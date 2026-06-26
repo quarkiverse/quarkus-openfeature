@@ -7,3 +7,8 @@ It integrates the https://openfeature.dev/[OpenFeature] SDK into Quarkus, so you
 
 All classes under a `runtime` package are internal and may change without notice.
 Only classes outside of `runtime` are considered public API.
+A list of public APIs follows, categorized by area.
+
+== Testing
+
+* `io.quarkiverse.openfeature.junit.TestFlag`

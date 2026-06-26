@@ -1,0 +1,90 @@
+= Testing
+
+include::./includes/attributes.adoc[]
+
+This extension provides a JUnit 5 extension for overriding feature flags in tests.
+Add the following dependency:
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>io.quarkiverse.openfeature</groupId>
+    <artifactId>quarkus-openfeature-junit</artifactId>
+    <version>{project-version}</version>
+    <scope>test</scope>
+</dependency>
+----
+
+Use the `@TestFlag` annotation on test methods or test classes to override flag values for the duration of a test:
+
+[source,java]
+----
+import dev.openfeature.sdk.FlagValueType;
+import io.quarkiverse.openfeature.junit.TestFlag;
+
+@QuarkusTest
+public class MyFeatureTest {
+    @Inject
+    Client client;
+
+    @Test
+    @TestFlag(key = "new-greeting", value = "true")
+    void newGreetingEnabled() {
+        // "new-greeting" evaluates to true for this test
+        assertThat(client.getBooleanValue("new-greeting", false)).isTrue();
+    }
+
+    @Test
+    void newGreetingDefault() {
+        // no @TestFlag here -- the real provider value is used
+        // ...
+    }
+
+    @Test
+    @TestFlag(key = "ui-variant", value = "dark-mode", type = FlagValueType.STRING)
+    @TestFlag(key = "max-retries", value = "5", type = FlagValueType.INTEGER)
+    void multipleFlags() {
+        assertThat(client.getStringValue("ui-variant", "default")).isEqualTo("dark-mode");
+        assertThat(client.getIntegerValue("max-retries", 3)).isEqualTo(5);
+    }
+}
+----
+
+== Value types
+
+The `@TestFlag` annotation supports the following value types (via the `type` attribute):
+
+* `BOOLEAN` (default) -- parsed via `Boolean.parseBoolean()`, so only `"true"` (case-insensitive) produces `true`
+* `STRING` -- used as-is
+* `INTEGER` -- parsed via `Integer.parseInt()`
+* `DOUBLE` -- parsed via `Double.parseDouble()`
+
+Note that `OBJECT` is not supported and will result in an exception.
+
+== Fall-through to real providers
+
+Flags that are not overridden fall through to the real provider, so you can mix overrides with real flag values in the same test.
+
+== Class-level and method-level annotations
+
+When `@TestFlag` is placed on a class, the override applies to all test methods in that class.
+Method-level `@TestFlag` annotations take precedence over class-level annotations for the same flag key.
+Overrides are always cleared after each test method, so subsequent tests see the real provider values.
+
+== Named domains
+
+For named domains, use the `domain` attribute:
+
+[source,java]
+----
+@Test
+@TestFlag(domain = "experimentation", key = "experiment-a", value = "true")
+void experimentEnabled() {
+    // ...
+}
+----
+
+== Provider support
+
+Testing support requires the provider to expose an additional contract.
+All providers included in this extension do this and so support testing out of the box.

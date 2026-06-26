@@ -143,6 +143,11 @@ public class MyService {
 Each domain has its own provider and flag configuration.
 Flags from one domain are not visible in another.
 
+== Testing
+
+The `quarkus-openfeature-junit` artifact provides a `@TestFlag` annotation for overriding feature flag values in tests.
+See xref:testing.adoc[Testing] for details.
+
 [[extension-configuration-reference]]
 == Extension Configuration Reference
 

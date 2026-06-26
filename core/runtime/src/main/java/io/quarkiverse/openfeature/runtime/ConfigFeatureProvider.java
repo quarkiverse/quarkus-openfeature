@@ -15,9 +15,10 @@ import dev.openfeature.sdk.Value;
 import dev.openfeature.sdk.exceptions.FlagNotFoundError;
 import dev.openfeature.sdk.exceptions.TypeMismatchError;
 
-public class ConfigFeatureProvider implements FeatureProvider, DevFeatureAccess {
+public class ConfigFeatureProvider implements FeatureProvider, DevFeatureAccess, TestFeatureAccess {
     private final String name;
     private final Map<String, String> flags;
+    private volatile TestOverrides testOverrides;
 
     public ConfigFeatureProvider(String name, Map<String, String> flags) {
         this.name = name;
@@ -31,6 +32,10 @@ public class ConfigFeatureProvider implements FeatureProvider, DevFeatureAccess 
 
     @Override
     public ProviderEvaluation<Boolean> getBooleanEvaluation(String key, Boolean defaultValue, EvaluationContext ctx) {
+        ProviderEvaluation<Boolean> override = evaluateTestOverride(key, Boolean.class);
+        if (override != null) {
+            return override;
+        }
         return ProviderEvaluation.<Boolean> builder()
                 .value(Boolean.parseBoolean(resolveFlag(key)))
                 .reason(Reason.STATIC.toString())
@@ -39,6 +44,10 @@ public class ConfigFeatureProvider implements FeatureProvider, DevFeatureAccess 
 
     @Override
     public ProviderEvaluation<String> getStringEvaluation(String key, String defaultValue, EvaluationContext ctx) {
+        ProviderEvaluation<String> override = evaluateTestOverride(key, String.class);
+        if (override != null) {
+            return override;
+        }
         return ProviderEvaluation.<String> builder()
                 .value(resolveFlag(key))
                 .reason(Reason.STATIC.toString())
@@ -47,6 +56,10 @@ public class ConfigFeatureProvider implements FeatureProvider, DevFeatureAccess 
 
     @Override
     public ProviderEvaluation<Integer> getIntegerEvaluation(String key, Integer defaultValue, EvaluationContext ctx) {
+        ProviderEvaluation<Integer> override = evaluateTestOverride(key, Integer.class);
+        if (override != null) {
+            return override;
+        }
         String value = resolveFlag(key);
         try {
             return ProviderEvaluation.<Integer> builder()
@@ -60,6 +73,10 @@ public class ConfigFeatureProvider implements FeatureProvider, DevFeatureAccess 
 
     @Override
     public ProviderEvaluation<Double> getDoubleEvaluation(String key, Double defaultValue, EvaluationContext ctx) {
+        ProviderEvaluation<Double> override = evaluateTestOverride(key, Double.class);
+        if (override != null) {
+            return override;
+        }
         String value = resolveFlag(key);
         try {
             return ProviderEvaluation.<Double> builder()
@@ -73,6 +90,10 @@ public class ConfigFeatureProvider implements FeatureProvider, DevFeatureAccess 
 
     @Override
     public ProviderEvaluation<Value> getObjectEvaluation(String key, Value defaultValue, EvaluationContext ctx) {
+        ProviderEvaluation<Value> override = evaluateTestOverride(key, Value.class);
+        if (override != null) {
+            return override;
+        }
         return ProviderEvaluation.<Value> builder()
                 .value(new Value(resolveFlag(key)))
                 .reason(Reason.STATIC.toString())
@@ -114,5 +135,20 @@ public class ConfigFeatureProvider implements FeatureProvider, DevFeatureAccess 
         }
 
         return FlagValueType.STRING;
+    }
+
+    @Override
+    public void setTestOverrides(TestOverrides overrides) {
+        this.testOverrides = overrides;
+    }
+
+    @Override
+    public void clearTestOverrides() {
+        this.testOverrides = null;
+    }
+
+    protected final <T> ProviderEvaluation<T> evaluateTestOverride(String key, Class<T> expectedType) {
+        TestOverrides testOverrides = this.testOverrides;
+        return testOverrides != null ? testOverrides.evaluate(key, expectedType) : null;
     }
 }
