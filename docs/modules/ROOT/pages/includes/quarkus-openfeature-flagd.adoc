@@ -1,0 +1,404 @@
+[.configuration-legend]
+icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[.header-title]##Configuration property##
+h|Type
+h|Default
+
+a|icon:lock[title=Fixed at build time] [[quarkus-openfeature-flagd_quarkus-openfeature-flagd-devservices-enabled]] [.property-path]##link:#quarkus-openfeature-flagd_quarkus-openfeature-flagd-devservices-enabled[`+++quarkus.openfeature.flagd.devservices.enabled+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flagd.devservices.enabled+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flagd.devservices.enabled+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flagd.devservices.enabled+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+If DevServices has been explicitly enabled or disabled. DevServices is generally enabled by default, unless there is an existing configuration present.
+
+When DevServices is enabled Quarkus will attempt to automatically configure and start a flagd instance when running in Dev or Test mode and when Docker is running.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLAGD_DEVSERVICES_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLAGD_DEVSERVICES_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-openfeature-flagd_quarkus-openfeature-flagd-devservices-image-name]] [.property-path]##link:#quarkus-openfeature-flagd_quarkus-openfeature-flagd-devservices-image-name[`+++quarkus.openfeature.flagd.devservices.image-name+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flagd.devservices.image-name+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flagd.devservices.image-name+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flagd.devservices.image-name+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+The container image name to use, for container based DevServices providers.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLAGD_DEVSERVICES_IMAGE_NAME+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLAGD_DEVSERVICES_IMAGE_NAME+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|`+++ghcr.io/open-feature/flagd:latest+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-openfeature-flagd_quarkus-openfeature-flagd-devservices-port]] [.property-path]##link:#quarkus-openfeature-flagd_quarkus-openfeature-flagd-devservices-port[`+++quarkus.openfeature.flagd.devservices.port+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flagd.devservices.port+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flagd.devservices.port+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flagd.devservices.port+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Optional fixed port the dev service will listen to.
+
+If not defined, the port will be chosen randomly.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLAGD_DEVSERVICES_PORT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLAGD_DEVSERVICES_PORT+++`
+endif::add-copy-button-to-env-var[]
+--
+|int
+|
+
+a|icon:lock[title=Fixed at build time] [[quarkus-openfeature-flagd_quarkus-openfeature-flagd-devservices-path]] [.property-path]##link:#quarkus-openfeature-flagd_quarkus-openfeature-flagd-devservices-path[`+++quarkus.openfeature.flagd.devservices.path+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flagd.devservices.path+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flagd.devservices.path+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flagd.devservices.path+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Path to a flag definition file on the classpath. If not configured explicitly and the default `flags.json` file does not exist, flagd starts with an empty flag configuration. If configured explicitly and the file does not exist, the build fails.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLAGD_DEVSERVICES_PATH+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLAGD_DEVSERVICES_PATH+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|`+++flags.json+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-openfeature-flagd_quarkus-openfeature-flagd-devservices-shared]] [.property-path]##link:#quarkus-openfeature-flagd_quarkus-openfeature-flagd-devservices-shared[`+++quarkus.openfeature.flagd.devservices.shared+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flagd.devservices.shared+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flagd.devservices.shared+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flagd.devservices.shared+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Indicates if the flagd instance managed by Quarkus Dev Services is shared. When shared, Quarkus looks for running containers using label-based service discovery. If a matching container is found, it is used, and so a second one is not started. Otherwise, Dev Services for flagd starts a new container.
+
+The discovery uses the `quarkus-dev-service-flagd` label. The value is configured using the `service-name` property.
+
+Container sharing is only used in dev mode.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLAGD_DEVSERVICES_SHARED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLAGD_DEVSERVICES_SHARED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-openfeature-flagd_quarkus-openfeature-flagd-devservices-service-name]] [.property-path]##link:#quarkus-openfeature-flagd_quarkus-openfeature-flagd-devservices-service-name[`+++quarkus.openfeature.flagd.devservices.service-name+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flagd.devservices.service-name+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flagd.devservices.service-name+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flagd.devservices.service-name+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+The value of the `quarkus-dev-service-flagd` label attached to the started container. This property is used when `shared` is set to `true`. In this case, before starting a container, Dev Services for flagd looks for a container with the `quarkus-dev-service-flagd` label set to the configured value. If found, it will use this container instead of starting a new one. Otherwise, it starts a new container with the `quarkus-dev-service-flagd` label set to the specified value.
+
+This property is used when you need multiple shared flagd servers.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLAGD_DEVSERVICES_SERVICE_NAME+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLAGD_DEVSERVICES_SERVICE_NAME+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|`+++flagd+++`
+
+a| [[quarkus-openfeature-flagd_quarkus-openfeature-flagd-url]] [.property-path]##link:#quarkus-openfeature-flagd_quarkus-openfeature-flagd-url[`+++quarkus.openfeature.flagd.url+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flagd.url+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flagd.url+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flagd.url+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+flagd server URL.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLAGD_URL+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLAGD_URL+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|`+++localhost:8015+++`
+
+a| [[quarkus-openfeature-flagd_quarkus-openfeature-flagd-tls-configuration-name]] [.property-path]##link:#quarkus-openfeature-flagd_quarkus-openfeature-flagd-tls-configuration-name[`+++quarkus.openfeature.flagd.tls-configuration-name+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flagd.tls-configuration-name+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flagd.tls-configuration-name+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flagd.tls-configuration-name+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+TLS configuration name from the Quarkus TLS registry.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLAGD_TLS_CONFIGURATION_NAME+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLAGD_TLS_CONFIGURATION_NAME+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-openfeature-flagd_quarkus-openfeature-flagd-stream-deadline]] [.property-path]##link:#quarkus-openfeature-flagd_quarkus-openfeature-flagd-stream-deadline[`+++quarkus.openfeature.flagd.stream-deadline+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flagd.stream-deadline+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flagd.stream-deadline+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flagd.stream-deadline+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Idle timeout for the gRPC streaming connection. If no data is received within this period, the stream is closed and a reconnect is attempted.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLAGD_STREAM_DEADLINE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLAGD_STREAM_DEADLINE+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-openfeature-flagd_quarkus-openfeature[icon:question-circle[title=More information about the Duration format]]
+|`+++10M+++`
+
+a| [[quarkus-openfeature-flagd_quarkus-openfeature-flagd-grace-period]] [.property-path]##link:#quarkus-openfeature-flagd_quarkus-openfeature-flagd-grace-period[`+++quarkus.openfeature.flagd.grace-period+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flagd.grace-period+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flagd.grace-period+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flagd.grace-period+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Grace period before transitioning from STALE to ERROR after a connection loss. During this period, the provider continues serving cached flag values while attempting to reconnect. If the connection is restored within the grace period, the provider transitions back to READY without emitting an ERROR event.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLAGD_GRACE_PERIOD+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLAGD_GRACE_PERIOD+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-openfeature-flagd_quarkus-openfeature[icon:question-circle[title=More information about the Duration format]]
+|`+++1M+++`
+
+a| [[quarkus-openfeature-flagd_quarkus-openfeature-flagd-provider-id]] [.property-path]##link:#quarkus-openfeature-flagd_quarkus-openfeature-flagd-provider-id[`+++quarkus.openfeature.flagd.provider-id+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flagd.provider-id+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flagd.provider-id+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flagd.provider-id+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Unique identifier for this client, sent to flagd for telemetry, monitoring, and routing purposes.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLAGD_PROVIDER_ID+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLAGD_PROVIDER_ID+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-openfeature-flagd_quarkus-openfeature-flagd-selector]] [.property-path]##link:#quarkus-openfeature-flagd_quarkus-openfeature-flagd-selector[`+++quarkus.openfeature.flagd.selector+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flagd.selector+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flagd.selector+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flagd.selector+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Selector for filtering which flag source to sync when flagd serves multiple flag sources.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLAGD_SELECTOR+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLAGD_SELECTOR+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-openfeature-flagd_quarkus-openfeature-flagd-offline-path]] [.property-path]##link:#quarkus-openfeature-flagd_quarkus-openfeature-flagd-offline-path[`+++quarkus.openfeature.flagd.offline-path+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flagd.offline-path+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flagd.offline-path+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flagd.offline-path+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Path to a JSON flag definition file for offline mode. When set, the provider reads flags from this file instead of connecting to a flagd instance.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLAGD_OFFLINE_PATH+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLAGD_OFFLINE_PATH+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-openfeature-flagd_quarkus-openfeature-flagd-use-quarkus-jackson]] [.property-path]##link:#quarkus-openfeature-flagd_quarkus-openfeature-flagd-use-quarkus-jackson[`+++quarkus.openfeature.flagd.use-quarkus-jackson+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flagd.use-quarkus-jackson+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flagd.use-quarkus-jackson+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flagd.use-quarkus-jackson+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Whether to use the Quarkus-managed `ObjectMapper` from the `quarkus-jackson` extension. When `false`, the provider creates its own `ObjectMapper` instance.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLAGD_USE_QUARKUS_JACKSON+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLAGD_USE_QUARKUS_JACKSON+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+|===
+
+ifndef::no-duration-note[]
+[NOTE]
+[id=duration-note-anchor-quarkus-openfeature-flagd_quarkus-openfeature]
+.About the Duration format
+====
+To write duration values, use the standard `java.time.Duration` format.
+See the link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html#parse(java.lang.CharSequence)[Duration#parse() Java API documentation] for more information.
+
+You can also use a simplified format, starting with a number:
+
+* If the value is only a number, it represents time in seconds.
+* If the value is a number followed by `ms`, it represents time in milliseconds.
+
+In other cases, the simplified format is translated to the `java.time.Duration` format for parsing:
+
+* If the value is a number followed by `h`, `m`, or `s`, it is prefixed with `PT`.
+* If the value is a number followed by `d`, it is prefixed with `P`.
+====
+endif::no-duration-note[]

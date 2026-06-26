@@ -1,0 +1,13 @@
+{
+  "$schema": "https://flagd.dev/schema/v0/flags.json",
+  "flags": {
+    "custom-string-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "greeting": "hello from custom domain",
+        "parting": "goodbye from custom domain"
+      },
+      "defaultVariant": "greeting"
+    }
+  }
+}

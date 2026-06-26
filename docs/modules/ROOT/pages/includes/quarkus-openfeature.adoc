@@ -7,6 +7,29 @@ h|[.header-title]##Configuration property##
 h|Type
 h|Default
 
+a| [[quarkus-openfeature_quarkus-openfeature-await-providers]] [.property-path]##link:#quarkus-openfeature_quarkus-openfeature-await-providers[`+++quarkus.openfeature.await-providers+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.await-providers+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether to wait for providers to be ready before the application starts.
+
+When `auto`, providers are awaited in the dev and test launch modes but not in production. When `true`, startup blocks until all providers have received their initial flag data. When `false`, providers initialize asynchronously and return default values until ready.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_AWAIT_PROVIDERS+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_AWAIT_PROVIDERS+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`auto`, `true`, `false`
+|`+++auto+++`
+
 a|icon:lock[title=Fixed at build time] [[quarkus-openfeature_quarkus-openfeature-provider]] [.property-path]##link:#quarkus-openfeature_quarkus-openfeature-provider[`+++quarkus.openfeature.provider+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++quarkus.openfeature.provider+++[]

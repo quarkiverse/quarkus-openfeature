@@ -6,6 +6,7 @@ This extension integrates the https://openfeature.dev/[OpenFeature] SDK with Qua
 
 OpenFeature is an open specification for feature flag management.
 It provides a vendor-neutral API, so your application code doesn't depend on a specific feature flag provider.
+You can switch between providers (such as https://flagd.dev/[flagd]) without changing your application code.
 
 == Installation
 
@@ -13,6 +14,19 @@ Select an OpenFeature provider and add its extension to your project.
 You don't need to explicitly add a dependency on `io.quarkiverse.openfeature:quarkus-openfeature`, it is included transitively.
 
 Available providers:
+
+xref:flagd.adoc[flagd provider]::
+Connects to a https://flagd.dev/[flagd] instance for dynamic feature flag evaluation.
+Flags are evaluated in-process using flag definitions synced from flagd over gRPC.
++
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>io.quarkiverse.openfeature</groupId>
+    <artifactId>quarkus-openfeature-flagd</artifactId>
+    <version>{project-version}</version>
+</dependency>
+----
 
 xref:config-providers.adoc[Runtime configuration provider]::
 Reads flag values from Quarkus runtime configuration.
@@ -39,6 +53,14 @@ They are fixed during build and cannot be changed at runtime.
     <version>{project-version}</version>
 </dependency>
 ----
+
+=== Provider implementation
+
+This extension does not use the upstream OpenFeature providers.
+Instead, it implements its own providers that use Vert.x for non-blocking synchronization with the feature flag server and delegate flag evaluation to the same in-process engines (flagd-core, Yggdrasil, etc.).
+
+The upstream providers often rely on blocking I/O and heavyweight dependencies (such as OkHttp), conflicting with Quarkus's reactive core.
+By implementing providers directly on top of Vert.x, this extension avoids extra dependencies, integrates with the Quarkus TLS registry and credential providers, and guarantees that flag evaluations never perform I/O -- making them safe to call from any thread, including the Vert.x event loop.
 
 == Usage
 
@@ -74,7 +96,7 @@ Value config = client.getObjectValue("complex-config", new Value());
 ----
 
 NOTE: Object evaluation returns structured data whose richness depends on the provider.
-The configuration-based providers return the raw config value as a string wrapped in a `Value`.
+Providers like flagd support full JSON structures, while the configuration-based providers return the raw config value as a string wrapped in a `Value`.
 
 It is safe to call the `Client` methods on a non-blockable thread (such as Vert.x event loop), because this extension guarantees feature flags are evaluated purely in memory; no I/O occurs.
 
@@ -142,6 +164,30 @@ public class MyService {
 
 Each domain has its own provider and flag configuration.
 Flags from one domain are not visible in another.
+
+== Provider initialization
+
+Providers that connect to a remote service (such as flagd) initialize asynchronously: they open a connection, receive the initial set of flag definitions, and only then become _ready_.
+Until a provider is ready, flag evaluations return default values.
+
+By default, this extension blocks application startup until all providers are ready _in the dev and test launch modes_, but lets them initialize asynchronously in the production launch mode.
+This means:
+
+* In *development and testing*, flags are always available when your first request arrives.
+  This avoids confusing "default value" responses during development.
+* In *production*, the application starts immediately and begins serving traffic while providers connect.
+  This is typically what you want for rolling deployments and health checks.
+
+You can override this behavior explicitly:
+
+[source,properties]
+----
+# Always block startup until providers are ready
+quarkus.openfeature.await-providers=true
+
+# Never block startup, even in dev/test mode
+quarkus.openfeature.await-providers=false
+----
 
 == Testing
 

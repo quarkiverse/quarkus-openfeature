@@ -1,3 +1,5 @@
 :project-version: ${release.current-version}
 
 :examples-dir: ./../examples/
+
+:flagd-core-version: ${flagd-core.version}

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://flagd.dev/schema/v0/flags.json",
+  "flags": {
+    "bool-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "on": true,
+        "off": false
+      },
+      "defaultVariant": "on"
+    },
+    "string-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "greeting": "hello from flagd",
+        "parting": "goodbye"
+      },
+      "defaultVariant": "greeting"
+    },
+    "int-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "one": 1,
+        "ten": 10
+      },
+      "defaultVariant": "ten"
+    },
+    "disabled-flag": {
+      "state": "DISABLED",
+      "variants": {
+        "on": true,
+        "off": false
+      },
+      "defaultVariant": "on"
+    },
+    "targeted-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "match": "targeted-value",
+        "fallback": "default-value"
+      },
+      "defaultVariant": "fallback",
+      "targeting": {
+        "if": [
+          { "==": [{ "var": "targetingKey" }, "test-user"] },
+          "match",
+          "fallback"
+        ]
+      }
+    }
+  }
+}

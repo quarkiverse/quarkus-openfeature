@@ -1,0 +1,373 @@
+{
+  "flags": {
+    "fractional-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "clubs": "clubs",
+        "diamonds": "diamonds",
+        "hearts": "hearts",
+        "spades": "spades",
+        "wild": "wild"
+      },
+      "defaultVariant": "wild",
+      "targeting": {
+        "fractional": [
+          {"cat": [
+            { "var": "$flagd.flagKey" },
+            { "var": "user.name" }
+          ]},
+          [ "clubs", 25 ],
+          [ "diamonds", 25 ],
+          [ "hearts", 25 ],
+          [ "spades", 25 ]
+        ]
+      }
+    },
+    "fractional-single-entry-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "single": "single",
+        "fallback": "fallback"
+      },
+      "defaultVariant": "fallback",
+      "targeting": {
+        "fractional": [
+          [ "single", 1 ]
+        ]
+      }
+    },
+    "fractional-flag-shorthand": {
+      "state": "ENABLED",
+      "variants": {
+        "heads": "heads",
+        "tails": "tails",
+        "draw": "draw"
+      },
+      "defaultVariant": "draw",
+      "targeting": {
+        "fractional": [
+          [ "heads" ],
+          [ "tails", 1 ]
+        ]
+      }
+    },
+    "fractional-flag-A-shared-seed": {
+      "state": "ENABLED",
+      "variants": {
+        "clubs": "clubs",
+        "diamonds": "diamonds",
+        "hearts": "hearts",
+        "spades": "spades",
+        "wild": "wild"
+      },
+      "defaultVariant": "wild",
+      "targeting": {
+        "fractional": [
+          { "cat": [
+            "shared-seed",
+            { "var": "user.name" }
+          ]},
+          [ "clubs", 25 ],
+          [ "diamonds", 25 ],
+          [ "hearts", 25 ],
+          [ "spades", 25 ]
+        ]
+      }
+    },
+    "fractional-flag-B-shared-seed": {
+      "state": "ENABLED",
+      "variants": {
+        "clubs": "ace-of-clubs",
+        "diamonds": "ace-of-diamonds",
+        "hearts": "ace-of-hearts",
+        "spades": "ace-of-spades",
+        "wild": "wild"
+      },
+      "defaultVariant": "wild",
+      "targeting": {
+        "fractional": [
+          { "cat": [
+            "shared-seed",
+            { "var": "user.name" }
+          ]},
+          [ "clubs", 25 ],
+          [ "diamonds", 25 ],
+          [ "hearts", 25 ],
+          [ "spades", 25 ]
+        ]
+      }
+    },
+    "fractional-hash-edge-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "lower": "lower",
+        "upper": "upper"
+      },
+      "defaultVariant": "lower",
+      "targeting": {
+        "fractional": [
+          { "var": "targetingKey" },
+          [ "lower", 50 ],
+          [ "upper", 50 ]
+        ]
+      }
+    },
+    "fractional-nested-if-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "premium": "premium",
+        "standard": "standard",
+        "fallback": "fallback"
+      },
+      "defaultVariant": "fallback",
+      "targeting": {
+        "fractional": [
+          { "var": "targetingKey" },
+          [
+            {
+              "if": [
+                { "==": [{ "var": "tier" }, "premium"] },
+                "premium",
+                "standard"
+              ]
+            },
+            50
+          ],
+          [ "standard", 50 ]
+        ]
+      }
+    },
+    "fractional-nested-var-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "red": "red",
+        "green": "green",
+        "blue": "blue",
+        "fallback": "fallback"
+      },
+      "defaultVariant": "fallback",
+      "targeting": {
+        "fractional": [
+          { "var": "targetingKey" },
+          [ { "var": "color" }, 50 ],
+          [ "blue", 50 ]
+        ]
+      }
+    },
+    "fractional-nested-weight-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "red": "red",
+        "blue": "blue",
+        "fallback": "fallback"
+      },
+      "defaultVariant": "fallback",
+      "targeting": {
+        "fractional": [
+          { "var": "targetingKey" },
+          [
+            "red",
+            {
+              "if": [
+                { "==": [{ "var": "tier" }, "premium"] },
+                100,
+                0
+              ]
+            }
+          ],
+          [ "blue", 10 ]
+        ]
+      }
+    },
+    "fractional-as-condition-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "big": "hundreds",
+        "small": "ones",
+        "fallback": "zero"
+      },
+      "defaultVariant": "fallback",
+      "targeting": {
+        "if": [
+          {
+            "fractional": [
+              [ false, 0 ],
+              [ true, 100 ]
+            ]
+          },
+          "big", "small"
+        ]
+      }
+    },
+    "fractional-as-condition-false-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "big": "hundreds",
+        "small": "ones",
+        "fallback": "zero"
+      },
+      "defaultVariant": "fallback",
+      "targeting": {
+        "if": [
+          {
+            "fractional": [
+              [ false, 100 ],
+              [ true, 0 ]
+            ]
+          },
+          "big", "small"
+        ]
+      }
+    },
+    "starts-ends-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "prefix": "prefix",
+        "postfix": "postfix",
+        "none": "none"
+      },
+      "defaultVariant": "none",
+      "targeting": {
+        "if": [
+          {
+            "starts_with": [{"var": "id"}, "abc"]
+          },
+          "prefix", {
+            "if": [
+              {
+                "ends_with": [{"var": "id"}, "xyz"]
+              },
+              "postfix", {
+                "if": [
+                  {
+                    "ends_with": [{"var": "id"}, 3]
+                  },
+                  "fail", "none"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "equal-greater-lesser-version-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "equal": "equal",
+        "greater": "greater",
+        "lesser": "lesser",
+        "none": "none"
+      },
+      "defaultVariant": "none",
+      "targeting": {
+        "if": [
+          {
+            "sem_ver": [{"var": "version"}, "=", "2.0.0"]
+          },
+          "equal", {
+            "if": [
+              {
+                "sem_ver": [{"var": "version"}, ">", "2.0.0"]
+              },
+              "greater", {
+                "if": [
+                  {
+                    "sem_ver": [{"var": "version"}, "<", "2.0.0"]
+                  },
+                  "lesser", {
+                    "if": [
+                      {
+                        "sem_ver": [{"var": "version"}, "=", "2.0.0.0"]
+                      },
+                      "fail", "none"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "major-minor-version-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "minor": "minor",
+        "major": "major",
+        "none": "none"
+      },
+      "defaultVariant": "none",
+      "targeting": {
+        "if": [
+          {
+            "sem_ver": [{"var": "version"}, "~", "3.0.0"]
+          },
+          "minor", {
+            "if": [
+              {
+                "sem_ver": [{"var": "version"}, "^", "3.0.0"]
+              },
+              "major", "none"
+            ]
+          }
+        ]
+      }
+    },
+    "semver-v-prefix-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "match": "match",
+        "no-match": "no-match"
+      },
+      "defaultVariant": "no-match",
+      "targeting": {
+        "if": [
+          {"sem_ver": [{"var": "version"}, "=", "v1.0.0"]},
+          "match", "no-match"
+        ]
+      }
+    },
+    "semver-partial-version-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "match": "match",
+        "no-match": "no-match"
+      },
+      "defaultVariant": "no-match",
+      "targeting": {
+        "if": [
+          {"sem_ver": [{"var": "version"}, "^", "1"]},
+          "match", "no-match"
+        ]
+      }
+    },
+    "semver-numeric-context-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "match": "match",
+        "no-match": "no-match"
+      },
+      "defaultVariant": "no-match",
+      "targeting": {
+        "if": [
+          {"sem_ver": [{"var": "version"}, ">", "1.1"]},
+          "match", "no-match"
+        ]
+      }
+    },
+    "semver-build-metadata-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "match": "match",
+        "no-match": "no-match"
+      },
+      "defaultVariant": "no-match",
+      "targeting": {
+        "if": [
+          {"sem_ver": [{"var": "version"}, "=", "1.0.0+build"]},
+          "match", "no-match"
+        ]
+      }
+    }
+  }
+}

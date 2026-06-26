@@ -11,6 +11,8 @@ import dev.openfeature.sdk.Client;
 import dev.openfeature.sdk.FeatureProvider;
 import dev.openfeature.sdk.OpenFeatureAPI;
 import dev.openfeature.sdk.multiprovider.MultiProvider;
+import io.quarkus.runtime.LaunchMode;
+import io.quarkus.runtime.RuntimeValue;
 import io.quarkus.runtime.annotations.Recorder;
 
 @Recorder
@@ -21,18 +23,38 @@ public class OpenFeatureRecorder {
         return providers.getOrDefault(domain, Collections.emptyList());
     }
 
+    private final RuntimeValue<OpenFeatureRuntimeConfig> config;
+
+    public OpenFeatureRecorder(RuntimeValue<OpenFeatureRuntimeConfig> config) {
+        this.config = config;
+    }
+
     public void reset() {
         providers.clear();
     }
 
     public void configureProvider(String domain, List<FeatureProviderFactory> factories) {
+        boolean shouldAwaitProviders = switch (config.getValue().awaitProviders()) {
+            case TRUE -> true;
+            case FALSE -> false;
+            case AUTO -> LaunchMode.current().isDevOrTest();
+        };
+
         OpenFeatureAPI api = OpenFeatureAPI.getInstance();
         FeatureProvider provider = createProvider(domain, factories);
 
-        if (OpenFeatureBuildTimeConfig.DEFAULT_DOMAIN.equals(domain)) {
-            api.setProviderAndWait(provider);
+        if (shouldAwaitProviders) {
+            if (OpenFeatureBuildTimeConfig.DEFAULT_DOMAIN.equals(domain)) {
+                api.setProviderAndWait(provider);
+            } else {
+                api.setProviderAndWait(domain, provider);
+            }
         } else {
-            api.setProviderAndWait(domain, provider);
+            if (OpenFeatureBuildTimeConfig.DEFAULT_DOMAIN.equals(domain)) {
+                api.setProvider(provider);
+            } else {
+                api.setProvider(domain, provider);
+            }
         }
     }
 

@@ -14,5 +14,6 @@
 
     <modules>
         <module>config</module>
+        <module>flagd</module>
     </modules>
 </project>

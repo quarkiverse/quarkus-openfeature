@@ -1,0 +1,159 @@
+= flagd Provider
+
+include::./includes/attributes.adoc[]
+
+The flagd provider connects to a https://flagd.dev/[flagd] instance and evaluates feature flags in-process.
+Flag definitions are synced from flagd over gRPC and evaluated locally, so no network call is made during flag evaluation.
+
+This extension depends on:
+
+[cols="1,1,1"]
+|===
+|Component |Version |Source
+
+|flagd core
+|{flagd-core-version}
+|https://github.com/open-feature/java-sdk-contrib[open-feature/java-sdk-contrib]
+|===
+
+== Installation
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>io.quarkiverse.openfeature</groupId>
+    <artifactId>quarkus-openfeature-flagd</artifactId>
+    <version>{project-version}</version>
+</dependency>
+----
+
+== Configuration
+
+By default, the provider connects to `localhost:8015`.
+To connect to a different flagd instance:
+
+[source,properties]
+----
+quarkus.openfeature.flagd.url=flagd.example.com:8015
+----
+
+For named domains:
+
+[source,properties]
+----
+quarkus.openfeature."experimentation".flagd.url=flagd-experiments.example.com:8015
+----
+
+=== TLS
+
+The provider uses the Quarkus TLS registry for TLS configuration.
+First, configure a named TLS configuration in `application.properties`, then reference it:
+
+[source,properties]
+----
+quarkus.tls.flagd.trust-store.pem.certs=ca.pem
+
+quarkus.openfeature.flagd.tls-configuration-name=flagd
+----
+
+See the https://quarkus.io/guides/tls-registry-reference[Quarkus TLS registry documentation] for all available options.
+
+=== Authentication
+
+The flagd sync protocol does not define an authentication mechanism.
+To secure the connection, use TLS and network-level controls.
+
+=== Offline mode
+
+For testing or development without a running flagd instance, the provider can read flags from a local JSON file:
+
+[source,properties]
+----
+quarkus.openfeature.flagd.offline-path=/path/to/flags.json
+----
+
+In offline mode, no gRPC connection is made and flag values are static.
+
+=== Selector
+
+If your flagd instance serves multiple flag sources, you can use a https://flagd.dev/concepts/selectors/[selector] to filter to a specific one:
+
+[source,properties]
+----
+quarkus.openfeature.flagd.selector=flagSetId=my-flags
+----
+
+=== Provider ID
+
+To identify this client to the flagd server:
+
+[source,properties]
+----
+quarkus.openfeature.flagd.provider-id=my-service
+----
+
+The server may use this ID to uniquely identify the client, for example in telemetry, and filter flag configurations that it can expose to the client.
+
+Note that this value is sent in the gRPC request for synchronization and is _not_ related to https://flagd.dev/reference/specifications/providers/[flagd providers].
+
+== Evaluation context
+
+The evaluation context is passed directly to the flagd evaluation engine for use in https://flagd.dev/reference/flag-definitions/#targeting-rules[targeting rules].
+
+== Dev Services
+
+In dev and test mode, a flagd container is started automatically if no `quarkus.openfeature.flagd.url` is configured and Docker is available.
+If no flag definition file is found, flagd starts with an empty configuration.
+
+To provide flag definitions to the dev service, place a `flags.json` file in `src/main/resources`:
+
+[source,json]
+----
+{
+  "flags": {
+    "welcome-banner": {
+      "state": "ENABLED",
+      "variants": {
+        "on": true,
+        "off": false
+      },
+      "defaultVariant": "on"
+    }
+  }
+}
+----
+
+The dev service picks up this file automatically.
+You can also configure a different path:
+
+[source,properties]
+----
+quarkus.openfeature.flagd.devservices.path=my-flags.json
+----
+
+Changes to the flag definition file are detected during live reload and the application is restarted automatically.
+The flagd container picks up the updated file through its own file watcher.
+
+== Connection lifecycle
+
+The provider maintains a persistent gRPC streaming connection to flagd.
+On connection loss, it automatically attempts to reconnect.
+The provider lifecycle follows the OpenFeature specification:
+
+READY:: The provider has received flag data and is serving evaluations.
+STALE:: The connection was lost. The provider continues serving cached flag values while reconnecting.
+ERROR:: The provider did not reconnect within the grace period (default 1 minute).
+FATAL:: The server returned a fatal gRPC status (such as `PERMISSION_DENIED` or `UNAUTHENTICATED`).
+The provider will not attempt to reconnect.
+
+The grace period is configurable:
+
+[source,properties]
+----
+quarkus.openfeature.flagd.grace-period=10m
+----
+
+[[configuration-reference]]
+== Configuration Reference
+
+include::includes/quarkus-openfeature-flagd.adoc[leveloffset=+1, opts=optional]

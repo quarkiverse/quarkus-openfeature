@@ -1,0 +1,23 @@
+{
+  "flags": {
+    "selector-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "foo": "foo",
+        "bar": "bar"
+      },
+      "defaultVariant": "foo"
+    },
+    "cross-flagset-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "on": true,
+        "off": false
+      },
+      "defaultVariant": "on"
+    }
+  },
+  "metadata": {
+    "flagSetId": "selector-set"
+  }
+}

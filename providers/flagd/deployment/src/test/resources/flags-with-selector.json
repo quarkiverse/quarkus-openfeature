@@ -1,0 +1,16 @@
+{
+  "$schema": "https://flagd.dev/schema/v0/flags.json",
+  "flags": {
+    "selector-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "hello": "hello from selector",
+        "bye": "goodbye"
+      },
+      "defaultVariant": "hello"
+    }
+  },
+  "metadata": {
+    "flagSetId": "my-set"
+  }
+}

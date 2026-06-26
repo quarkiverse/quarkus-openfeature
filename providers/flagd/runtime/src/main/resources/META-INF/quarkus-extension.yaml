@@ -1,0 +1,11 @@
+name: OpenFeature - flagd
+metadata:
+  keywords:
+    - openfeature
+    - flags
+    - toggles
+    - flagd
+  categories:
+    - "miscellaneous"
+  status: "preview"
+  hide-in-dev-ui: true
