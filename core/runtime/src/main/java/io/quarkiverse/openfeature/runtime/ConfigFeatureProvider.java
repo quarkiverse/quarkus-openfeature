@@ -1,9 +1,13 @@
 package io.quarkiverse.openfeature.runtime;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import dev.openfeature.sdk.EvaluationContext;
 import dev.openfeature.sdk.FeatureProvider;
+import dev.openfeature.sdk.FlagValueType;
 import dev.openfeature.sdk.Metadata;
 import dev.openfeature.sdk.ProviderEvaluation;
 import dev.openfeature.sdk.Reason;
@@ -11,7 +15,7 @@ import dev.openfeature.sdk.Value;
 import dev.openfeature.sdk.exceptions.FlagNotFoundError;
 import dev.openfeature.sdk.exceptions.TypeMismatchError;
 
-public class ConfigFeatureProvider implements FeatureProvider {
+public class ConfigFeatureProvider implements FeatureProvider, DevFeatureAccess {
     private final String name;
     private final Map<String, String> flags;
 
@@ -81,5 +85,34 @@ public class ConfigFeatureProvider implements FeatureProvider {
             throw new FlagNotFoundError("Flag not found: " + key);
         }
         return value;
+    }
+
+    @Override
+    public Collection<FlagInfo> getFlags() {
+        List<FlagInfo> result = new ArrayList<>(flags.size());
+        for (Map.Entry<String, String> entry : flags.entrySet()) {
+            result.add(new FlagInfo(entry.getKey(), inferType(entry.getValue())));
+        }
+        return result;
+    }
+
+    private static FlagValueType inferType(String value) {
+        if ("true".equals(value) || "false".equals(value)) {
+            return FlagValueType.BOOLEAN;
+        }
+
+        try {
+            Integer.parseInt(value);
+            return FlagValueType.INTEGER;
+        } catch (NumberFormatException ignored) {
+        }
+
+        try {
+            Double.parseDouble(value);
+            return FlagValueType.DOUBLE;
+        } catch (NumberFormatException ignored) {
+        }
+
+        return FlagValueType.STRING;
     }
 }
