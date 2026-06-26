@@ -1,0 +1,512 @@
+[.configuration-legend]
+icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[.header-title]##Configuration property##
+h|Type
+h|Default
+
+a|icon:lock[title=Fixed at build time] [[quarkus-openfeature-flipt_quarkus-openfeature-flipt-devservices-enabled]] [.property-path]##link:#quarkus-openfeature-flipt_quarkus-openfeature-flipt-devservices-enabled[`+++quarkus.openfeature.flipt.devservices.enabled+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flipt.devservices.enabled+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flipt.devservices.enabled+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flipt.devservices.enabled+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+If DevServices has been explicitly enabled or disabled. DevServices is generally enabled by default, unless there is an existing configuration present.
+
+When DevServices is enabled Quarkus will attempt to automatically configure and start a Flipt instance when running in Dev or Test mode and when Docker is running.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLIPT_DEVSERVICES_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLIPT_DEVSERVICES_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-openfeature-flipt_quarkus-openfeature-flipt-devservices-image-name]] [.property-path]##link:#quarkus-openfeature-flipt_quarkus-openfeature-flipt-devservices-image-name[`+++quarkus.openfeature.flipt.devservices.image-name+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flipt.devservices.image-name+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flipt.devservices.image-name+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flipt.devservices.image-name+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+The container image name to use, for container based DevServices providers.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLIPT_DEVSERVICES_IMAGE_NAME+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLIPT_DEVSERVICES_IMAGE_NAME+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|`+++flipt/flipt:v2+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-openfeature-flipt_quarkus-openfeature-flipt-devservices-port]] [.property-path]##link:#quarkus-openfeature-flipt_quarkus-openfeature-flipt-devservices-port[`+++quarkus.openfeature.flipt.devservices.port+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flipt.devservices.port+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flipt.devservices.port+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flipt.devservices.port+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Optional fixed port the dev service will listen to.
+
+If not defined, the port will be chosen randomly.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLIPT_DEVSERVICES_PORT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLIPT_DEVSERVICES_PORT+++`
+endif::add-copy-button-to-env-var[]
+--
+|int
+|
+
+a|icon:lock[title=Fixed at build time] [[quarkus-openfeature-flipt_quarkus-openfeature-flipt-devservices-path]] [.property-path]##link:#quarkus-openfeature-flipt_quarkus-openfeature-flipt-devservices-path[`+++quarkus.openfeature.flipt.devservices.path+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flipt.devservices.path+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flipt.devservices.path+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flipt.devservices.path+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Path to a flag definition file on the classpath. If not configured explicitly and the default `features.yaml` file does not exist, Flipt starts with an empty flag configuration. If configured explicitly and the file does not exist, the build fails.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLIPT_DEVSERVICES_PATH+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLIPT_DEVSERVICES_PATH+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|`+++features.yaml+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-openfeature-flipt_quarkus-openfeature-flipt-devservices-shared]] [.property-path]##link:#quarkus-openfeature-flipt_quarkus-openfeature-flipt-devservices-shared[`+++quarkus.openfeature.flipt.devservices.shared+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flipt.devservices.shared+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flipt.devservices.shared+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flipt.devservices.shared+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Indicates if the Flipt instance managed by Quarkus Dev Services is shared. When shared, Quarkus looks for running containers using label-based service discovery. If a matching container is found, it is used, and so a second one is not started. Otherwise, Dev Services for Flipt starts a new container.
+
+The discovery uses the `quarkus-dev-service-flipt` label. The value is configured using the `service-name` property.
+
+Container sharing is only used in dev mode.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLIPT_DEVSERVICES_SHARED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLIPT_DEVSERVICES_SHARED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-openfeature-flipt_quarkus-openfeature-flipt-devservices-service-name]] [.property-path]##link:#quarkus-openfeature-flipt_quarkus-openfeature-flipt-devservices-service-name[`+++quarkus.openfeature.flipt.devservices.service-name+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flipt.devservices.service-name+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flipt.devservices.service-name+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flipt.devservices.service-name+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+The value of the `quarkus-dev-service-flipt` label attached to the started container. This property is used when `shared` is set to `true`. In this case, before starting a container, Dev Services for Flipt looks for a container with the `quarkus-dev-service-flipt` label set to the configured value. If found, it will use this container instead of starting a new one. Otherwise, it starts a new container with the `quarkus-dev-service-flipt` label set to the specified value.
+
+This property is used when you need multiple shared Flipt servers.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLIPT_DEVSERVICES_SERVICE_NAME+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLIPT_DEVSERVICES_SERVICE_NAME+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|`+++flipt+++`
+
+a| [[quarkus-openfeature-flipt_quarkus-openfeature-flipt-url]] [.property-path]##link:#quarkus-openfeature-flipt_quarkus-openfeature-flipt-url[`+++quarkus.openfeature.flipt.url+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flipt.url+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flipt.url+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flipt.url+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Flipt server URL.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLIPT_URL+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLIPT_URL+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|`+++http://localhost:8080+++`
+
+a| [[quarkus-openfeature-flipt_quarkus-openfeature-flipt-environment]] [.property-path]##link:#quarkus-openfeature-flipt_quarkus-openfeature-flipt-environment[`+++quarkus.openfeature.flipt.environment+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flipt.environment+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flipt.environment+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flipt.environment+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Flipt environment.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLIPT_ENVIRONMENT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLIPT_ENVIRONMENT+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|`+++default+++`
+
+a| [[quarkus-openfeature-flipt_quarkus-openfeature-flipt-namespace]] [.property-path]##link:#quarkus-openfeature-flipt_quarkus-openfeature-flipt-namespace[`+++quarkus.openfeature.flipt.namespace+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flipt.namespace+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flipt.namespace+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flipt.namespace+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Flipt namespace.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLIPT_NAMESPACE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLIPT_NAMESPACE+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|`+++default+++`
+
+a| [[quarkus-openfeature-flipt_quarkus-openfeature-flipt-auth-type]] [.property-path]##link:#quarkus-openfeature-flipt_quarkus-openfeature-flipt-auth-type[`+++quarkus.openfeature.flipt.auth-type+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flipt.auth-type+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flipt.auth-type+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flipt.auth-type+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Authentication type.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLIPT_AUTH_TYPE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLIPT_AUTH_TYPE+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`none`, `client-token`
+|`+++none+++`
+
+a| [[quarkus-openfeature-flipt_quarkus-openfeature-flipt-auth-token]] [.property-path]##link:#quarkus-openfeature-flipt_quarkus-openfeature-flipt-auth-token[`+++quarkus.openfeature.flipt.auth-token+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flipt.auth-token+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flipt.auth-token+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flipt.auth-token+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Authentication token value. For development and testing only. For production, use a credentials provider instead.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLIPT_AUTH_TOKEN+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLIPT_AUTH_TOKEN+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-openfeature-flipt_quarkus-openfeature-flipt-credentials-provider]] [.property-path]##link:#quarkus-openfeature-flipt_quarkus-openfeature-flipt-credentials-provider[`+++quarkus.openfeature.flipt.credentials-provider+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flipt.credentials-provider+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flipt.credentials-provider+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flipt.credentials-provider+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+The credentials provider name. This is the key used to look up credentials in the credentials provider.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLIPT_CREDENTIALS_PROVIDER+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLIPT_CREDENTIALS_PROVIDER+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-openfeature-flipt_quarkus-openfeature-flipt-credentials-provider-name]] [.property-path]##link:#quarkus-openfeature-flipt_quarkus-openfeature-flipt-credentials-provider-name[`+++quarkus.openfeature.flipt.credentials-provider-name+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flipt.credentials-provider-name+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flipt.credentials-provider-name+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flipt.credentials-provider-name+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+The credentials provider bean name.
+
+This is a bean name (as in `@Named`) of a bean that implements `CredentialsProvider`. It is used to select the credentials provider bean when multiple exist. This is unnecessary when there is only one credentials provider available.
+
+For Vault, the credentials provider bean name is `vault-credentials-provider`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLIPT_CREDENTIALS_PROVIDER_NAME+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLIPT_CREDENTIALS_PROVIDER_NAME+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-openfeature-flipt_quarkus-openfeature-flipt-tls-configuration-name]] [.property-path]##link:#quarkus-openfeature-flipt_quarkus-openfeature-flipt-tls-configuration-name[`+++quarkus.openfeature.flipt.tls-configuration-name+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flipt.tls-configuration-name+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flipt.tls-configuration-name+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flipt.tls-configuration-name+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+TLS configuration name from the Quarkus TLS registry.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLIPT_TLS_CONFIGURATION_NAME+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLIPT_TLS_CONFIGURATION_NAME+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-openfeature-flipt_quarkus-openfeature-flipt-reference]] [.property-path]##link:#quarkus-openfeature-flipt_quarkus-openfeature-flipt-reference[`+++quarkus.openfeature.flipt.reference+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flipt.reference+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flipt.reference+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flipt.reference+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Git reference for versioned flag state. When set, Flipt returns flags at this specific reference.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLIPT_REFERENCE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLIPT_REFERENCE+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-openfeature-flipt_quarkus-openfeature-flipt-grace-period]] [.property-path]##link:#quarkus-openfeature-flipt_quarkus-openfeature-flipt-grace-period[`+++quarkus.openfeature.flipt.grace-period+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flipt.grace-period+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flipt.grace-period+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flipt.grace-period+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Grace period before transitioning from STALE to ERROR after a connection loss. During this period, the provider continues serving cached flag values while attempting to reconnect. If the connection is restored within the grace period, the provider transitions back to READY without emitting an ERROR event.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLIPT_GRACE_PERIOD+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLIPT_GRACE_PERIOD+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-openfeature-flipt_quarkus-openfeature[icon:question-circle[title=More information about the Duration format]]
+|`+++1M+++`
+
+a| [[quarkus-openfeature-flipt_quarkus-openfeature-flipt-wasm-instances]] [.property-path]##link:#quarkus-openfeature-flipt_quarkus-openfeature-flipt-wasm-instances[`+++quarkus.openfeature.flipt.wasm-instances+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flipt.wasm-instances+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flipt.wasm-instances+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flipt.wasm-instances+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Number of WASM engine instances in the evaluation pool. Each engine can evaluate one flag at a time, so this controls the maximum concurrency of flag evaluations.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLIPT_WASM_INSTANCES+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLIPT_WASM_INSTANCES+++`
+endif::add-copy-button-to-env-var[]
+--
+|int
+|`+++16+++`
+
+a| [[quarkus-openfeature-flipt_quarkus-openfeature-flipt-use-quarkus-jackson]] [.property-path]##link:#quarkus-openfeature-flipt_quarkus-openfeature-flipt-use-quarkus-jackson[`+++quarkus.openfeature.flipt.use-quarkus-jackson+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flipt.use-quarkus-jackson+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flipt.use-quarkus-jackson+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flipt.use-quarkus-jackson+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Whether to use the Quarkus-managed `ObjectMapper` from the `quarkus-jackson` extension. When `false`, the provider creates its own `ObjectMapper` instance.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLIPT_USE_QUARKUS_JACKSON+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLIPT_USE_QUARKUS_JACKSON+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+|===
+
+ifndef::no-duration-note[]
+[NOTE]
+[id=duration-note-anchor-quarkus-openfeature-flipt_quarkus-openfeature]
+.About the Duration format
+====
+To write duration values, use the standard `java.time.Duration` format.
+See the link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html#parse(java.lang.CharSequence)[Duration#parse() Java API documentation] for more information.
+
+You can also use a simplified format, starting with a number:
+
+* If the value is only a number, it represents time in seconds.
+* If the value is a number followed by `ms`, it represents time in milliseconds.
+
+In other cases, the simplified format is translated to the `java.time.Duration` format for parsing:
+
+* If the value is a number followed by `h`, `m`, or `s`, it is prefixed with `PT`.
+* If the value is a number followed by `d`, it is prefixed with `P`.
+====
+endif::no-duration-note[]

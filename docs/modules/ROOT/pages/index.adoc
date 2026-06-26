@@ -28,6 +28,19 @@ Flags are evaluated in-process using flag definitions synced from flagd over gRP
 </dependency>
 ----
 
+xref:flipt.adoc[Flipt provider]::
+Connects to a https://www.flipt.io/[Flipt] instance for dynamic feature flag evaluation.
+Flags are evaluated in-process using flag definitions synced from Flipt over HTTP streaming and a compiled WebAssembly engine.
++
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>io.quarkiverse.openfeature</groupId>
+    <artifactId>quarkus-openfeature-flipt</artifactId>
+    <version>{project-version}</version>
+</dependency>
+----
+
 xref:config-providers.adoc[Runtime configuration provider]::
 Reads flag values from Quarkus runtime configuration.
 Values can be overridden at runtime using environment variables, system properties, or config files.

@@ -1,0 +1,63 @@
+namespace: default
+flags:
+  - key: bool-flag
+    name: bool-flag
+    type: BOOLEAN_FLAG_TYPE
+    enabled: true
+    rollouts:
+      - threshold:
+          percentage: 100
+          value: true
+  - key: string-flag
+    name: string-flag
+    type: VARIANT_FLAG_TYPE
+    enabled: true
+    variants:
+      - key: greeting
+      - key: parting
+    rules:
+      - segment: everyone
+        distributions:
+          - variant: greeting
+            rollout: 100
+  - key: int-flag
+    name: int-flag
+    type: VARIANT_FLAG_TYPE
+    enabled: true
+    variants:
+      - key: "10"
+      - key: "1"
+    rules:
+      - segment: everyone
+        distributions:
+          - variant: "10"
+            rollout: 100
+  - key: disabled-flag
+    name: disabled-flag
+    type: BOOLEAN_FLAG_TYPE
+    enabled: false
+  - key: targeted-flag
+    name: targeted-flag
+    type: VARIANT_FLAG_TYPE
+    enabled: true
+    variants:
+      - key: targeted-value
+      - key: default-value
+    rules:
+      - segment: test-users
+        distributions:
+          - variant: targeted-value
+            rollout: 100
+    defaultVariant: default-value
+segments:
+  - key: everyone
+    name: everyone
+    match_type: ALL_MATCH_TYPE
+  - key: test-users
+    name: test-users
+    match_type: ANY_MATCH_TYPE
+    constraints:
+      - property: userType
+        operator: eq
+        value: tester
+        type: STRING_COMPARISON_TYPE

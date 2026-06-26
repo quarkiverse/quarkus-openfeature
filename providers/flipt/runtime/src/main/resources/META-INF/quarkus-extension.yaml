@@ -1,0 +1,11 @@
+name: OpenFeature - Flipt
+metadata:
+  keywords:
+    - openfeature
+    - flags
+    - toggles
+    - flipt
+  categories:
+    - "miscellaneous"
+  status: "preview"
+  hide-in-dev-ui: true

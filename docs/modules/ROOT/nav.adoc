@@ -1,5 +1,6 @@
 * xref:index.adoc[Getting Started]
 * xref:public-api.adoc[Public API]
 * xref:flagd.adoc[flagd Provider]
+* xref:flipt.adoc[Flipt Provider]
 * xref:config-providers.adoc[Configuration Providers]
 * xref:testing.adoc[Testing]

@@ -1,0 +1,204 @@
+= Flipt Provider
+
+include::./includes/attributes.adoc[]
+
+The Flipt provider connects to a https://www.flipt.io/[Flipt] instance and evaluates feature flags in-process.
+Flag definitions are synced from Flipt over HTTP streaming and evaluated locally using a compiled WebAssembly engine, so no network call is made during flag evaluation.
+
+NOTE: This provider requires Flipt v2.
+It is not compatible with Flipt v1.
+
+This extension depends on:
+
+[cols="1,1,1"]
+|===
+|Component |Version |Source
+
+|Flipt engine (WASM)
+|0.3.0
+|https://github.com/flipt-io/flipt-client-sdks[flipt-io/flipt-client-sdks]
+|===
+
+== Installation
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>io.quarkiverse.openfeature</groupId>
+    <artifactId>quarkus-openfeature-flipt</artifactId>
+    <version>{project-version}</version>
+</dependency>
+----
+
+== Configuration
+
+By default, the provider connects to `http://localhost:8080`.
+To connect to a different Flipt instance:
+
+[source,properties]
+----
+quarkus.openfeature.flipt.url=https://flipt.example.com
+----
+
+For named domains:
+
+[source,properties]
+----
+quarkus.openfeature."experimentation".flipt.url=https://flipt-experiments.example.com
+----
+
+=== Environments and namespaces
+
+Flipt organizes flags into environments and namespaces.
+Both default to `default` and may be reconfigured:
+
+[source,properties]
+----
+quarkus.openfeature.flipt.environment=production
+quarkus.openfeature.flipt.namespace=my-team
+----
+
+See https://docs.flipt.io/v2/concepts[Flipt Concepts] for more information about environments and namespaces.
+
+=== TLS
+
+The provider uses the Quarkus TLS registry for TLS configuration.
+First, configure a named TLS configuration in `application.properties`, then reference it:
+
+[source,properties]
+----
+quarkus.tls.flipt.trust-store.pem.certs=ca.pem
+
+quarkus.openfeature.flipt.tls-configuration-name=flipt
+----
+
+See the https://quarkus.io/guides/tls-registry-reference[Quarkus TLS registry documentation] for all available options.
+
+=== Authentication
+
+The provider supports authentication using https://docs.flipt.io/v2/configuration/authentication[client tokens]:
+
+[source,properties]
+----
+quarkus.openfeature.flipt.auth-type=client-token
+quarkus.openfeature.flipt.auth-token=my-secret-token
+----
+
+Setting `auth-token` directly in configuration is suitable for development and testing.
+For production, use a https://quarkus.io/guides/credentials-provider[credentials provider] such as Vault:
+
+[source,properties]
+----
+quarkus.openfeature.flipt.auth-type=client-token
+quarkus.openfeature.flipt.credentials-provider=flipt-token
+quarkus.openfeature.flipt.credentials-provider-name=vault-credentials-provider
+----
+
+IMPORTANT: Flipt also supports https://docs.flipt.io/v2/configuration/authentication[JWT authentication], where tokens are issued by an external identity provider such as Keycloak.
+This requires dynamic token acquisition and refresh, which is not yet supported.
+If you need JWT authentication with Flipt, please open an issue.
+
+=== Git reference
+
+When using Flipt's git-based storage, you can pin flag evaluation to a specific git reference:
+
+[source,properties]
+----
+quarkus.openfeature.flipt.reference=main
+----
+
+== Evaluation context
+
+The OpenFeature targeting key maps to the Flipt https://docs.flipt.io/v2/concepts#entities[entity ID].
+All other context attributes are passed through to the evaluation engine as generic context properties.
+
+== Dev Services
+
+In dev and test mode, a Flipt container is started automatically if no `quarkus.openfeature.flipt.url` is configured and Docker is available.
+The container uses the `memory` storage backend and flag definitions are imported via the Flipt v2 API on startup.
+If no flag definition file is found, Flipt starts with an empty configuration.
+
+To provide flag definitions to the dev service, place a `features.yaml` file in `src/main/resources`:
+
+[source,yaml]
+----
+namespace: default
+flags:
+  - key: welcome-banner
+    name: Welcome Banner
+    type: BOOLEAN_FLAG_TYPE
+    enabled: true
+    rollouts:
+      - threshold:
+          percentage: 100
+          value: true
+  - key: greeting
+    name: Greeting
+    type: VARIANT_FLAG_TYPE
+    enabled: true
+    variants:
+      - key: hello
+      - key: howdy
+    rules:
+      - segment: beta-users
+        distributions:
+          - variant: howdy
+            rollout: 100
+segments:
+  - key: beta-users
+    name: Beta Users
+    match_type: ANY_MATCH_TYPE
+    constraints:
+      - type: STRING_COMPARISON_TYPE
+        property: userType
+        operator: eq
+        value: beta
+----
+
+The dev service picks up this file automatically.
+You can also configure a different path:
+
+[source,properties]
+----
+quarkus.openfeature.flipt.devservices.path=my-flags.yml
+----
+
+Changes to the flag definition file are detected during live reload and the Flipt container is restarted automatically.
+
+== Evaluation concurrency
+
+Flag evaluation runs locally in a WebAssembly engine.
+Each engine instance can only evaluate one flag at a time, so a pool of engine instances is maintained.
+The pool size controls the maximum number of concurrent flag evaluations; the default is 16.
+If all instances are in use, an evaluation request waits up to 100 milliseconds for an instance to become available.
+If no instance is available within that time, the default value is returned.
+To increase the pool size:
+
+[source,properties]
+----
+quarkus.openfeature.flipt.wasm-instances=32
+----
+
+== Connection lifecycle
+
+The provider maintains a persistent HTTP streaming connection to Flipt.
+On connection loss, it automatically attempts to reconnect.
+The provider lifecycle follows the OpenFeature specification:
+
+READY:: The provider has received flag data and is serving evaluations.
+STALE:: The connection was lost. The provider continues serving cached flag values while reconnecting.
+ERROR:: The provider did not reconnect within the grace period (default 1 minute).
+FATAL:: The server returned an authentication error (HTTP 401 or 403).
+The provider will not attempt to reconnect.
+
+The grace period is configurable:
+
+[source,properties]
+----
+quarkus.openfeature.flipt.grace-period=10m
+----
+
+[[configuration-reference]]
+== Configuration Reference
+
+include::includes/quarkus-openfeature-flipt.adoc[leveloffset=+1, opts=optional]

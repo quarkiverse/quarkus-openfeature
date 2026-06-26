@@ -1,0 +1,14 @@
+storage:
+  default:
+    backend:
+      type: memory
+
+authentication:
+  required: true
+  methods:
+    token:
+      enabled: true
+      storage:
+        tokens:
+          test-token:
+            credential: test-secret

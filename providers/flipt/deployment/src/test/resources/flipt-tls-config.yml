@@ -1,0 +1,10 @@
+storage:
+  default:
+    backend:
+      type: memory
+
+server:
+  protocol: https
+  https_port: 8080
+  cert_file: /certs/server.crt
+  cert_key: /certs/server.key

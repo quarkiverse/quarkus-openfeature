@@ -15,5 +15,6 @@
     <modules>
         <module>config</module>
         <module>flagd</module>
+        <module>flipt</module>
     </modules>
 </project>

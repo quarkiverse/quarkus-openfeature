@@ -21,6 +21,7 @@
         <module>providers/runtime-config</module>
         <module>providers/buildtime-config</module>
         <module>providers/flagd</module>
+        <module>providers/flipt</module>
         <module>junit</module>
     </modules>
 
@@ -38,6 +39,7 @@
 
         <assertj.version>3.27.3</assertj.version>
         <cucumber.version>7.34.3</cucumber.version>
+        <endive.version>1.0.0</endive.version>
         <flagd-core.version>2.0.0</flagd-core.version>
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>3.5.6</maven-surefire-plugin.version>
