@@ -1,0 +1,154 @@
+= GO Feature Flag Provider
+
+include::./includes/attributes.adoc[]
+
+The GO Feature Flag provider connects to a https://gofeatureflag.org/[GO Feature Flag] relay proxy and evaluates feature flags in-process.
+Flag definitions are fetched over HTTP and kept up-to-date via Server-Sent Events (SSE), then evaluated locally using a compiled WebAssembly engine, so no network call is made during flag evaluation.
+
+This extension depends on:
+
+[cols="1,1,1"]
+|===
+|Component |Version |Source
+
+|GO Feature Flag engine (WASM)
+|0.2.2
+|https://github.com/go-feature-flag/wasm-releases[go-feature-flag/wasm-releases]
+|===
+
+== Installation
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>io.quarkiverse.openfeature</groupId>
+    <artifactId>quarkus-openfeature-gofeatureflag</artifactId>
+    <version>{project-version}</version>
+</dependency>
+----
+
+== Configuration
+
+By default, the provider connects to `http://localhost:1031`.
+To connect to a different relay proxy:
+
+[source,properties]
+----
+quarkus.openfeature.gofeatureflag.url=https://goff.example.com
+----
+
+For named domains:
+
+[source,properties]
+----
+quarkus.openfeature."experimentation".gofeatureflag.url=https://goff-experiments.example.com
+----
+
+=== TLS
+
+The provider uses the Quarkus TLS registry for TLS configuration.
+First, configure a named TLS configuration in `application.properties`, then reference it:
+
+[source,properties]
+----
+quarkus.tls.goff.trust-store.pem.certs=ca.pem
+
+quarkus.openfeature.gofeatureflag.tls-configuration-name=goff
+----
+
+See the https://quarkus.io/guides/tls-registry-reference[Quarkus TLS registry documentation] for all available options.
+
+=== Authentication
+
+The provider supports API key authentication:
+
+[source,properties]
+----
+quarkus.openfeature.gofeatureflag.api-key=my-secret-key
+----
+
+Setting `api-key` directly in configuration is suitable for development and testing.
+For production, use a https://quarkus.io/guides/credentials-provider[credentials provider] such as Vault:
+
+[source,properties]
+----
+quarkus.openfeature.gofeatureflag.credentials-provider=goff-token
+quarkus.openfeature.gofeatureflag.credentials-provider-name=vault-credentials-provider
+----
+
+== Evaluation context
+
+A targeting key is https://gofeatureflag.org/docs/concepts/evaluation-context#targeting-key[mandatory] in GO Feature Flag and if it is missing, the evaluation may return an error with code `TARGETING_KEY_MISSING`.
+All other context attributes are passed through to the evaluation engine as generic context properties.
+
+== Dev Services
+
+In dev and test mode, a GO Feature Flag relay proxy container is started automatically if no `quarkus.openfeature.gofeatureflag.url` is configured and Docker is available.
+If no flag definition file is found, the relay proxy starts with an empty configuration.
+
+To provide flag definitions to the dev service, place a `flags.goff.yaml` file in `src/main/resources`:
+
+[source,yaml]
+----
+my-feature:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: enabled
+
+greeting:
+  variations:
+    hello: hello
+    howdy: howdy
+  defaultRule:
+    variation: hello
+----
+
+The dev service picks up this file automatically.
+You can also configure a different path:
+
+[source,properties]
+----
+quarkus.openfeature.gofeatureflag.devservices.path=my-flags.yaml
+----
+
+Changes to the flag definition file are detected during live reload and the application is restarted automatically.
+The relay proxy picks up the updated file through its own file watcher.
+
+== Evaluation concurrency
+
+Flag evaluation runs locally in a WebAssembly engine.
+Each engine instance can only evaluate one flag at a time, so a pool of engine instances is maintained.
+The pool size controls the maximum number of concurrent flag evaluations; the default is 16.
+If all instances are in use, an evaluation request waits up to 100 milliseconds for an instance to become available.
+If no instance is available within that time, the default value is returned.
+To increase the pool size:
+
+[source,properties]
+----
+quarkus.openfeature.gofeatureflag.wasm-instances=32
+----
+
+== Connection lifecycle
+
+The provider fetches the full flag configuration on startup and then subscribes to the relay proxy's SSE stream for real-time updates.
+On connection loss, it automatically re-fetches the full configuration and reconnects to the stream.
+The provider lifecycle follows the OpenFeature specification:
+
+READY:: The provider has received flag data and is serving evaluations.
+STALE:: The connection was lost. The provider continues serving cached flag values while reconnecting.
+ERROR:: The provider did not reconnect within the grace period (default 1 minute).
+FATAL:: The server returned an authentication error (HTTP 401 or 403). The provider will not attempt to reconnect.
+
+The grace period is configurable:
+
+[source,properties]
+----
+quarkus.openfeature.gofeatureflag.grace-period=10m
+----
+
+[[configuration-reference]]
+== Configuration Reference
+
+include::includes/quarkus-openfeature-gofeatureflag.adoc[leveloffset=+1, opts=optional]

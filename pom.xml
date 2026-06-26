@@ -22,6 +22,7 @@
         <module>providers/buildtime-config</module>
         <module>providers/flagd</module>
         <module>providers/flipt</module>
+        <module>providers/gofeatureflag</module>
         <module>junit</module>
     </modules>
 

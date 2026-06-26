@@ -16,5 +16,6 @@
         <module>config</module>
         <module>flagd</module>
         <module>flipt</module>
+        <module>gofeatureflag</module>
     </modules>
 </project>

@@ -41,6 +41,19 @@ Flags are evaluated in-process using flag definitions synced from Flipt over HTT
 </dependency>
 ----
 
+xref:gofeatureflag.adoc[GO Feature Flag provider]::
+Connects to a https://gofeatureflag.org/[GO Feature Flag] relay proxy for dynamic feature flag evaluation.
+Flags are evaluated in-process using flag definitions synced from the relay proxy over HTTP and SSE, and a compiled WebAssembly engine.
++
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>io.quarkiverse.openfeature</groupId>
+    <artifactId>quarkus-openfeature-gofeatureflag</artifactId>
+    <version>{project-version}</version>
+</dependency>
+----
+
 xref:config-providers.adoc[Runtime configuration provider]::
 Reads flag values from Quarkus runtime configuration.
 Values can be overridden at runtime using environment variables, system properties, or config files.

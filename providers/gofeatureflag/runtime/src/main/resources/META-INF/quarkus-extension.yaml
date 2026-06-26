@@ -1,0 +1,11 @@
+name: OpenFeature - GO Feature Flag
+metadata:
+  keywords:
+    - openfeature
+    - flags
+    - toggles
+    - go-feature-flag
+  categories:
+    - "miscellaneous"
+  status: "preview"
+  hide-in-dev-ui: true

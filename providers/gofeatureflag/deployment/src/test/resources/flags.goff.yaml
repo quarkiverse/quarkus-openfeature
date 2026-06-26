@@ -1,0 +1,35 @@
+bool-flag:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: enabled
+
+string-flag:
+  variations:
+    greeting: hello
+    parting: goodbye
+  defaultRule:
+    variation: greeting
+
+int-flag:
+  variations:
+    ten: 10
+    one: 1
+  defaultRule:
+    variation: ten
+
+double-flag:
+  variations:
+    pi: 3.14
+    e: 2.72
+  defaultRule:
+    variation: pi
+
+disabled-flag:
+  disable: true
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: enabled

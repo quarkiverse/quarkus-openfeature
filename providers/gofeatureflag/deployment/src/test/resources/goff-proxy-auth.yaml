@@ -1,0 +1,7 @@
+pollingInterval: 1000
+authorizedKeys:
+  evaluation:
+    - "test-secret"
+retrievers:
+  - kind: file
+    path: /goff/flags.goff.yaml

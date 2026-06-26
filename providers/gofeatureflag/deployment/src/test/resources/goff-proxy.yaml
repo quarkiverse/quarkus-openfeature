@@ -1,0 +1,4 @@
+pollingInterval: 1000
+retrievers:
+  - kind: file
+    path: /goff/flags.goff.yaml
