@@ -17,5 +17,6 @@
         <module>flagd</module>
         <module>flipt</module>
         <module>gofeatureflag</module>
+        <module>unleash</module>
     </modules>
 </project>

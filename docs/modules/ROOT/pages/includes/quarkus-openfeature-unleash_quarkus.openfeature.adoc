@@ -1,0 +1,434 @@
+[.configuration-legend]
+icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[.header-title]##Configuration property##
+h|Type
+h|Default
+
+a|icon:lock[title=Fixed at build time] [[quarkus-openfeature-unleash_quarkus-openfeature-unleash-devservices-enabled]] [.property-path]##link:#quarkus-openfeature-unleash_quarkus-openfeature-unleash-devservices-enabled[`+++quarkus.openfeature.unleash.devservices.enabled+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.unleash.devservices.enabled+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".unleash.devservices.enabled+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".unleash.devservices.enabled+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+If DevServices has been explicitly enabled or disabled. DevServices is generally enabled by default, unless there is an existing configuration present.
+
+When DevServices is enabled Quarkus will attempt to automatically configure and start an Unleash server instance when running in Dev or Test mode and when Docker is running.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_UNLEASH_DEVSERVICES_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_UNLEASH_DEVSERVICES_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-openfeature-unleash_quarkus-openfeature-unleash-devservices-image-name]] [.property-path]##link:#quarkus-openfeature-unleash_quarkus-openfeature-unleash-devservices-image-name[`+++quarkus.openfeature.unleash.devservices.image-name+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.unleash.devservices.image-name+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".unleash.devservices.image-name+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".unleash.devservices.image-name+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+The container image name to use, for container based DevServices providers.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_UNLEASH_DEVSERVICES_IMAGE_NAME+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_UNLEASH_DEVSERVICES_IMAGE_NAME+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|`+++unleashorg/unleash-server:latest+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-openfeature-unleash_quarkus-openfeature-unleash-devservices-port]] [.property-path]##link:#quarkus-openfeature-unleash_quarkus-openfeature-unleash-devservices-port[`+++quarkus.openfeature.unleash.devservices.port+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.unleash.devservices.port+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".unleash.devservices.port+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".unleash.devservices.port+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Optional fixed port the dev service will listen to.
+
+If not defined, the port will be chosen randomly.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_UNLEASH_DEVSERVICES_PORT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_UNLEASH_DEVSERVICES_PORT+++`
+endif::add-copy-button-to-env-var[]
+--
+|int
+|
+
+a|icon:lock[title=Fixed at build time] [[quarkus-openfeature-unleash_quarkus-openfeature-unleash-devservices-path]] [.property-path]##link:#quarkus-openfeature-unleash_quarkus-openfeature-unleash-devservices-path[`+++quarkus.openfeature.unleash.devservices.path+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.unleash.devservices.path+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".unleash.devservices.path+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".unleash.devservices.path+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Path to a flag definition file on the classpath, in the standard Unleash export/import JSON format. If not configured explicitly and the default `unleash.json` file does not exist, the server starts with an empty flag configuration. If configured explicitly and the file does not exist, the build fails.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_UNLEASH_DEVSERVICES_PATH+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_UNLEASH_DEVSERVICES_PATH+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|`+++unleash.json+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-openfeature-unleash_quarkus-openfeature-unleash-devservices-shared]] [.property-path]##link:#quarkus-openfeature-unleash_quarkus-openfeature-unleash-devservices-shared[`+++quarkus.openfeature.unleash.devservices.shared+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.unleash.devservices.shared+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".unleash.devservices.shared+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".unleash.devservices.shared+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Indicates if the Unleash instance managed by Quarkus Dev Services is shared. When shared, Quarkus looks for running containers using label-based service discovery. If a matching container is found, it is used, and so a second one is not started. Otherwise, Dev Services for Unleash starts a new container.
+
+The discovery uses the `quarkus-dev-service-unleash` label. The value is configured using the `service-name` property.
+
+Container sharing is only used in dev mode.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_UNLEASH_DEVSERVICES_SHARED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_UNLEASH_DEVSERVICES_SHARED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-openfeature-unleash_quarkus-openfeature-unleash-devservices-service-name]] [.property-path]##link:#quarkus-openfeature-unleash_quarkus-openfeature-unleash-devservices-service-name[`+++quarkus.openfeature.unleash.devservices.service-name+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.unleash.devservices.service-name+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".unleash.devservices.service-name+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".unleash.devservices.service-name+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+The value of the `quarkus-dev-service-unleash` label attached to the started container. This property is used when `shared` is set to `true`. In this case, before starting a container, Dev Services for Unleash looks for a container with the `quarkus-dev-service-unleash` label set to the configured value. If found, it will use this container instead of starting a new one. Otherwise, it starts a new container with the `quarkus-dev-service-unleash` label set to the specified value.
+
+This property is used when you need multiple shared Unleash servers.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_UNLEASH_DEVSERVICES_SERVICE_NAME+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_UNLEASH_DEVSERVICES_SERVICE_NAME+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|`+++unleash+++`
+
+a| [[quarkus-openfeature-unleash_quarkus-openfeature-unleash-url]] [.property-path]##link:#quarkus-openfeature-unleash_quarkus-openfeature-unleash-url[`+++quarkus.openfeature.unleash.url+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.unleash.url+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".unleash.url+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".unleash.url+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Unleash API URL.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_UNLEASH_URL+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_UNLEASH_URL+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|`+++http://localhost:4242/api+++`
+
+a| [[quarkus-openfeature-unleash_quarkus-openfeature-unleash-api-key]] [.property-path]##link:#quarkus-openfeature-unleash_quarkus-openfeature-unleash-api-key[`+++quarkus.openfeature.unleash.api-key+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.unleash.api-key+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".unleash.api-key+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".unleash.api-key+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Backend token for authentication with Unleash.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_UNLEASH_API_KEY+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_UNLEASH_API_KEY+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-openfeature-unleash_quarkus-openfeature-unleash-poll-interval]] [.property-path]##link:#quarkus-openfeature-unleash_quarkus-openfeature-unleash-poll-interval[`+++quarkus.openfeature.unleash.poll-interval+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.unleash.poll-interval+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".unleash.poll-interval+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".unleash.poll-interval+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Interval between synchronization polls. When a successful poll finishes, the next poll is scheduled in this interval. In case the poll is unsuccessful, retry happens on an internally managed schedule.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_UNLEASH_POLL_INTERVAL+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_UNLEASH_POLL_INTERVAL+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-openfeature-unleash_quarkus-openfeature[icon:question-circle[title=More information about the Duration format]]
+|`+++1M+++`
+
+a| [[quarkus-openfeature-unleash_quarkus-openfeature-unleash-credentials-provider]] [.property-path]##link:#quarkus-openfeature-unleash_quarkus-openfeature-unleash-credentials-provider[`+++quarkus.openfeature.unleash.credentials-provider+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.unleash.credentials-provider+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".unleash.credentials-provider+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".unleash.credentials-provider+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+The credentials provider name. This is the key used to look up credentials in the credentials provider.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_UNLEASH_CREDENTIALS_PROVIDER+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_UNLEASH_CREDENTIALS_PROVIDER+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-openfeature-unleash_quarkus-openfeature-unleash-credentials-provider-name]] [.property-path]##link:#quarkus-openfeature-unleash_quarkus-openfeature-unleash-credentials-provider-name[`+++quarkus.openfeature.unleash.credentials-provider-name+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.unleash.credentials-provider-name+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".unleash.credentials-provider-name+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".unleash.credentials-provider-name+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+The credentials provider bean name.
+
+This is a bean name (as in `@Named`) of a bean that implements `CredentialsProvider`. It is used to select the credentials provider bean when multiple exist. This is unnecessary when there is only one credentials provider available.
+
+For Vault, the credentials provider bean name is `vault-credentials-provider`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_UNLEASH_CREDENTIALS_PROVIDER_NAME+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_UNLEASH_CREDENTIALS_PROVIDER_NAME+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-openfeature-unleash_quarkus-openfeature-unleash-tls-configuration-name]] [.property-path]##link:#quarkus-openfeature-unleash_quarkus-openfeature-unleash-tls-configuration-name[`+++quarkus.openfeature.unleash.tls-configuration-name+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.unleash.tls-configuration-name+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".unleash.tls-configuration-name+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".unleash.tls-configuration-name+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+TLS configuration name from the Quarkus TLS registry.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_UNLEASH_TLS_CONFIGURATION_NAME+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_UNLEASH_TLS_CONFIGURATION_NAME+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-openfeature-unleash_quarkus-openfeature-unleash-grace-period]] [.property-path]##link:#quarkus-openfeature-unleash_quarkus-openfeature-unleash-grace-period[`+++quarkus.openfeature.unleash.grace-period+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.unleash.grace-period+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".unleash.grace-period+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".unleash.grace-period+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Grace period before transitioning from STALE to ERROR after a connection loss. During this period, the provider continues serving cached flag values while attempting to reconnect. If the connection is restored within the grace period, the provider transitions back to READY without emitting an ERROR event.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_UNLEASH_GRACE_PERIOD+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_UNLEASH_GRACE_PERIOD+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-openfeature-unleash_quarkus-openfeature[icon:question-circle[title=More information about the Duration format]]
+|`+++1M+++`
+
+a| [[quarkus-openfeature-unleash_quarkus-openfeature-unleash-app-name]] [.property-path]##link:#quarkus-openfeature-unleash_quarkus-openfeature-unleash-app-name[`+++quarkus.openfeature.unleash.app-name+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.unleash.app-name+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".unleash.app-name+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".unleash.app-name+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Application name passed to the Unleash context for evaluation.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_UNLEASH_APP_NAME+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_UNLEASH_APP_NAME+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|`+++${quarkus.application.name}+++`
+
+a| [[quarkus-openfeature-unleash_quarkus-openfeature-unleash-environment]] [.property-path]##link:#quarkus-openfeature-unleash_quarkus-openfeature-unleash-environment[`+++quarkus.openfeature.unleash.environment+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.unleash.environment+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".unleash.environment+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".unleash.environment+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Environment passed to the Unleash context for evaluation.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_UNLEASH_ENVIRONMENT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_UNLEASH_ENVIRONMENT+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+|===
+
+ifndef::no-duration-note[]
+[NOTE]
+[id=duration-note-anchor-quarkus-openfeature-unleash_quarkus-openfeature]
+.About the Duration format
+====
+To write duration values, use the standard `java.time.Duration` format.
+See the link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html#parse(java.lang.CharSequence)[Duration#parse() Java API documentation] for more information.
+
+You can also use a simplified format, starting with a number:
+
+* If the value is only a number, it represents time in seconds.
+* If the value is a number followed by `ms`, it represents time in milliseconds.
+
+In other cases, the simplified format is translated to the `java.time.Duration` format for parsing:
+
+* If the value is a number followed by `h`, `m`, or `s`, it is prefixed with `PT`.
+* If the value is a number followed by `d`, it is prefixed with `P`.
+====
+endif::no-duration-note[]

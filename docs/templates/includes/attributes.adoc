@@ -3,3 +3,4 @@
 :examples-dir: ./../examples/
 
 :flagd-core-version: ${flagd-core.version}
+:yggdrasil-engine-version: ${yggdrasil-engine.version}

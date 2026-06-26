@@ -6,7 +6,7 @@ This extension integrates the https://openfeature.dev/[OpenFeature] SDK with Qua
 
 OpenFeature is an open specification for feature flag management.
 It provides a vendor-neutral API, so your application code doesn't depend on a specific feature flag provider.
-You can switch between providers (such as https://flagd.dev/[flagd]) without changing your application code.
+You can switch between providers (such as https://flagd.dev/[flagd], https://www.getunleash.io/[Unleash], or others) without changing your application code.
 
 == Installation
 
@@ -50,6 +50,19 @@ Flags are evaluated in-process using flag definitions synced from the relay prox
 <dependency>
     <groupId>io.quarkiverse.openfeature</groupId>
     <artifactId>quarkus-openfeature-gofeatureflag</artifactId>
+    <version>{project-version}</version>
+</dependency>
+----
+
+xref:unleash.adoc[Unleash provider]::
+Connects to an https://www.getunleash.io/[Unleash] instance for dynamic feature flag evaluation.
+Flags are evaluated in-process using flag definitions polled from Unleash over HTTP and the native Yggdrasil engine.
++
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>io.quarkiverse.openfeature</groupId>
+    <artifactId>quarkus-openfeature-unleash</artifactId>
     <version>{project-version}</version>
 </dependency>
 ----
@@ -193,7 +206,7 @@ Flags from one domain are not visible in another.
 
 == Provider initialization
 
-Providers that connect to a remote service (such as flagd) initialize asynchronously: they open a connection, receive the initial set of flag definitions, and only then become _ready_.
+Providers that connect to a remote service (such as flagd or Unleash) initialize asynchronously: they open a connection, receive the initial set of flag definitions, and only then become _ready_.
 Until a provider is ready, flag evaluations return default values.
 
 By default, this extension blocks application startup until all providers are ready _in the dev and test launch modes_, but lets them initialize asynchronously in the production launch mode.

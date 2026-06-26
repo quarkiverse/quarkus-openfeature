@@ -117,7 +117,7 @@ class OpenFeatureProcessor {
             throw new IllegalStateException(
                     "No OpenFeature provider found for " + domainLabel + ".\n"
                             + "Add a provider extension such as "
-                            + "quarkus-openfeature-flagd.");
+                            + "quarkus-openfeature-flagd or quarkus-openfeature-unleash.");
         } else if (factories.size() > 1) {
             throw new IllegalStateException(
                     "Multiple OpenFeature providers found for " + domainLabel + ": " + factories.keySet()

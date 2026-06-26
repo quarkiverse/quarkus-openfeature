@@ -1,0 +1,39 @@
+{
+  "features": [
+    {"name": "bool-flag", "type": "release", "project": "default"},
+    {"name": "string-flag", "type": "release", "project": "default"},
+    {"name": "int-flag", "type": "release", "project": "default"},
+    {"name": "disabled-flag", "type": "release", "project": "default"}
+  ],
+  "featureStrategies": [
+    {
+      "name": "default",
+      "featureName": "bool-flag",
+      "parameters": {}
+    },
+    {
+      "name": "default",
+      "featureName": "string-flag",
+      "parameters": {},
+      "variants": [
+        {"name": "hello", "weight": 1000, "weightType": "variable", "stickiness": "default",
+         "payload": {"type": "string", "value": "hello"}}
+      ]
+    },
+    {
+      "name": "default",
+      "featureName": "int-flag",
+      "parameters": {},
+      "variants": [
+        {"name": "ten", "weight": 1000, "weightType": "variable", "stickiness": "default",
+         "payload": {"type": "string", "value": "10"}}
+      ]
+    }
+  ],
+  "featureEnvironments": [
+    {"enabled": true, "featureName": "bool-flag", "environment": "development", "name": "bool-flag"},
+    {"enabled": true, "featureName": "string-flag", "environment": "development", "name": "string-flag"},
+    {"enabled": true, "featureName": "int-flag", "environment": "development", "name": "int-flag"},
+    {"enabled": false, "featureName": "disabled-flag", "environment": "development", "name": "disabled-flag"}
+  ]
+}

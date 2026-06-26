@@ -45,6 +45,11 @@
             <artifactId>quarkus-openfeature-gofeatureflag</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.quarkiverse.openfeature</groupId>
+            <artifactId>quarkus-openfeature-unleash</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

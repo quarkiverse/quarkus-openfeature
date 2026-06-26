@@ -23,6 +23,7 @@
         <module>providers/flagd</module>
         <module>providers/flipt</module>
         <module>providers/gofeatureflag</module>
+        <module>providers/unleash</module>
         <module>junit</module>
     </modules>
 
@@ -49,6 +50,7 @@
         <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
         <quarkus.version>3.33.2</quarkus.version>
         <smallrye-certificate-generator.version>0.9.3</smallrye-certificate-generator.version>
+        <yggdrasil-engine.version>1.0.1</yggdrasil-engine.version>
     </properties>
 
     <dependencyManagement>

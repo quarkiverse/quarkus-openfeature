@@ -1,0 +1,11 @@
+name: OpenFeature - Unleash
+metadata:
+  keywords:
+    - openfeature
+    - flags
+    - toggles
+    - unleash
+  categories:
+    - "miscellaneous"
+  status: "preview"
+  hide-in-dev-ui: true

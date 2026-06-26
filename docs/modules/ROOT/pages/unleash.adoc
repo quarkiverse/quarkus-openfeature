@@ -1,0 +1,181 @@
+= Unleash Provider
+
+include::./includes/attributes.adoc[]
+
+The Unleash provider connects to an https://www.getunleash.io/[Unleash] instance and evaluates feature flags in-process.
+Flag definitions are polled from the Unleash API over HTTP and evaluated locally using the https://github.com/Unleash/yggdrasil[Yggdrasil engine] (a native Rust library), so no network call is made during flag evaluation.
+
+This extension depends on:
+
+[cols="1,1,1"]
+|===
+|Component |Version |Source
+
+|Yggdrasil engine (native)
+|{yggdrasil-engine-version}
+|https://github.com/Unleash/yggdrasil[Unleash/yggdrasil]
+|===
+
+== Installation
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>io.quarkiverse.openfeature</groupId>
+    <artifactId>quarkus-openfeature-unleash</artifactId>
+    <version>{project-version}</version>
+</dependency>
+----
+
+== Configuration
+
+By default, the provider connects to `http://localhost:4242/api`.
+To connect to a different Unleash instance:
+
+[source,properties]
+----
+quarkus.openfeature.unleash.url=https://unleash.example.com/api
+----
+
+For named domains:
+
+[source,properties]
+----
+quarkus.openfeature."experimentation".unleash.url=https://unleash-experiments.example.com/api
+----
+
+=== TLS
+
+The provider uses the Quarkus TLS registry for TLS configuration.
+First, configure a named TLS configuration in `application.properties`, then reference it:
+
+[source,properties]
+----
+quarkus.tls.unleash.trust-store.pem.certs=ca.pem
+
+quarkus.openfeature.unleash.tls-configuration-name=unleash
+----
+
+See the https://quarkus.io/guides/tls-registry-reference[Quarkus TLS registry documentation] for all available options.
+
+=== Authentication
+
+The Unleash server requires a https://docs.getunleash.io/concepts/api-tokens-and-client-keys[backend token] to access the API.
+Without a valid token, API requests are rejected and the provider enters the FATAL state.
+
+The Unleash dev service configures the token automatically -- no manual configuration is needed.
+Without dev services, configure the API key explicitly:
+
+[source,properties]
+----
+quarkus.openfeature.unleash.api-key=default:production.some-secret
+----
+
+Setting `api-key` directly in configuration is suitable for development and testing.
+For production, use a https://quarkus.io/guides/credentials-provider[credentials provider] such as Vault:
+
+[source,properties]
+----
+quarkus.openfeature.unleash.credentials-provider=unleash-token
+quarkus.openfeature.unleash.credentials-provider-name=vault-credentials-provider
+----
+
+== Evaluation context
+
+All fields of the https://docs.getunleash.io/concepts/unleash-context[Unleash context] come from the OpenFeature context attributes.
+Some may be provided through other means, but a context attribute is always preferred.
+
+[cols="1,2"]
+|===
+|Field |Origin
+
+|`appName`
+|Evaluation context attribute `appName`, or configuration
+
+|`environment`
+|Evaluation context attribute `environment`, or configuration
+
+|`userId`
+|Targeting key from the evaluation context
+
+|`sessionId`
+|Evaluation context attribute `sessionId`
+
+|`remoteAddress`
+|Evaluation context attribute `remoteAddress`
+
+|`currentTime`
+|Evaluation context attribute `currentTime`, or current time
+
+|`properties`
+|All other evaluation context attributes
+|===
+
+The `appName` defaults to the Quarkus application name (`quarkus.application.name`), but may be reconfigured.
+The `environment` may also be configured:
+
+[source,properties]
+----
+quarkus.openfeature.unleash.app-name=my-app
+quarkus.openfeature.unleash.environment=production
+----
+
+== Dev Services
+
+In dev and test mode, an Unleash server container (with a PostgreSQL database) is started automatically if no `quarkus.openfeature.unleash.url` is configured and Docker is available.
+If no flag definition file is found, Unleash starts with an empty configuration.
+
+To provide flag definitions to the dev service, place an `unleash.json` file in `src/main/resources`.
+This file uses the standard Unleash export/import JSON format:
+
+[source,json]
+----
+{
+  "features": [
+    {"name": "welcome-banner", "type": "release", "project": "default"}
+  ],
+  "featureStrategies": [
+    {
+      "name": "default",
+      "featureName": "welcome-banner",
+      "parameters": {}
+    }
+  ],
+  "featureEnvironments": [
+    {"enabled": true, "featureName": "welcome-banner", "environment": "development", "name": "welcome-banner"}
+  ]
+}
+----
+
+The dev service picks up this file automatically.
+You can also configure a different path:
+
+[source,properties]
+----
+quarkus.openfeature.unleash.devservices.path=my-flags.json
+----
+
+Changes to the flag definition file are detected during live reload and the Unleash container is restarted automatically.
+
+== Connection lifecycle
+
+The provider polls the Unleash API for the full flag configuration on a regular interval.
+On connection loss, it automatically retries with a shorter interval.
+The provider lifecycle follows the OpenFeature specification:
+
+READY:: The provider has received flag data and is serving evaluations.
+STALE:: The connection was lost. The provider continues serving cached flag values while reconnecting.
+ERROR:: The provider did not reconnect within the grace period (default 1 minute).
+FATAL:: The server returned an authentication error (HTTP 401 or 403). The provider will not attempt to reconnect.
+
+The grace period is configurable:
+
+[source,properties]
+----
+quarkus.openfeature.unleash.grace-period=10m
+----
+
+[[configuration-reference]]
+== Configuration Reference
+
+include::includes/quarkus-openfeature-unleash.adoc[leveloffset=+1, opts=optional]

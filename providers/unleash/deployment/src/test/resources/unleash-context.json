@@ -1,0 +1,54 @@
+{
+  "features": [
+    {"name": "app-name-flag", "type": "release", "project": "default"},
+    {"name": "env-flag", "type": "release", "project": "default"}
+  ],
+  "featureStrategies": [
+    {
+      "name": "default",
+      "featureName": "app-name-flag",
+      "sortOrder": 0,
+      "parameters": {},
+      "constraints": [{"contextName": "appName", "operator": "IN", "values": ["test-app"]}],
+      "variants": [
+        {"name": "v", "weight": 1000, "weightType": "variable", "stickiness": "default",
+         "payload": {"type": "string", "value": "matched"}}
+      ]
+    },
+    {
+      "name": "default",
+      "featureName": "app-name-flag",
+      "sortOrder": 1,
+      "parameters": {},
+      "variants": [
+        {"name": "v", "weight": 1000, "weightType": "variable", "stickiness": "default",
+         "payload": {"type": "string", "value": "not-matched"}}
+      ]
+    },
+    {
+      "name": "default",
+      "featureName": "env-flag",
+      "sortOrder": 0,
+      "parameters": {},
+      "constraints": [{"contextName": "environment", "operator": "IN", "values": ["production"]}],
+      "variants": [
+        {"name": "v", "weight": 1000, "weightType": "variable", "stickiness": "default",
+         "payload": {"type": "string", "value": "matched"}}
+      ]
+    },
+    {
+      "name": "default",
+      "featureName": "env-flag",
+      "sortOrder": 1,
+      "parameters": {},
+      "variants": [
+        {"name": "v", "weight": 1000, "weightType": "variable", "stickiness": "default",
+         "payload": {"type": "string", "value": "not-matched"}}
+      ]
+    }
+  ],
+  "featureEnvironments": [
+    {"enabled": true, "featureName": "app-name-flag", "environment": "development", "name": "app-name-flag"},
+    {"enabled": true, "featureName": "env-flag", "environment": "development", "name": "env-flag"}
+  ]
+}

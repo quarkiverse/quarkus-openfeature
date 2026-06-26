@@ -3,5 +3,6 @@
 * xref:flagd.adoc[flagd Provider]
 * xref:flipt.adoc[Flipt Provider]
 * xref:gofeatureflag.adoc[GO Feature Flag Provider]
+* xref:unleash.adoc[Unleash Provider]
 * xref:config-providers.adoc[Configuration Providers]
 * xref:testing.adoc[Testing]

@@ -4,7 +4,7 @@ include::./includes/attributes.adoc[]
 
 This extension includes two built-in providers that read flag values from Quarkus configuration.
 These are useful for development, testing, or simple deployments where flags are known at build time or runtime.
-For production use with dynamic flag evaluation, consider a dedicated provider such as flagd.
+For production use with dynamic flag evaluation, consider a dedicated provider such as flagd or Unleash.
 
 == Runtime configuration provider
 
