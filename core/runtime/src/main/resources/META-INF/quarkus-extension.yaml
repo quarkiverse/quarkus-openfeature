@@ -1,0 +1,11 @@
+name: OpenFeature
+description: Vendor-neutral feature flag evaluation using the OpenFeature SDK
+metadata:
+  keywords:
+    - openfeature
+    - flags
+    - toggles
+  guide: https://docs.quarkiverse.io/quarkus-openfeature/dev
+  categories:
+    - "miscellaneous"
+  status: "preview"

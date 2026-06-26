@@ -1,0 +1,37 @@
+[.configuration-legend]
+icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[.header-title]##Configuration property##
+h|Type
+h|Default
+
+a|icon:lock[title=Fixed at build time] [[quarkus-openfeature_quarkus-openfeature-provider]] [.property-path]##link:#quarkus-openfeature_quarkus-openfeature-provider[`+++quarkus.openfeature.provider+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.provider+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".provider+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".provider+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Which provider(s) to use for this domain.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_PROVIDER+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_PROVIDER+++`
+endif::add-copy-button-to-env-var[]
+--
+|list of string
+|
+
+|===
+

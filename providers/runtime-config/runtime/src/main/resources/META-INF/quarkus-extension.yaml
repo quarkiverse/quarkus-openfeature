@@ -1,0 +1,10 @@
+name: OpenFeature - Runtime Config
+metadata:
+  keywords:
+    - openfeature
+    - flags
+    - toggles
+  categories:
+    - "miscellaneous"
+  status: "preview"
+  hide-in-dev-ui: true

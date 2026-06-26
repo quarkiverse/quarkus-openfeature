@@ -1,0 +1,149 @@
+= Quarkus OpenFeature
+
+include::./includes/attributes.adoc[]
+
+This extension integrates the https://openfeature.dev/[OpenFeature] SDK with Quarkus, providing feature flag evaluation as a CDI service.
+
+OpenFeature is an open specification for feature flag management.
+It provides a vendor-neutral API, so your application code doesn't depend on a specific feature flag provider.
+
+== Installation
+
+Select an OpenFeature provider and add its extension to your project.
+You don't need to explicitly add a dependency on `io.quarkiverse.openfeature:quarkus-openfeature`, it is included transitively.
+
+Available providers:
+
+xref:config-providers.adoc[Runtime configuration provider]::
+Reads flag values from Quarkus runtime configuration.
+Values can be overridden at runtime using environment variables, system properties, or config files.
++
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>io.quarkiverse.openfeature</groupId>
+    <artifactId>quarkus-openfeature-runtime-config</artifactId>
+    <version>{project-version}</version>
+</dependency>
+----
+
+xref:config-providers.adoc[Build-time configuration provider]::
+Reads flag values from Quarkus build-time configuration.
+They are fixed during build and cannot be changed at runtime.
++
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>io.quarkiverse.openfeature</groupId>
+    <artifactId>quarkus-openfeature-buildtime-config</artifactId>
+    <version>{project-version}</version>
+</dependency>
+----
+
+== Usage
+
+Inject the OpenFeature `Client` and evaluate feature flags:
+
+[source,java]
+----
+import dev.openfeature.sdk.Client;
+
+@ApplicationScoped
+public class MyService {
+    @Inject
+    Client client;
+
+    public String greet() {
+        if (client.getBooleanValue("new-greeting", false)) {
+            return "Hello, OpenFeature!";
+        }
+        return "Hello!";
+    }
+}
+----
+
+The `Client` supports boolean, string, integer, double, and object flag evaluations:
+
+[source,java]
+----
+boolean enabled = client.getBooleanValue("feature-enabled", false);
+String variant = client.getStringValue("ui-variant", "default");
+int maxRetries = client.getIntegerValue("max-retries", 3);
+double threshold = client.getDoubleValue("threshold", 0.5);
+Value config = client.getObjectValue("complex-config", new Value());
+----
+
+NOTE: Object evaluation returns structured data whose richness depends on the provider.
+The configuration-based providers return the raw config value as a string wrapped in a `Value`.
+
+It is safe to call the `Client` methods on a non-blockable thread (such as Vert.x event loop), because this extension guarantees feature flags are evaluated purely in memory; no I/O occurs.
+
+You can also inject `OpenFeatureAPI` directly if you need lower-level access.
+
+== Provider selection
+
+If your application has exactly one provider extension on the classpath, it is used automatically for the default domain.
+No configuration is needed.
+
+If you have multiple provider extensions, you must configure which provider(s) to use:
+
+[source,properties]
+----
+quarkus.openfeature.provider=runtime-config
+----
+
+You can also combine multiple providers.
+The first provider in the list that has a value for a given flag wins:
+
+[source,properties]
+----
+quarkus.openfeature.provider=runtime-config,buildtime-config
+----
+
+== Multiple domains
+
+OpenFeature supports the concept of _domains_ -- named scopes that can use different providers.
+For example, you might use one provider for payment-related flags and another for experimentation.
+
+Named domains must always declare their provider explicitly, even if only one provider extension is on the classpath.
+They are configured under quoted keys:
+
+[source,properties]
+----
+# Default domain
+quarkus.openfeature.provider=runtime-config
+quarkus.openfeature.runtime.my-flag=true
+
+# Named domain "experimentation"
+quarkus.openfeature."experimentation".provider=buildtime-config
+quarkus.openfeature."experimentation".buildtime.experiment-a=true
+quarkus.openfeature."experimentation".buildtime.experiment-b=false
+----
+
+Inject domain-specific clients using the `@Identifier` qualifier:
+
+[source,java]
+----
+import dev.openfeature.sdk.Client;
+import io.smallrye.common.annotation.Identifier;
+
+@ApplicationScoped
+public class MyService {
+    @Inject
+    Client defaultClient; // <1>
+
+    @Inject
+    @Identifier("experimentation")
+    Client experimentationClient; // <2>
+}
+----
+<1> The default domain client.
+<2> A client for the "experimentation" domain, using its own provider configuration.
+
+Each domain has its own provider and flag configuration.
+Flags from one domain are not visible in another.
+
+[[extension-configuration-reference]]
+== Extension Configuration Reference
+
+include::includes/quarkus-openfeature.adoc[leveloffset=+1, opts=optional]

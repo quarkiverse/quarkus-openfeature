@@ -1,0 +1,9 @@
+= Public API
+
+include::./includes/attributes.adoc[]
+
+This extension tries to not define public APIs.
+It integrates the https://openfeature.dev/[OpenFeature] SDK into Quarkus, so you use the standard https://javadoc.io/doc/dev.openfeature/sdk/latest/index.html[OpenFeature API] directly.
+
+All classes under a `runtime` package are internal and may change without notice.
+Only classes outside of `runtime` are considered public API.

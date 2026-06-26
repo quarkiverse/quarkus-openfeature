@@ -1,0 +1,112 @@
+= Configuration Providers
+
+include::./includes/attributes.adoc[]
+
+This extension includes two built-in providers that read flag values from Quarkus configuration.
+These are useful for development, testing, or simple deployments where flags are known at build time or runtime.
+
+== Runtime configuration provider
+
+The runtime configuration provider reads flag values from Quarkus runtime configuration.
+Values can be overridden at deploy time using environment variables, system properties, or external config files, as described in https://quarkus.io/guides/config-reference[Quarkus Configuration documentation].
+
+Add the dependency:
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>io.quarkiverse.openfeature</groupId>
+    <artifactId>quarkus-openfeature-runtime-config</artifactId>
+    <version>{project-version}</version>
+</dependency>
+----
+
+Define flags in `application.properties`:
+
+[source,properties]
+----
+quarkus.openfeature.runtime.new-feature=true
+quarkus.openfeature.runtime.greeting=hello
+quarkus.openfeature.runtime.max-retries=3
+quarkus.openfeature.runtime.threshold=0.75
+----
+
+Values are stored as strings and converted to the requested type at evaluation time.
+Boolean evaluation never fails because a value cannot be parsed, but note that only `true` is truthy, all other values are false.
+Integer and double evaluation throw an error if the value cannot be parsed.
+
+For named domains, flags are scoped under the domain name:
+
+[source,properties]
+----
+quarkus.openfeature."experimentation".runtime.experiment-a=true
+quarkus.openfeature."experimentation".runtime.experiment-b=false
+----
+
+== Build-time configuration provider
+
+The build-time configuration provider reads flag values that are fixed at build time.
+These values are baked into the application and cannot be changed at runtime, even with environment variables or system properties.
+
+Add the dependency:
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>io.quarkiverse.openfeature</groupId>
+    <artifactId>quarkus-openfeature-buildtime-config</artifactId>
+    <version>{project-version}</version>
+</dependency>
+----
+
+Define flags in `application.properties`:
+
+[source,properties]
+----
+quarkus.openfeature.buildtime.stable-feature=true
+quarkus.openfeature.buildtime.api-version=v2
+----
+
+For named domains:
+
+[source,properties]
+----
+quarkus.openfeature."experimentation".buildtime.locked-flag=false
+----
+
+== Using both providers
+
+You can use both providers together.
+Add both dependencies and configure the provider order:
+
+[source,properties]
+----
+quarkus.openfeature.provider=runtime-config,buildtime-config
+----
+
+The first provider in the list that has a value for a given flag wins.
+In this example, runtime flags take precedence over build-time flags.
+
+This can be useful to define build-time defaults that are overridable at runtime:
+
+[source,properties]
+----
+quarkus.openfeature.provider=runtime-config,buildtime-config
+
+# Build-time default
+quarkus.openfeature.buildtime.new-feature=false
+
+# Runtime override (e.g., set via environment variable in production)
+quarkus.openfeature.runtime.new-feature=true
+----
+
+[[configuration-reference]]
+== Configuration Reference
+
+=== Runtime configuration provider
+
+include::includes/quarkus-openfeature-runtime-config.adoc[leveloffset=+2, opts=optional]
+
+=== Build-time configuration provider
+
+include::includes/quarkus-openfeature-buildtime-config.adoc[leveloffset=+2, opts=optional]

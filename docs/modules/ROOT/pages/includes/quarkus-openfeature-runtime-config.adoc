@@ -1,0 +1,37 @@
+[.configuration-legend]
+icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[.header-title]##Configuration property##
+h|Type
+h|Default
+
+a| [[quarkus-openfeature-runtime-config_quarkus-openfeature-runtime-flag-name]] [.property-path]##link:#quarkus-openfeature-runtime-config_quarkus-openfeature-runtime-flag-name[`+++quarkus.openfeature.runtime."flag-name"+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.runtime."flag-name"+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".runtime."flag-name"+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".runtime."flag-name"+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Flag values configurable at runtime, keyed by flag name.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_RUNTIME__FLAG_NAME_+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_RUNTIME__FLAG_NAME_+++`
+endif::add-copy-button-to-env-var[]
+--
+|Map<String,String>
+|
+
+|===
+
