@@ -39,7 +39,7 @@
 
         <maven.compiler.release>17</maven.compiler.release>
 
-        <assertj.version>3.27.3</assertj.version>
+        <assertj.version>3.27.7</assertj.version>
         <cucumber.version>7.34.3</cucumber.version>
         <endive.version>1.0.0</endive.version>
         <flagd-core.version>2.0.0</flagd-core.version>
