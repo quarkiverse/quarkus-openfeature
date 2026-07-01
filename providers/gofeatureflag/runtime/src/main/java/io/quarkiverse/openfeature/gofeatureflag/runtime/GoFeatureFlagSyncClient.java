@@ -165,8 +165,8 @@ public class GoFeatureFlagSyncClient {
                                     live[0] = true;
 
                                     state.resetReconnectDelay();
-                                    boolean reconnected = state.setReadyAndWasError();
-                                    listener.onUpdate(reconnected);
+                                    listener.onUpdate(state.isError());
+                                    state.setReady();
 
                                     if (!changedKeys.isEmpty()) {
                                         log.debugf("Applied %d buffered flag diffs", changedKeys.size());

@@ -116,8 +116,8 @@ public class UnleashSyncClient {
                                             try {
                                                 log.debugf("Polled Unleash state");
                                                 state.resetReconnectDelay();
-                                                boolean reconnected = state.setReadyAndWasError();
-                                                listener.onUpdate(body.toString(), reconnected);
+                                                listener.onUpdate(body.toString(), state.isError());
+                                                state.setReady();
                                                 scheduleNextPoll(listener);
                                             } catch (Exception e) {
                                                 log.errorf(e, "Failed to parse Unleash state");
