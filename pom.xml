@@ -49,7 +49,7 @@
         <protobuf.version>4.33.2</protobuf.version>
         <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
         <quarkus.version>3.33.2</quarkus.version>
-        <smallrye-certificate-generator.version>0.9.3</smallrye-certificate-generator.version>
+        <smallrye-certificate-generator.version>1.0.2</smallrye-certificate-generator.version>
         <yggdrasil-engine.version>1.0.1</yggdrasil-engine.version>
     </properties>
 
