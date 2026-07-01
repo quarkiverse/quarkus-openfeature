@@ -83,7 +83,7 @@ public class FlagdSyncClient {
         String flagData = Files.readString(Path.of(path));
         latestFlagConfiguration = flagData;
         evaluator.setFlagsAndGetChangedKeys(flagData);
-        state.setReadyAndWasError();
+        state.setReady();
     }
 
     private void startGrpc(Listener listener) {
@@ -135,8 +135,8 @@ public class FlagdSyncClient {
                                                 ? ProtobufConvert.toEvaluationContext(syncResponse.getSyncContext())
                                                 : null;
                                         state.resetReconnectDelay();
-                                        boolean reconnected = state.setReadyAndWasError();
-                                        listener.onUpdate(changedKeys, syncContext, reconnected);
+                                        listener.onUpdate(changedKeys, syncContext, state.isError());
+                                        state.setReady();
                                     } catch (Exception e) {
                                         log.errorf(e, "Failed to process flag data");
                                         listener.onError("Failed to process flag data: " + e.getMessage());

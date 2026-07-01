@@ -197,8 +197,8 @@ public class FliptSyncClient {
                 log.debugf("Received flag data from Flipt: %d bytes", snapshotJson.length());
                 enginePool.updateSnapshot(snapshotJson);
                 state.resetReconnectDelay();
-                boolean reconnected = state.setReadyAndWasError();
-                listener.onUpdate(reconnected);
+                listener.onUpdate(state.isError());
+                state.setReady();
             } catch (Exception e) {
                 log.errorf(e, "Failed to process Flipt sync data");
                 listener.onError("Failed to process flag data: " + e.getMessage());

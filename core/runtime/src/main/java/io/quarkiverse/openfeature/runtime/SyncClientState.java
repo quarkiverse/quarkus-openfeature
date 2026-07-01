@@ -63,10 +63,14 @@ public final class SyncClientState {
         return state.get() == SHUTDOWN;
     }
 
-    public boolean setReadyAndWasError() {
-        int prev = state.getAndUpdate(s -> s == SHUTDOWN ? SHUTDOWN : READY);
+    public boolean isError() {
+        int s = state.get();
+        return s == ERROR || s == INITIAL_ERROR;
+    }
+
+    public void setReady() {
+        state.getAndUpdate(s -> s == SHUTDOWN ? SHUTDOWN : READY);
         initializedBarrier.countDown();
-        return prev == ERROR || prev == INITIAL_ERROR;
     }
 
     public void setError() {
