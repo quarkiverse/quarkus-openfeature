@@ -1,4 +1,4 @@
-:project-version: 0
+:project-version: 1.0.0.Alpha1
 
 :examples-dir: ./../examples/
 
