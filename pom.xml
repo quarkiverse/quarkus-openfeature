@@ -10,7 +10,7 @@
 
     <groupId>io.quarkiverse.openfeature</groupId>
     <artifactId>quarkus-openfeature-parent</artifactId>
-    <version>1.0.0.Alpha1</version>
+    <version>999-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Quarkus OpenFeature - Parent</name>
     <description>Quarkus extension for OpenFeature, the open standard for feature flags</description>
@@ -31,7 +31,7 @@
         <connection>scm:git:git@github.com:quarkiverse/quarkus-openfeature.git</connection>
         <developerConnection>scm:git:git@github.com:quarkiverse/quarkus-openfeature.git</developerConnection>
         <url>https://github.com/quarkiverse/quarkus-openfeature</url>
-      <tag>1.0.0.Alpha1</tag>
+      <tag>HEAD</tag>
   </scm>
 
     <properties>

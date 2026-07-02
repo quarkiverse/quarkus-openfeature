@@ -5,7 +5,7 @@
     <parent>
         <groupId>io.quarkiverse.openfeature</groupId>
         <artifactId>quarkus-openfeature-integration-tests</artifactId>
-        <version>1.0.0.Alpha1</version>
+        <version>999-SNAPSHOT</version>
     </parent>
 
     <artifactId>quarkus-openfeature-integration-tests-config</artifactId>
