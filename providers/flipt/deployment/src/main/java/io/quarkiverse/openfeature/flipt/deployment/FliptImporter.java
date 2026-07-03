@@ -33,6 +33,8 @@ public class FliptImporter {
             throw new RuntimeException(e);
         }
 
+        normalize(features);
+
         String namespace = (String) features.getOrDefault("namespace", "default");
         String resourcesUrl = baseUrl + "/api/v2/environments/default/namespaces/"
                 + URLEncoder.encode(namespace, StandardCharsets.UTF_8) + "/resources";
@@ -44,7 +46,6 @@ public class FliptImporter {
                 List<Map<String, Object>> segments = (List<Map<String, Object>>) features.get("segments");
                 if (segments != null) {
                     for (Map<String, Object> segment : segments) {
-                        segment.put("@type", "flipt.core.Segment");
                         postResource(client, resourcesUrl, (String) segment.get("key"), segment, authToken);
                     }
                 }
@@ -52,8 +53,6 @@ public class FliptImporter {
                 List<Map<String, Object>> flags = (List<Map<String, Object>>) features.get("flags");
                 if (flags != null) {
                     for (Map<String, Object> flag : flags) {
-                        flag.put("@type", "flipt.core.Flag");
-                        normalizeFlag(flag);
                         postResource(client, resourcesUrl, (String) flag.get("key"), flag, authToken);
                     }
                 }
@@ -62,6 +61,26 @@ public class FliptImporter {
             }
         } finally {
             vertx.close();
+        }
+    }
+
+    // visible for testing
+    @SuppressWarnings("unchecked")
+    static void normalize(Map<String, Object> features) {
+        List<Map<String, Object>> segments = (List<Map<String, Object>>) features.get("segments");
+        if (segments != null) {
+            for (Map<String, Object> segment : segments) {
+                segment.put("@type", "flipt.core.Segment");
+                renameKey(segment, "match_type", "matchType");
+            }
+        }
+
+        List<Map<String, Object>> flags = (List<Map<String, Object>>) features.get("flags");
+        if (flags != null) {
+            for (Map<String, Object> flag : flags) {
+                flag.put("@type", "flipt.core.Flag");
+                normalizeFlag(flag);
+            }
         }
     }
 
@@ -77,19 +96,69 @@ public class FliptImporter {
                         rollout.put("type", "SEGMENT_ROLLOUT_TYPE");
                     }
                 }
+
+                Map<String, Object> segment = (Map<String, Object>) rollout.get("segment");
+                if (segment != null) {
+                    normalizeRolloutSegment(segment);
+                }
+            }
+        }
+
+        List<Map<String, Object>> variants = (List<Map<String, Object>>) flag.get("variants");
+        if (variants != null) {
+            for (Map<String, Object> variant : variants) {
+                if (Boolean.TRUE.equals(variant.remove("default"))) {
+                    flag.put("defaultVariant", variant.get("key"));
+                }
             }
         }
 
         List<Map<String, Object>> rules = (List<Map<String, Object>>) flag.get("rules");
         if (rules != null) {
             for (Map<String, Object> rule : rules) {
-                if (rule.containsKey("segment") && !rule.containsKey("segments")) {
-                    Object segment = rule.remove("segment");
-                    List<Object> segments = new ArrayList<>();
-                    segments.add(segment);
-                    rule.put("segments", segments);
-                }
+                normalizeRuleSegment(rule);
             }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void normalizeRuleSegment(Map<String, Object> rule) {
+        if (!rule.containsKey("segment")) {
+            return;
+        }
+
+        Object segment = rule.remove("segment");
+        if (segment instanceof String) {
+            List<Object> segments = new ArrayList<>();
+            segments.add(segment);
+            rule.put("segments", segments);
+        } else if (segment instanceof Map) {
+            Map<String, Object> segmentMap = (Map<String, Object>) segment;
+            rule.put("segments", segmentMap.get("keys"));
+            renameKey(segmentMap, "operator", "segmentOperator");
+            if (segmentMap.containsKey("segmentOperator")) {
+                rule.put("segmentOperator", segmentMap.remove("segmentOperator"));
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void normalizeRolloutSegment(Map<String, Object> segment) {
+        if (segment.containsKey("key")) {
+            String key = (String) segment.remove("key");
+            List<Object> segments = new ArrayList<>();
+            segments.add(key);
+            segment.put("segments", segments);
+        } else if (segment.containsKey("keys")) {
+            segment.put("segments", segment.remove("keys"));
+        }
+
+        renameKey(segment, "operator", "segmentOperator");
+    }
+
+    private static void renameKey(Map<String, Object> map, String oldKey, String newKey) {
+        if (map.containsKey(oldKey)) {
+            map.put(newKey, map.remove(oldKey));
         }
     }
 

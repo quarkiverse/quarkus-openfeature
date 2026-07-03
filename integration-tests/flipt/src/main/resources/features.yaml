@@ -43,12 +43,12 @@ flags:
     variants:
       - key: targeted-value
       - key: default-value
+        default: true
     rules:
       - segment: test-users
         distributions:
           - variant: targeted-value
             rollout: 100
-    defaultVariant: default-value
 segments:
   - key: everyone
     name: everyone
