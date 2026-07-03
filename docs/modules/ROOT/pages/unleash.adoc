@@ -147,6 +147,9 @@ This file uses the standard Unleash export/import JSON format:
 }
 ----
 
+NOTE: The file uses the Unleash https://docs.getunleash.io/api/export-features[export format].
+See also the https://docs.getunleash.io/concepts/import-export[import and export] overview.
+
 The dev service picks up this file automatically.
 You can also configure a different path:
 

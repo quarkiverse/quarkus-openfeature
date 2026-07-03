@@ -123,6 +123,8 @@ To provide flag definitions to the dev service, place a `flags.json` file in `sr
 }
 ----
 
+NOTE: See the https://flagd.dev/reference/flag-definitions/[flag definitions] reference for the complete format.
+
 The dev service picks up this file automatically.
 You can also configure a different path:
 

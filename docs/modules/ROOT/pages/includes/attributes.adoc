@@ -3,4 +3,5 @@
 :examples-dir: ./../examples/
 
 :flagd-core-version: 2.0.0
-:yggdrasil-engine-version: 1.0.1
+:openfeature-sdk-version: 1.21.0
+:yggdrasil-engine-version: 1.0.2

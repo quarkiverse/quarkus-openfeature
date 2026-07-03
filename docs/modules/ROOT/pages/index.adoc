@@ -2,7 +2,7 @@
 
 include::./includes/attributes.adoc[]
 
-This extension integrates the https://openfeature.dev/[OpenFeature] SDK with Quarkus, providing feature flag evaluation as a CDI service.
+This extension integrates the https://openfeature.dev/[OpenFeature] SDK, version {openfeature-sdk-version}, with Quarkus, providing feature flag evaluation as a CDI service.
 
 OpenFeature is an open specification for feature flag management.
 It provides a vendor-neutral API, so your application code doesn't depend on a specific feature flag provider.

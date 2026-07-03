@@ -155,6 +155,9 @@ segments:
         value: beta
 ----
 
+NOTE: The features file format is defined by a https://github.com/flipt-io/flipt/blob/v2/core/validation/flipt.cue[CUE schema] (also available as https://github.com/flipt-io/flipt/blob/v2/core/validation/flipt.json[JSON schema]).
+You can validate your file with the https://docs.flipt.io/v2/cli/commands/validate[`flipt validate`] command.
+
 The dev service picks up this file automatically.
 You can also configure a different path:
 

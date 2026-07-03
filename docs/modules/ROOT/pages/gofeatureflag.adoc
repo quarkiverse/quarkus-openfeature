@@ -105,6 +105,8 @@ greeting:
     variation: hello
 ----
 
+NOTE: See the https://gofeatureflag.org/docs/configure_flag/create-flags[create flags] reference for the complete format.
+
 The dev service picks up this file automatically.
 You can also configure a different path:
 
