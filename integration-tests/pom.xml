@@ -19,4 +19,44 @@
         <module>gofeatureflag</module>
         <module>unleash</module>
     </modules>
+
+    <!--
+      - TODO uncomment once quarkus-enforcer-rules supports configurable groupIdPrefix
+      - and set the dependency version
+      -
+      - see also https://github.com/quarkusio/quarkus/pull/55347
+      -->
+    <!--
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-deployment-deps</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requiresMinimalDeploymentDependency>
+                                    <groupIdPrefix>io.quarkiverse.openfeature</groupIdPrefix>
+                                </requiresMinimalDeploymentDependency>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>io.quarkus</groupId>
+                        <artifactId>quarkus-enforcer-rules</artifactId>
+                        <version>TODO</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
+    -->
 </project>

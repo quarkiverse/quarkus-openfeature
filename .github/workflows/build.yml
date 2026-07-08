@@ -51,7 +51,7 @@ jobs:
           cache: 'maven'
 
       - name: Build and test
-        run: mvn -B clean install -Dno-format
+        run: mvn -B clean install -Dno-format -T 1C
 
   native-tests:
     name: Native Tests
@@ -68,7 +68,7 @@ jobs:
           cache: 'maven'
 
       - name: Build without tests
-        run: mvn -B clean install -DskipTests -Dno-format
+        run: mvn -B clean install -DskipTests -Dno-format -T 1C
 
       - name: Test with native
         run: mvn -B install -Dnative -Dquarkus.native.container-build -Dnative.surefire.skip -f integration-tests
