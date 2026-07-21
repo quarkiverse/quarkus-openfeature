@@ -1,6 +1,8 @@
 package io.quarkiverse.openfeature.runtime.devui;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -91,6 +93,63 @@ public class OpenFeatureJsonRpcService {
         } catch (Exception e) {
             return new JsonObject().put("error", e.getMessage());
         }
+    }
+
+    @NonBlocking
+    public JsonObject getEvents(String domain) {
+        List<String> names = new ArrayList<>();
+        List<List<DevFeatureAccess.EventInfo>> logs = new ArrayList<>();
+        for (FeatureProvider provider : OpenFeatureRecorder.getProviders(domain)) {
+            if (provider instanceof DevFeatureAccess devSpi) {
+                List<DevFeatureAccess.EventInfo> log = devSpi.getEventLog();
+                if (!log.isEmpty()) {
+                    names.add(provider.getMetadata().getName());
+                    logs.add(log);
+                }
+            }
+        }
+
+        JsonArray events = new JsonArray();
+        if (logs.size() == 1) {
+            String name = names.get(0);
+            List<DevFeatureAccess.EventInfo> log = logs.get(0);
+            for (int i = log.size() - 1; i >= 0; i--) {
+                events.add(eventToJson(log.get(i), name));
+            }
+        } else if (logs.size() > 1) {
+            // merge from the end of each list (all are in chronological order)
+            int[] cursors = new int[logs.size()];
+            for (int i = 0; i < cursors.length; i++) {
+                cursors[i] = logs.get(i).size() - 1;
+            }
+            for (;;) {
+                int best = -1;
+                long bestTime = Long.MIN_VALUE;
+                for (int i = 0; i < cursors.length; i++) {
+                    if (cursors[i] >= 0) {
+                        long t = logs.get(i).get(cursors[i]).timestamp();
+                        if (t >= bestTime) {
+                            bestTime = t;
+                            best = i;
+                        }
+                    }
+                }
+                if (best < 0) {
+                    break;
+                }
+                events.add(eventToJson(logs.get(best).get(cursors[best]), names.get(best)));
+                cursors[best]--;
+            }
+        }
+        return new JsonObject().put("events", events);
+    }
+
+    private static JsonObject eventToJson(DevFeatureAccess.EventInfo event, String providerName) {
+        return new JsonObject()
+                .put("timestamp", event.timestamp())
+                .put("type", event.type().name())
+                .put("message", event.message())
+                .put("provider", providerName);
     }
 
     private Client getClient(String domain) {

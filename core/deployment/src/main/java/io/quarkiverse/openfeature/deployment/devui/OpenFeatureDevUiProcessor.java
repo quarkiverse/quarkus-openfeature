@@ -28,6 +28,11 @@ class OpenFeatureDevUiProcessor {
                 .componentLink("qwc-openfeature-flags.js")
                 .icon("font-awesome-solid:flag"));
 
+        pageBuildItem.addPage(Page.webComponentPageBuilder()
+                .title("Providers")
+                .componentLink("qwc-openfeature-providers.js")
+                .icon("font-awesome-solid:server"));
+
         List<String> namedDomains = new ArrayList<>();
         for (String domain : config.domains().keySet()) {
             if (!OpenFeatureBuildTimeConfig.DEFAULT_DOMAIN.equals(domain)) {
