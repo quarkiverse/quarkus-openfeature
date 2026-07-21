@@ -88,3 +88,26 @@ void experimentEnabled() {
 
 Testing support requires the provider to expose an additional contract.
 All providers included in this extension do this and so support testing out of the box.
+
+== Comparison with the upstream OpenFeature JUnit extension
+
+The https://github.com/open-feature/java-sdk-contrib/tree/main/tools/junit-openfeature[upstream OpenFeature JUnit extension] (`dev.openfeature.contrib.tools:junitopenfeature`) provides similar annotation-driven flag overrides for tests.
+While both extensions cover the same use case, their approach differs significantly.
+
+Global state::
+This extension pushes test overrides into each provider before a test and clears them after, leaving the provider in its original state.
+The upstream extension replaces the registered provider for each domain with a test-only provider.
+This mutates global state and is not reversed after the test, which can cause interference between tests.
+
+Fall-through to real providers::
+This extension injects test overrides into existing providers.
+Flags that are _not_ overridden continue to be evaluated by the real provider, so you can test a specific scenario while relying on real flag values for everything else.
+The upstream extension replaces the provider entirely with a test-only in-memory provider.
+Any flag not declared in the test annotations returns the default value, not the value from your actual provider.
+
+Dependencies::
+This extension has no additional dependencies beyond JUnit Jupiter.
+The upstream extension pulls in JUnit Pioneer and `commons-lang3` as transitive dependencies.
+
+In a Quarkus application, use `quarkus-openfeature-junit`.
+The upstream extension is designed for plain Java projects that use the OpenFeature SDK without a framework.
