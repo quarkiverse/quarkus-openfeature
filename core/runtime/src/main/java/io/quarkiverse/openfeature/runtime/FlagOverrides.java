@@ -1,5 +1,7 @@
 package io.quarkiverse.openfeature.runtime;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import dev.openfeature.sdk.ProviderEvaluation;
@@ -7,7 +9,7 @@ import dev.openfeature.sdk.Reason;
 import dev.openfeature.sdk.exceptions.TypeMismatchError;
 
 /**
- * Contains a map of overridden flag values and evaluation logic for them. Used by providers that
+ * Immutable container of overridden flag values. Used by providers that
  * implement {@link OverrideFeatureAccess}.
  */
 public final class FlagOverrides {
@@ -15,6 +17,26 @@ public final class FlagOverrides {
 
     public FlagOverrides(Map<String, Object> overrides) {
         this.overrides = overrides;
+    }
+
+    public FlagOverrides with(String key, Object value) {
+        Map<String, Object> copy = new HashMap<>(overrides);
+        copy.put(key, value);
+        return new FlagOverrides(copy);
+    }
+
+    public FlagOverrides without(String key) {
+        Map<String, Object> copy = new HashMap<>(overrides);
+        copy.remove(key);
+        return new FlagOverrides(copy);
+    }
+
+    public boolean isEmpty() {
+        return overrides.isEmpty();
+    }
+
+    public Map<String, Object> getAll() {
+        return Collections.unmodifiableMap(overrides);
     }
 
     @SuppressWarnings("unchecked")
