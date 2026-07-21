@@ -16,7 +16,7 @@ import dev.openfeature.sdk.ProviderEventDetails;
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 
-public abstract class AbstractRemoteFeatureProvider extends EventProvider implements DevFeatureAccess, TestFeatureAccess {
+public abstract class AbstractRemoteFeatureProvider extends EventProvider implements DevFeatureAccess, OverrideFeatureAccess {
     private static final Logger log = Logger.getLogger(AbstractRemoteFeatureProvider.class);
 
     private static final int MAX_EVENTS = 100;
@@ -28,7 +28,7 @@ public abstract class AbstractRemoteFeatureProvider extends EventProvider implem
 
     private final Deque<DevFeatureAccess.EventInfo> eventLog = new ConcurrentLinkedDeque<>();
 
-    private volatile TestOverrides testOverrides;
+    private volatile FlagOverrides flagOverrides;
 
     // only accessed from the Vert.x event loop, no synchronization needed
     private Long errorTimerId;
@@ -154,17 +154,17 @@ public abstract class AbstractRemoteFeatureProvider extends EventProvider implem
     }
 
     @Override
-    public final void setTestOverrides(TestOverrides overrides) {
-        this.testOverrides = overrides;
+    public final void setFlagOverrides(FlagOverrides overrides) {
+        this.flagOverrides = overrides;
     }
 
     @Override
-    public final void clearTestOverrides() {
-        this.testOverrides = null;
+    public final void clearFlagOverrides() {
+        this.flagOverrides = null;
     }
 
-    protected final <T> ProviderEvaluation<T> evaluateTestOverride(String key, Class<T> expectedType) {
-        TestOverrides testOverrides = this.testOverrides;
-        return testOverrides != null ? testOverrides.evaluate(key, expectedType) : null;
+    protected final <T> ProviderEvaluation<T> evaluateFlagOverride(String key, Class<T> expectedType) {
+        FlagOverrides flagOverrides = this.flagOverrides;
+        return flagOverrides != null ? flagOverrides.evaluate(key, expectedType) : null;
     }
 }

@@ -102,7 +102,7 @@ public class FlagdFeatureProvider extends AbstractRemoteFeatureProvider {
 
     @Override
     public ProviderEvaluation<Boolean> getBooleanEvaluation(String key, Boolean defaultValue, EvaluationContext ctx) {
-        ProviderEvaluation<Boolean> override = evaluateTestOverride(key, Boolean.class);
+        ProviderEvaluation<Boolean> override = evaluateFlagOverride(key, Boolean.class);
         if (override != null) {
             return override;
         }
@@ -111,7 +111,7 @@ public class FlagdFeatureProvider extends AbstractRemoteFeatureProvider {
 
     @Override
     public ProviderEvaluation<String> getStringEvaluation(String key, String defaultValue, EvaluationContext ctx) {
-        ProviderEvaluation<String> override = evaluateTestOverride(key, String.class);
+        ProviderEvaluation<String> override = evaluateFlagOverride(key, String.class);
         if (override != null) {
             return override;
         }
@@ -120,7 +120,7 @@ public class FlagdFeatureProvider extends AbstractRemoteFeatureProvider {
 
     @Override
     public ProviderEvaluation<Integer> getIntegerEvaluation(String key, Integer defaultValue, EvaluationContext ctx) {
-        ProviderEvaluation<Integer> override = evaluateTestOverride(key, Integer.class);
+        ProviderEvaluation<Integer> override = evaluateFlagOverride(key, Integer.class);
         if (override != null) {
             return override;
         }
@@ -129,7 +129,7 @@ public class FlagdFeatureProvider extends AbstractRemoteFeatureProvider {
 
     @Override
     public ProviderEvaluation<Double> getDoubleEvaluation(String key, Double defaultValue, EvaluationContext ctx) {
-        ProviderEvaluation<Double> override = evaluateTestOverride(key, Double.class);
+        ProviderEvaluation<Double> override = evaluateFlagOverride(key, Double.class);
         if (override != null) {
             return override;
         }
@@ -138,7 +138,7 @@ public class FlagdFeatureProvider extends AbstractRemoteFeatureProvider {
 
     @Override
     public ProviderEvaluation<Value> getObjectEvaluation(String key, Value defaultValue, EvaluationContext ctx) {
-        ProviderEvaluation<Value> override = evaluateTestOverride(key, Value.class);
+        ProviderEvaluation<Value> override = evaluateFlagOverride(key, Value.class);
         if (override != null) {
             return override;
         }

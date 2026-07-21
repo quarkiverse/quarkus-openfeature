@@ -8,12 +8,12 @@ import dev.openfeature.sdk.exceptions.TypeMismatchError;
 
 /**
  * Contains a map of overridden flag values and evaluation logic for them. Used by providers that
- * implement {@link TestFeatureAccess}.
+ * implement {@link OverrideFeatureAccess}.
  */
-public final class TestOverrides {
+public final class FlagOverrides {
     private final Map<String, Object> overrides;
 
-    public TestOverrides(Map<String, Object> overrides) {
+    public FlagOverrides(Map<String, Object> overrides) {
         this.overrides = overrides;
     }
 
