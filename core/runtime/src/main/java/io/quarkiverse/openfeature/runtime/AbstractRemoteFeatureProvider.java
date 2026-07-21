@@ -1,13 +1,17 @@
 package io.quarkiverse.openfeature.runtime;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 import org.jboss.logging.Logger;
 
 import dev.openfeature.sdk.ErrorCode;
 import dev.openfeature.sdk.EventProvider;
 import dev.openfeature.sdk.ProviderEvaluation;
+import dev.openfeature.sdk.ProviderEvent;
 import dev.openfeature.sdk.ProviderEventDetails;
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
@@ -15,10 +19,14 @@ import io.vertx.core.Vertx;
 public abstract class AbstractRemoteFeatureProvider extends EventProvider implements DevFeatureAccess, TestFeatureAccess {
     private static final Logger log = Logger.getLogger(AbstractRemoteFeatureProvider.class);
 
+    private static final int MAX_EVENTS = 100;
+
     private final Vertx vertx;
     private final Context context;
     private final Duration gracePeriod;
     private final SyncClientState syncState;
+
+    private final Deque<DevFeatureAccess.EventInfo> eventLog = new ConcurrentLinkedDeque<>();
 
     private volatile TestOverrides testOverrides;
 
@@ -46,6 +54,7 @@ public abstract class AbstractRemoteFeatureProvider extends EventProvider implem
 
     protected final void handleReconnected() {
         cancelErrorTimer();
+        recordEvent(ProviderEvent.PROVIDER_READY, "reconnected");
         emitProviderReady(ProviderEventDetails.builder()
                 .message("reconnected")
                 .build());
@@ -53,6 +62,7 @@ public abstract class AbstractRemoteFeatureProvider extends EventProvider implem
 
     protected final void handleReconnected(List<String> flagsChanged) {
         cancelErrorTimer();
+        recordEvent(ProviderEvent.PROVIDER_READY, "reconnected");
         emitProviderReady(ProviderEventDetails.builder()
                 .flagsChanged(flagsChanged)
                 .message("reconnected")
@@ -60,12 +70,14 @@ public abstract class AbstractRemoteFeatureProvider extends EventProvider implem
     }
 
     protected final void handleConfigurationChanged(String message) {
+        recordEvent(ProviderEvent.PROVIDER_CONFIGURATION_CHANGED, message);
         emitProviderConfigurationChanged(ProviderEventDetails.builder()
                 .message(message)
                 .build());
     }
 
     protected final void handleConfigurationChanged(String message, List<String> flagsChanged) {
+        recordEvent(ProviderEvent.PROVIDER_CONFIGURATION_CHANGED, message);
         emitProviderConfigurationChanged(ProviderEventDetails.builder()
                 .flagsChanged(flagsChanged)
                 .message(message)
@@ -77,6 +89,7 @@ public abstract class AbstractRemoteFeatureProvider extends EventProvider implem
             return;
         }
         if (!syncState.wasEverReady()) {
+            recordEvent(ProviderEvent.PROVIDER_ERROR, message);
             emitProviderError(ProviderEventDetails.builder()
                     .message(message)
                     .build());
@@ -87,6 +100,7 @@ public abstract class AbstractRemoteFeatureProvider extends EventProvider implem
         }
         log.debugf("Stream error, emitting STALE and scheduling ERROR in %d seconds",
                 gracePeriod.toSeconds());
+        recordEvent(ProviderEvent.PROVIDER_STALE, message);
         emitProviderStale(ProviderEventDetails.builder()
                 .message(message)
                 .build());
@@ -94,6 +108,7 @@ public abstract class AbstractRemoteFeatureProvider extends EventProvider implem
             if (!syncState.isShutdown()) {
                 log.errorf("Provider did not reconnect within %d seconds, emitting ERROR",
                         gracePeriod.toSeconds());
+                recordEvent(ProviderEvent.PROVIDER_ERROR, message);
                 emitProviderError(ProviderEventDetails.builder()
                         .message(message)
                         .build());
@@ -103,6 +118,7 @@ public abstract class AbstractRemoteFeatureProvider extends EventProvider implem
 
     protected final void handleFatalError(String message) {
         cancelErrorTimer();
+        recordEvent(ProviderEvent.PROVIDER_ERROR, message);
         emitProviderError(ProviderEventDetails.builder()
                 .errorCode(ErrorCode.PROVIDER_FATAL)
                 .message(message)
@@ -124,6 +140,18 @@ public abstract class AbstractRemoteFeatureProvider extends EventProvider implem
      * Event-loop-only fields (timers, clients) can be accessed directly.
      */
     protected abstract void doShutdown();
+
+    private void recordEvent(ProviderEvent type, String message) {
+        eventLog.addLast(new DevFeatureAccess.EventInfo(System.currentTimeMillis(), type, message));
+        while (eventLog.size() > MAX_EVENTS) {
+            eventLog.pollFirst();
+        }
+    }
+
+    @Override
+    public List<DevFeatureAccess.EventInfo> getEventLog() {
+        return new ArrayList<>(eventLog);
+    }
 
     @Override
     public final void setTestOverrides(TestOverrides overrides) {
