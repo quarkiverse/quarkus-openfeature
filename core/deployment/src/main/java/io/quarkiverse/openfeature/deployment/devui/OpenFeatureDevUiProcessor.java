@@ -25,7 +25,7 @@ class OpenFeatureDevUiProcessor {
 
         pageBuildItem.addPage(Page.webComponentPageBuilder()
                 .title("Feature Flags")
-                .componentLink("qwc-openfeature.js")
+                .componentLink("qwc-openfeature-flags.js")
                 .icon("font-awesome-solid:flag"));
 
         List<String> namedDomains = new ArrayList<>();

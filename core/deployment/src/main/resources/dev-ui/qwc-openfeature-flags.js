@@ -1,15 +1,14 @@
 import { LitElement, html, css } from 'lit';
 import { JsonRpc } from 'jsonrpc';
 import { domains } from 'build-time-data';
+import './qwc-openfeature-selector.js';
 import '@vaadin/button';
-import '@vaadin/combo-box';
-import '@vaadin/grid';
 import '@vaadin/icon';
 import '@vaadin/select';
 import '@vaadin/text-area';
 import '@vaadin/text-field';
 
-export class QwcOpenfeature extends LitElement {
+export class QwcOpenfeatureFlags extends LitElement {
     jsonRpc = new JsonRpc(this);
 
     static styles = css`
@@ -17,39 +16,6 @@ export class QwcOpenfeature extends LitElement {
             display: flex;
             flex-direction: column;
             height: 100%;
-        }
-        .header {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 8px 16px;
-            border-bottom: 1px solid var(--lumo-contrast-10pct);
-            flex-shrink: 0;
-        }
-        .header-label {
-            font-size: var(--lumo-font-size-s);
-            font-weight: 600;
-            color: var(--lumo-secondary-text-color);
-        }
-        .header .provider-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: var(--lumo-font-size-s);
-            color: var(--lumo-secondary-text-color);
-        }
-        .state-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-        .state-READY { background-color: var(--lumo-success-color); }
-        .state-STALE { background-color: var(--lumo-primary-color); }
-        .state-ERROR { background-color: var(--lumo-error-color); }
-        .state-NOT_READY { background-color: var(--lumo-contrast-30pct); }
-        .provider-names {
-            color: var(--lumo-body-text-color);
         }
         .content {
             display: flex;
@@ -244,41 +210,16 @@ export class QwcOpenfeature extends LitElement {
 
     render() {
         return html`
-            ${this._renderHeader()}
+            <qwc-openfeature-selector
+                .domains="${domains}"
+                .selectedDomain="${this._selectedDomain}"
+                .providerStatus="${this._providerStatus}"
+                @domain-changed="${this._onDomainChanged}"
+            ></qwc-openfeature-selector>
             <div class="content">
                 ${this._renderFlagPanel()}
                 ${this._renderEvalPanel()}
             </div>
-        `;
-    }
-
-    _renderHeader() {
-        const domainItems = domains.map(d => ({ label: d, value: d }));
-        return html`
-            <div class="header">
-                <span class="header-label">Domain:</span>
-                <vaadin-select
-                    .items="${domainItems}"
-                    .value="${this._selectedDomain}"
-                    @value-changed="${this._onDomainChanged}"
-                    theme="small"
-                ></vaadin-select>
-                <div class="provider-info">
-                    ${this._providerStatus ? this._renderProviderInfo() : html`<span>Loading...</span>`}
-                </div>
-            </div>
-        `;
-    }
-
-    _renderProviderInfo() {
-        const state = this._providerStatus.state;
-        const providers = this._providerStatus.providers;
-        const names = providers && providers.length > 0 ? providers.join(', ') : 'No provider';
-        return html`
-            <span class="state-dot state-${state}"></span>
-            <span>${state}</span>
-            <span class="header-label" style="margin-left: 16px">${providers && providers.length > 1 ? 'Providers:' : 'Provider:'}</span>
-            <span class="provider-names">${names}</span>
         `;
     }
 
@@ -420,4 +361,4 @@ export class QwcOpenfeature extends LitElement {
     }
 }
 
-customElements.define('qwc-openfeature', QwcOpenfeature);
+customElements.define('qwc-openfeature-flags', QwcOpenfeatureFlags);
