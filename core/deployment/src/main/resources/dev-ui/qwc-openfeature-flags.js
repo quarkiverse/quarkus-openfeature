@@ -52,15 +52,45 @@ export class QwcOpenfeatureFlags extends LitElement {
             background-color: var(--lumo-primary-color-10pct);
             color: var(--lumo-primary-text-color);
         }
-        .eval-panel {
+        .flag-key {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .override-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--lumo-primary-color);
+            flex-shrink: 0;
+            cursor: help;
+        }
+        .override-section {
+            border-top: 1px solid var(--lumo-contrast-10pct);
+            padding-top: 12px;
+        }
+        .override-form {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .override-form vaadin-text-field {
+            width: 100%;
+        }
+        .override-buttons {
+            display: flex;
+            gap: 4px;
+        }
+        .right-panel {
             flex: 1;
             padding: 16px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 16px;
         }
-        .eval-panel h3 {
+        .right-panel h3 {
             margin: 0;
             font-size: var(--lumo-font-size-l);
         }
@@ -106,11 +136,14 @@ export class QwcOpenfeatureFlags extends LitElement {
         _flagsSupported: { state: true },
         _searchFilter: { state: true },
         _selectedFlag: { state: true },
-        _evalType: { state: true },
+        _selectedFlagType: { state: true },
         _evalDefault: { state: true },
         _evalContext: { state: true },
         _evalResult: { state: true },
         _evaluating: { state: true },
+        _overrides: { state: true },
+        _overrideValue: { state: true },
+        _overrideError: { state: true },
     };
 
     constructor() {
@@ -121,11 +154,14 @@ export class QwcOpenfeatureFlags extends LitElement {
         this._flagsSupported = true;
         this._searchFilter = '';
         this._selectedFlag = null;
-        this._evalType = 'boolean';
+        this._selectedFlagType = 'boolean';
         this._evalDefault = '';
         this._evalContext = '';
         this._evalResult = null;
         this._evaluating = false;
+        this._overrides = {};
+        this._overrideValue = '';
+        this._overrideError = null;
     }
 
     connectedCallback() {
@@ -141,6 +177,7 @@ export class QwcOpenfeatureFlags extends LitElement {
         this._flagsSupported = true;
         this._selectedFlag = null;
         this._evalResult = null;
+        this._overrideValue = '';
 
         this.jsonRpc.getProviderStatus({ domain }).then(r => {
             this._providerStatus = r.result;
@@ -152,6 +189,16 @@ export class QwcOpenfeatureFlags extends LitElement {
             } else {
                 this._flags = [];
                 this._flagsSupported = false;
+            }
+        });
+        this._loadOverrides(domain);
+    }
+
+    _loadOverrides(domain) {
+        this.jsonRpc.getOverrides({ domain }).then(r => {
+            this._overrides = r.result.overrides;
+            if (this._selectedFlag) {
+                this._overrideValue = this._overrides[this._selectedFlag] || '';
             }
         });
     }
@@ -168,13 +215,15 @@ export class QwcOpenfeatureFlags extends LitElement {
     _onFlagClick(flag) {
         this._selectedFlag = flag.key;
         if (flag.type) {
-            this._evalType = flag.type;
+            this._selectedFlagType = flag.type;
         }
+        this._overrideValue = this._overrides[flag.key] || '';
+        this._overrideError = null;
         this._evalResult = null;
     }
 
     _onEvalTypeChanged(e) {
-        this._evalType = e.detail.value;
+        this._selectedFlagType = e.detail.value;
     }
 
     _onEvalDefaultChanged(e) {
@@ -192,7 +241,7 @@ export class QwcOpenfeatureFlags extends LitElement {
         this.jsonRpc.evaluate({
             domain: this._selectedDomain,
             key: this._selectedFlag,
-            type: this._evalType,
+            type: this._selectedFlagType,
             defaultValue: this._evalDefault,
             contextJson: this._evalContext,
         }).then(r => {
@@ -208,6 +257,49 @@ export class QwcOpenfeatureFlags extends LitElement {
         this._evalResult = null;
     }
 
+    _onOverrideValueInput(e) {
+        this._overrideValue = e.target.value;
+    }
+
+    _onSetOverride(key) {
+        this.jsonRpc.setOverride({
+            domain: this._selectedDomain,
+            key,
+            value: this._overrideValue,
+            type: this._selectedFlagType,
+        }).then(r => {
+            if (r.result.success) {
+                this._overrideError = null;
+                this._loadOverrides(this._selectedDomain);
+            } else {
+                this._overrideError = r.result.error;
+            }
+        });
+    }
+
+    _onClearOverride(key) {
+        this.jsonRpc.clearOverride({
+            domain: this._selectedDomain,
+            key,
+        }).then(() => {
+            this._overrideValue = '';
+            this._loadOverrides(this._selectedDomain);
+        });
+    }
+
+    _onClearAllOverrides() {
+        this.jsonRpc.clearAllOverrides({
+            domain: this._selectedDomain,
+        }).then(() => {
+            this._overrideValue = '';
+            this._loadOverrides(this._selectedDomain);
+        });
+    }
+
+    _hasOverrides() {
+        return Object.keys(this._overrides).length > 0;
+    }
+
     render() {
         return html`
             <qwc-openfeature-selector
@@ -218,7 +310,10 @@ export class QwcOpenfeatureFlags extends LitElement {
             ></qwc-openfeature-selector>
             <div class="content">
                 ${this._renderFlagPanel()}
-                ${this._renderEvalPanel()}
+                <div class="right-panel">
+                    ${this._renderEvalSection()}
+                    ${this._renderOverrideSection()}
+                </div>
             </div>
         `;
     }
@@ -256,15 +351,33 @@ export class QwcOpenfeatureFlags extends LitElement {
         const filtered = this._searchFilter
             ? this._flags.filter(f => f.key.toLowerCase().includes(this._searchFilter))
             : this._flags;
-        return filtered.map(flag => html`
-            <div class="flag-item ${flag.key === this._selectedFlag ? 'selected' : ''}"
-                 @click="${() => this._onFlagClick(flag)}">
-                ${flag.key}
-            </div>
-        `);
+        return html`
+            ${filtered.map(flag => this._renderFlagItem(flag))}
+            ${this._hasOverrides() ? html`
+                <vaadin-button
+                    theme="small primary"
+                    style="margin: 8px 12px 0"
+                    @click="${this._onClearAllOverrides}"
+                >Clear overrides</vaadin-button>
+            ` : ''}
+        `;
     }
 
-    _renderEvalPanel() {
+    _renderFlagItem(flag) {
+        const isSelected = flag.key === this._selectedFlag;
+        const override = flag.key in this._overrides;
+        return html`
+            <div class="flag-item ${isSelected ? 'selected' : ''}"
+                 @click="${() => this._onFlagClick(flag)}">
+                <div class="flag-key">
+                    ${flag.key}
+                    ${override ? html`<span class="override-dot" title="Overridden"></span>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    _renderEvalSection() {
         const typeItems = [
             { label: 'Boolean', value: 'boolean' },
             { label: 'String', value: 'string' },
@@ -273,7 +386,7 @@ export class QwcOpenfeatureFlags extends LitElement {
             { label: 'Object', value: 'object' },
         ];
         return html`
-            <div class="eval-panel">
+            <div>
                 <h3>Evaluate Flag</h3>
                 <div class="eval-form">
                     <vaadin-text-field
@@ -285,7 +398,7 @@ export class QwcOpenfeatureFlags extends LitElement {
                     <vaadin-select
                         label="Type"
                         .items="${typeItems}"
-                        .value="${this._evalType}"
+                        .value="${this._selectedFlagType}"
                         @value-changed="${this._onEvalTypeChanged}"
                         theme="small"
                     ></vaadin-select>
@@ -310,6 +423,43 @@ export class QwcOpenfeatureFlags extends LitElement {
                     >Evaluate</vaadin-button>
                 </div>
                 ${this._evalResult ? this._renderResult() : ''}
+            </div>
+        `;
+    }
+
+    _renderOverrideSection() {
+        const override = this._selectedFlag && this._selectedFlag in this._overrides;
+        return html`
+            <div class="override-section">
+                <h3>Override Flag</h3>
+                ${this._selectedFlagType === 'object' ? html`
+                    <div class="result-error" style="font-size: var(--lumo-font-size-s)">Object flags cannot be overridden at the moment. Please file an issue if you need this.</div>
+                ` : ''}
+                <div class="override-form">
+                    <vaadin-text-field
+                        label="Override value"
+                        .value="${this._overrideValue}"
+                        @input="${this._onOverrideValueInput}"
+                        ?disabled="${!this._selectedFlag || this._selectedFlagType === 'object'}"
+                        theme="small"
+                    ></vaadin-text-field>
+                    <div class="override-buttons">
+                        <vaadin-button
+                            theme="small primary"
+                            @click="${() => this._onSetOverride(this._selectedFlag)}"
+                            ?disabled="${!this._selectedFlag || this._selectedFlagType === 'object'}"
+                        >Override</vaadin-button>
+                        ${override ? html`
+                            <vaadin-button
+                                theme="small primary"
+                                @click="${() => this._onClearOverride(this._selectedFlag)}"
+                            >Clear</vaadin-button>
+                        ` : ''}
+                    </div>
+                    ${this._overrideError ? html`
+                        <div class="result-error" style="font-size: var(--lumo-font-size-s)">${this._overrideError}</div>
+                    ` : ''}
+                </div>
             </div>
         `;
     }

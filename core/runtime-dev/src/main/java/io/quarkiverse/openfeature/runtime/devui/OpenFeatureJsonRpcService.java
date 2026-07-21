@@ -16,14 +16,18 @@ import dev.openfeature.sdk.ImmutableContext;
 import dev.openfeature.sdk.OpenFeatureAPI;
 import dev.openfeature.sdk.Value;
 import io.quarkiverse.openfeature.runtime.DevFeatureAccess;
+import io.quarkiverse.openfeature.runtime.FlagOverrides;
 import io.quarkiverse.openfeature.runtime.OpenFeatureBuildTimeConfig;
 import io.quarkiverse.openfeature.runtime.OpenFeatureRecorder;
+import io.quarkiverse.openfeature.runtime.OverrideFeatureAccess;
 import io.smallrye.common.annotation.NonBlocking;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 @ApplicationScoped
 public class OpenFeatureJsonRpcService {
+    private final Map<String, FlagOverrides> devOverrides = new HashMap<>();
+
     @NonBlocking
     public JsonObject getProviderStatus(String domain) {
         Client client = getClient(domain);
@@ -142,6 +146,83 @@ public class OpenFeatureJsonRpcService {
             }
         }
         return new JsonObject().put("events", events);
+    }
+
+    @NonBlocking
+    public JsonObject getOverrides(String domain) {
+        FlagOverrides overrides = devOverrides.get(domain);
+        JsonObject result = new JsonObject();
+        if (overrides != null) {
+            for (Map.Entry<String, Object> entry : overrides.getAll().entrySet()) {
+                result.put(entry.getKey(), String.valueOf(entry.getValue()));
+            }
+        }
+        return new JsonObject().put("overrides", result);
+    }
+
+    @NonBlocking
+    public JsonObject setOverride(String domain, String key, String value, String type) {
+        try {
+            Object parsed = parseOverrideValue(value, type);
+            FlagOverrides current = devOverrides.get(domain);
+            FlagOverrides updated = current != null
+                    ? current.with(key, parsed)
+                    : new FlagOverrides(Map.of(key, parsed));
+            devOverrides.put(domain, updated);
+            applyOverrides(domain, updated);
+            return new JsonObject().put("success", true);
+        } catch (Exception e) {
+            return new JsonObject().put("error", e.getMessage());
+        }
+    }
+
+    @NonBlocking
+    public JsonObject clearOverride(String domain, String key) {
+        FlagOverrides current = devOverrides.get(domain);
+        if (current != null) {
+            FlagOverrides updated = current.without(key);
+            if (updated.isEmpty()) {
+                devOverrides.remove(domain);
+                clearOverrides(domain);
+            } else {
+                devOverrides.put(domain, updated);
+                applyOverrides(domain, updated);
+            }
+        }
+        return new JsonObject().put("success", true);
+    }
+
+    @NonBlocking
+    public JsonObject clearAllOverrides(String domain) {
+        devOverrides.remove(domain);
+        clearOverrides(domain);
+        return new JsonObject().put("success", true);
+    }
+
+    private void applyOverrides(String domain, FlagOverrides overrides) {
+        for (FeatureProvider provider : OpenFeatureRecorder.getProviders(domain)) {
+            if (provider instanceof OverrideFeatureAccess access) {
+                access.setFlagOverrides(overrides);
+            }
+        }
+    }
+
+    private void clearOverrides(String domain) {
+        for (FeatureProvider provider : OpenFeatureRecorder.getProviders(domain)) {
+            if (provider instanceof OverrideFeatureAccess access) {
+                access.clearFlagOverrides();
+            }
+        }
+    }
+
+    private static Object parseOverrideValue(String value, String type) {
+        return switch (type) {
+            case "boolean" -> Boolean.parseBoolean(value);
+            case "integer" -> Integer.parseInt(value);
+            case "double" -> Double.parseDouble(value);
+            case "string" -> value;
+            default -> throw new IllegalArgumentException("Unknown type: " + type);
+        };
     }
 
     private static JsonObject eventToJson(DevFeatureAccess.EventInfo event, String providerName) {
