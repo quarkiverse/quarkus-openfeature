@@ -12,10 +12,10 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 
 import dev.openfeature.sdk.FeatureProvider;
 import dev.openfeature.sdk.FlagValueType;
+import io.quarkiverse.openfeature.runtime.FlagOverrides;
 import io.quarkiverse.openfeature.runtime.OpenFeatureBuildTimeConfig;
 import io.quarkiverse.openfeature.runtime.OpenFeatureRecorder;
-import io.quarkiverse.openfeature.runtime.TestFeatureAccess;
-import io.quarkiverse.openfeature.runtime.TestOverrides;
+import io.quarkiverse.openfeature.runtime.OverrideFeatureAccess;
 
 class OpenFeatureTestExtension implements BeforeEachCallback, AfterEachCallback {
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(
@@ -33,10 +33,10 @@ class OpenFeatureTestExtension implements BeforeEachCallback, AfterEachCallback 
         Set<String> overriddenDomains = new HashSet<>();
         for (Map.Entry<String, Map<String, Object>> entry : overridesByDomain.entrySet()) {
             String domain = entry.getKey();
-            TestOverrides overrides = new TestOverrides(entry.getValue());
+            FlagOverrides overrides = new FlagOverrides(entry.getValue());
             for (FeatureProvider provider : OpenFeatureRecorder.getProviders(domain)) {
-                if (provider instanceof TestFeatureAccess testAccess) {
-                    testAccess.setTestOverrides(overrides);
+                if (provider instanceof OverrideFeatureAccess overrideAccess) {
+                    overrideAccess.setFlagOverrides(overrides);
                     overriddenDomains.add(domain);
                 } else {
                     throw new IllegalStateException("Provider \"" + provider.getMetadata().getName()
@@ -58,8 +58,8 @@ class OpenFeatureTestExtension implements BeforeEachCallback, AfterEachCallback 
         }
         for (String domain : overriddenDomains) {
             for (FeatureProvider provider : OpenFeatureRecorder.getProviders(domain)) {
-                if (provider instanceof TestFeatureAccess testAccess) {
-                    testAccess.clearTestOverrides();
+                if (provider instanceof OverrideFeatureAccess overrideAccess) {
+                    overrideAccess.clearFlagOverrides();
                 }
             }
         }

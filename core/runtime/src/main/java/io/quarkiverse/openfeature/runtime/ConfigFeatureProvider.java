@@ -15,10 +15,10 @@ import dev.openfeature.sdk.Value;
 import dev.openfeature.sdk.exceptions.FlagNotFoundError;
 import dev.openfeature.sdk.exceptions.TypeMismatchError;
 
-public class ConfigFeatureProvider implements FeatureProvider, DevFeatureAccess, TestFeatureAccess {
+public class ConfigFeatureProvider implements FeatureProvider, DevFeatureAccess, OverrideFeatureAccess {
     private final String name;
     private final Map<String, String> flags;
-    private volatile TestOverrides testOverrides;
+    private volatile FlagOverrides flagOverrides;
 
     public ConfigFeatureProvider(String name, Map<String, String> flags) {
         this.name = name;
@@ -32,7 +32,7 @@ public class ConfigFeatureProvider implements FeatureProvider, DevFeatureAccess,
 
     @Override
     public ProviderEvaluation<Boolean> getBooleanEvaluation(String key, Boolean defaultValue, EvaluationContext ctx) {
-        ProviderEvaluation<Boolean> override = evaluateTestOverride(key, Boolean.class);
+        ProviderEvaluation<Boolean> override = evaluateFlagOverride(key, Boolean.class);
         if (override != null) {
             return override;
         }
@@ -44,7 +44,7 @@ public class ConfigFeatureProvider implements FeatureProvider, DevFeatureAccess,
 
     @Override
     public ProviderEvaluation<String> getStringEvaluation(String key, String defaultValue, EvaluationContext ctx) {
-        ProviderEvaluation<String> override = evaluateTestOverride(key, String.class);
+        ProviderEvaluation<String> override = evaluateFlagOverride(key, String.class);
         if (override != null) {
             return override;
         }
@@ -56,7 +56,7 @@ public class ConfigFeatureProvider implements FeatureProvider, DevFeatureAccess,
 
     @Override
     public ProviderEvaluation<Integer> getIntegerEvaluation(String key, Integer defaultValue, EvaluationContext ctx) {
-        ProviderEvaluation<Integer> override = evaluateTestOverride(key, Integer.class);
+        ProviderEvaluation<Integer> override = evaluateFlagOverride(key, Integer.class);
         if (override != null) {
             return override;
         }
@@ -73,7 +73,7 @@ public class ConfigFeatureProvider implements FeatureProvider, DevFeatureAccess,
 
     @Override
     public ProviderEvaluation<Double> getDoubleEvaluation(String key, Double defaultValue, EvaluationContext ctx) {
-        ProviderEvaluation<Double> override = evaluateTestOverride(key, Double.class);
+        ProviderEvaluation<Double> override = evaluateFlagOverride(key, Double.class);
         if (override != null) {
             return override;
         }
@@ -90,7 +90,7 @@ public class ConfigFeatureProvider implements FeatureProvider, DevFeatureAccess,
 
     @Override
     public ProviderEvaluation<Value> getObjectEvaluation(String key, Value defaultValue, EvaluationContext ctx) {
-        ProviderEvaluation<Value> override = evaluateTestOverride(key, Value.class);
+        ProviderEvaluation<Value> override = evaluateFlagOverride(key, Value.class);
         if (override != null) {
             return override;
         }
@@ -138,17 +138,17 @@ public class ConfigFeatureProvider implements FeatureProvider, DevFeatureAccess,
     }
 
     @Override
-    public void setTestOverrides(TestOverrides overrides) {
-        this.testOverrides = overrides;
+    public void setFlagOverrides(FlagOverrides overrides) {
+        this.flagOverrides = overrides;
     }
 
     @Override
-    public void clearTestOverrides() {
-        this.testOverrides = null;
+    public void clearFlagOverrides() {
+        this.flagOverrides = null;
     }
 
-    protected final <T> ProviderEvaluation<T> evaluateTestOverride(String key, Class<T> expectedType) {
-        TestOverrides testOverrides = this.testOverrides;
-        return testOverrides != null ? testOverrides.evaluate(key, expectedType) : null;
+    protected final <T> ProviderEvaluation<T> evaluateFlagOverride(String key, Class<T> expectedType) {
+        FlagOverrides flagOverrides = this.flagOverrides;
+        return flagOverrides != null ? flagOverrides.evaluate(key, expectedType) : null;
     }
 }
