@@ -49,7 +49,7 @@
         <openfeature-sdk.version>1.21.0</openfeature-sdk.version>
         <protobuf.version>4.33.2</protobuf.version>
         <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
-        <quarkus.version>3.33.2</quarkus.version>
+        <quarkus.version>3.38.0</quarkus.version>
         <smallrye-certificate-generator.version>0.9.3</smallrye-certificate-generator.version>
         <yggdrasil-engine.version>1.0.2</yggdrasil-engine.version>
     </properties>
