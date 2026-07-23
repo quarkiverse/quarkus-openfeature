@@ -20,15 +20,9 @@
         <module>unleash</module>
     </modules>
 
-    <!--
-      - TODO uncomment once quarkus-enforcer-rules supports configurable groupIdPrefix
-      - and set the dependency version
-      -
-      - see also https://github.com/quarkusio/quarkus/pull/55347
-      -->
-    <!--
     <build>
         <plugins>
+            <!-- we require Quarkus 3.33 (LTS), but configuring `groupIdPrefix` is possible since 3.38 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
@@ -52,11 +46,10 @@
                     <dependency>
                         <groupId>io.quarkus</groupId>
                         <artifactId>quarkus-enforcer-rules</artifactId>
-                        <version>TODO</version>
+                        <version>3.38.0</version>
                     </dependency>
                 </dependencies>
             </plugin>
         </plugins>
     </build>
-    -->
 </project>
