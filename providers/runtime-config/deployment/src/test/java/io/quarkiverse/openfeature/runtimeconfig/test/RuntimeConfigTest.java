@@ -16,6 +16,7 @@ public class RuntimeConfigTest {
             .overrideConfigKey("quarkus.openfeature.runtime.bool-flag", "true")
             .overrideConfigKey("quarkus.openfeature.runtime.string-flag", "hello")
             .overrideConfigKey("quarkus.openfeature.runtime.int-flag", "42")
+            .overrideConfigKey("quarkus.openfeature.runtime.long-flag", "10000000000")
             .overrideConfigKey("quarkus.openfeature.runtime.double-flag", "3.14");
 
     @Inject
@@ -34,6 +35,11 @@ public class RuntimeConfigTest {
     @Test
     void integerFlag() {
         assertThat(client.getIntegerValue("int-flag", 0)).isEqualTo(42);
+    }
+
+    @Test
+    void longFlag() {
+        assertThat(client.getLongValue("long-flag", 0L)).isEqualTo(10_000_000_000L);
     }
 
     @Test

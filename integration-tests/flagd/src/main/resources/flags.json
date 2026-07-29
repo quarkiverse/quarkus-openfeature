@@ -25,6 +25,14 @@
       },
       "defaultVariant": "ten"
     },
+    "long-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "small": 1,
+        "big": 42
+      },
+      "defaultVariant": "big"
+    },
     "disabled-flag": {
       "state": "DISABLED",
       "variants": {

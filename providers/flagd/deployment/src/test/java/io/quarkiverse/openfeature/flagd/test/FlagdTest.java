@@ -34,6 +34,11 @@ public class FlagdTest {
     }
 
     @Test
+    void longFlag() {
+        assertThat(client.getLongValue("long-flag", 0L)).isEqualTo(42L);
+    }
+
+    @Test
     void disabledFlagReturnsDefault() {
         assertThat(client.getBooleanValue("disabled-flag", false)).isFalse();
     }

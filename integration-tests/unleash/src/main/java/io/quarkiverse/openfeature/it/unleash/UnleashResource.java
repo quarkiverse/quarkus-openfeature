@@ -35,6 +35,12 @@ public class UnleashResource {
     }
 
     @GET
+    @Path("/long/{name}")
+    public long longFlag(@PathParam("name") String name) {
+        return client.getLongValue(name, 0L);
+    }
+
+    @GET
     @Path("/double/{name}")
     public double doubleFlag(@PathParam("name") String name) {
         return client.getDoubleValue(name, 0.0);

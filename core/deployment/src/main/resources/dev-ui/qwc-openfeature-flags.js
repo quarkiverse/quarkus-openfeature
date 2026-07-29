@@ -382,6 +382,7 @@ export class QwcOpenfeatureFlags extends LitElement {
             { label: 'Boolean', value: 'boolean' },
             { label: 'String', value: 'string' },
             { label: 'Integer', value: 'integer' },
+            { label: 'Long', value: 'long' },
             { label: 'Double', value: 'double' },
             { label: 'Object', value: 'object' },
         ];

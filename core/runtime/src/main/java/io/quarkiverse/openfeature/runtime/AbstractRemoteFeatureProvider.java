@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import org.jboss.logging.Logger;
 
 import dev.openfeature.sdk.ErrorCode;
+import dev.openfeature.sdk.EvaluationContext;
 import dev.openfeature.sdk.EventProvider;
 import dev.openfeature.sdk.ProviderEvaluation;
 import dev.openfeature.sdk.ProviderEvent;
@@ -123,6 +124,15 @@ public abstract class AbstractRemoteFeatureProvider extends EventProvider implem
                 .errorCode(ErrorCode.PROVIDER_FATAL)
                 .message(message)
                 .build());
+    }
+
+    @Override
+    public ProviderEvaluation<Long> getLongEvaluation(String key, Long defaultValue, EvaluationContext ctx) {
+        ProviderEvaluation<Long> override = evaluateFlagOverride(key, Long.class);
+        if (override != null) {
+            return override;
+        }
+        return super.getLongEvaluation(key, defaultValue, ctx);
     }
 
     @Override

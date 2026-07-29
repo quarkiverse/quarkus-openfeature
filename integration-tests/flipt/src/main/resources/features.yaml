@@ -32,6 +32,18 @@ flags:
         distributions:
           - variant: "10"
             rollout: 100
+  - key: long-flag
+    name: long-flag
+    type: VARIANT_FLAG_TYPE
+    enabled: true
+    variants:
+      - key: "10000000000"
+      - key: "1"
+    rules:
+      - segment: everyone
+        distributions:
+          - variant: "10000000000"
+            rollout: 100
   - key: disabled-flag
     name: disabled-flag
     type: BOOLEAN_FLAG_TYPE
