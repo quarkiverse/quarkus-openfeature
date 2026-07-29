@@ -34,6 +34,11 @@ public class UnleashTest {
     }
 
     @Test
+    void longFlag() {
+        assertThat(client.getLongValue("long-flag", 0L)).isEqualTo(10_000_000_000L);
+    }
+
+    @Test
     void disabledFlagReturnsDefault() {
         assertThat(client.getBooleanValue("disabled-flag", false)).isFalse();
     }

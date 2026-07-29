@@ -35,6 +35,14 @@ public class FliptResourceTest {
     }
 
     @Test
+    void longFlag() {
+        when().get("/flipt/long/long-flag")
+                .then()
+                .statusCode(200)
+                .body(is("10000000000"));
+    }
+
+    @Test
     void disabledFlagReturnsDefault() {
         when().get("/flipt/boolean/disabled-flag")
                 .then()

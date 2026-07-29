@@ -35,6 +35,14 @@ public class GoFeatureFlagResourceTest {
     }
 
     @Test
+    void longFlag() {
+        when().get("/goff/long/long-flag")
+                .then()
+                .statusCode(200)
+                .body(is("10000000000"));
+    }
+
+    @Test
     void doubleFlag() {
         when().get("/goff/double/double-flag")
                 .then()

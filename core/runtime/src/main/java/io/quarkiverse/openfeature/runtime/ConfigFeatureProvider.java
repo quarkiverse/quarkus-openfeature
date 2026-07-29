@@ -72,6 +72,23 @@ public class ConfigFeatureProvider implements FeatureProvider, DevFeatureAccess,
     }
 
     @Override
+    public ProviderEvaluation<Long> getLongEvaluation(String key, Long defaultValue, EvaluationContext ctx) {
+        ProviderEvaluation<Long> override = evaluateFlagOverride(key, Long.class);
+        if (override != null) {
+            return override;
+        }
+        String value = resolveFlag(key);
+        try {
+            return ProviderEvaluation.<Long> builder()
+                    .value(Long.parseLong(value))
+                    .reason(Reason.STATIC.toString())
+                    .build();
+        } catch (NumberFormatException e) {
+            throw new TypeMismatchError("Cannot parse as long: " + value);
+        }
+    }
+
+    @Override
     public ProviderEvaluation<Double> getDoubleEvaluation(String key, Double defaultValue, EvaluationContext ctx) {
         ProviderEvaluation<Double> override = evaluateFlagOverride(key, Double.class);
         if (override != null) {
@@ -125,6 +142,12 @@ public class ConfigFeatureProvider implements FeatureProvider, DevFeatureAccess,
         try {
             Integer.parseInt(value);
             return FlagValueType.INTEGER;
+        } catch (NumberFormatException ignored) {
+        }
+
+        try {
+            Long.parseLong(value);
+            return FlagValueType.LONG;
         } catch (NumberFormatException ignored) {
         }
 

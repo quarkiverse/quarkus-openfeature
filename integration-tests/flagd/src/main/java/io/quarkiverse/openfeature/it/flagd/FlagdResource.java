@@ -35,6 +35,12 @@ public class FlagdResource {
     }
 
     @GET
+    @Path("/long/{name}")
+    public long longFlag(@PathParam("name") String name) {
+        return client.getLongValue(name, 0L);
+    }
+
+    @GET
     @Path("/targeted/string/{name}")
     public String targetedStringFlag(@PathParam("name") String name,
             @QueryParam("targetingKey") String targetingKey) {

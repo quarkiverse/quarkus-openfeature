@@ -35,6 +35,14 @@ public class FlagdResourceTest {
     }
 
     @Test
+    void longFlag() {
+        when().get("/flagd/long/long-flag")
+                .then()
+                .statusCode(200)
+                .body(is("42"));
+    }
+
+    @Test
     void disabledFlagReturnsDefault() {
         when().get("/flagd/boolean/disabled-flag")
                 .then()

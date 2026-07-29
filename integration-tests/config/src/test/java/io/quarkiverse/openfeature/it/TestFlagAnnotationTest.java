@@ -75,19 +75,26 @@ public class TestFlagAnnotationTest {
 
     @Test
     @Order(8)
+    @TestFlag(key = "long-flag", value = "10000000000", type = FlagValueType.LONG)
+    void longFlag() {
+        assertThat(defaultClient.getLongValue("long-flag", 0L)).isEqualTo(10_000_000_000L);
+    }
+
+    @Test
+    @Order(9)
     @TestFlag(key = "custom-flag", value = "test-override", type = FlagValueType.STRING, domain = "custom")
     void customDomainOverride() {
         assertThat(customClient.getStringValue("custom-flag", "default")).isEqualTo("test-override");
     }
 
     @Test
-    @Order(9)
+    @Order(10)
     void customDomainNotOverriddenAfterPreviousTest() {
         assertThat(customClient.getStringValue("custom-flag", "default")).isEqualTo("custom-value");
     }
 
     @Test
-    @Order(10)
+    @Order(11)
     @TestFlag(key = "runtime-flag", value = "overridden-again", type = FlagValueType.STRING)
     @TestFlag(key = "new-flag", value = "brand-new", type = FlagValueType.STRING)
     void multipleMethodFlags() {
@@ -96,7 +103,7 @@ public class TestFlagAnnotationTest {
     }
 
     @Test
-    @Order(11)
+    @Order(12)
     @TestFlag(key = "runtime-flag", value = "overridden", type = FlagValueType.STRING)
     void overriddenFlagCoexistsWithRealFlags() {
         assertThat(defaultClient.getStringValue("runtime-flag", "default")).isEqualTo("overridden");

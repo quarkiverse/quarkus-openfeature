@@ -85,6 +85,10 @@ public class OpenFeatureJsonRpcService {
                     int def = defaultValue != null && !defaultValue.isEmpty() ? Integer.parseInt(defaultValue) : 0;
                     yield detailsToJson(client.getIntegerDetails(key, def, ctx));
                 }
+                case "long" -> {
+                    long def = defaultValue != null && !defaultValue.isEmpty() ? Long.parseLong(defaultValue) : 0L;
+                    yield detailsToJson(client.getLongDetails(key, def, ctx));
+                }
                 case "double" -> {
                     double def = defaultValue != null && !defaultValue.isEmpty() ? Double.parseDouble(defaultValue) : 0.0;
                     yield detailsToJson(client.getDoubleDetails(key, def, ctx));
@@ -219,6 +223,7 @@ public class OpenFeatureJsonRpcService {
         return switch (type) {
             case "boolean" -> Boolean.parseBoolean(value);
             case "integer" -> Integer.parseInt(value);
+            case "long" -> Long.parseLong(value);
             case "double" -> Double.parseDouble(value);
             case "string" -> value;
             default -> throw new IllegalArgumentException("Unknown type: " + type);

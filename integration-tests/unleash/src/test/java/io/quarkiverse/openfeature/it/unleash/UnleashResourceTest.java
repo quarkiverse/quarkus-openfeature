@@ -35,6 +35,14 @@ public class UnleashResourceTest {
     }
 
     @Test
+    void longFlag() {
+        when().get("/unleash/long/long-flag")
+                .then()
+                .statusCode(200)
+                .body(is("10000000000"));
+    }
+
+    @Test
     void disabledFlagReturnsDefault() {
         when().get("/unleash/boolean/disabled-flag")
                 .then()

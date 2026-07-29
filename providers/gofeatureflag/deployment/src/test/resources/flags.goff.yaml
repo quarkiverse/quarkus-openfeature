@@ -19,6 +19,13 @@ int-flag:
   defaultRule:
     variation: ten
 
+long-flag:
+  variations:
+    big: 10000000000
+    small: 1
+  defaultRule:
+    variation: big
+
 double-flag:
   variations:
     pi: 3.14

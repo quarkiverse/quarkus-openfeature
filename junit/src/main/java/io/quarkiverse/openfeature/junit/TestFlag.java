@@ -17,6 +17,7 @@ import dev.openfeature.sdk.FlagValueType;
  * <ul>
  * <li>{@link FlagValueType#BOOLEAN BOOLEAN}: parsed via {@link Boolean#parseBoolean(String)}</li>
  * <li>{@link FlagValueType#INTEGER INTEGER}: parsed via {@link Integer#parseInt(String)}</li>
+ * <li>{@link FlagValueType#LONG LONG}: parsed via {@link Long#parseLong(String)}</li>
  * <li>{@link FlagValueType#DOUBLE DOUBLE}: parsed via {@link Double#parseDouble(String)}</li>
  * <li>{@link FlagValueType#STRING STRING}: used as-is</li>
  * <li>{@link FlagValueType#OBJECT OBJECT}: not supported, throws {@link IllegalArgumentException}</li>

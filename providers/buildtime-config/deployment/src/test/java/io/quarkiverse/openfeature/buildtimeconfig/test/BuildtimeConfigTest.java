@@ -16,6 +16,7 @@ public class BuildtimeConfigTest {
             .overrideConfigKey("quarkus.openfeature.buildtime.bool-flag", "true")
             .overrideConfigKey("quarkus.openfeature.buildtime.string-flag", "hello")
             .overrideConfigKey("quarkus.openfeature.buildtime.int-flag", "42")
+            .overrideConfigKey("quarkus.openfeature.buildtime.long-flag", "10000000000")
             .overrideConfigKey("quarkus.openfeature.buildtime.double-flag", "3.14");
 
     @Inject
@@ -34,6 +35,11 @@ public class BuildtimeConfigTest {
     @Test
     void integerFlag() {
         assertThat(client.getIntegerValue("int-flag", 0)).isEqualTo(42);
+    }
+
+    @Test
+    void longFlag() {
+        assertThat(client.getLongValue("long-flag", 0L)).isEqualTo(10_000_000_000L);
     }
 
     @Test

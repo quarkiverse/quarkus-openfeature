@@ -89,6 +89,7 @@ class OpenFeatureTestExtension implements BeforeEachCallback, AfterEachCallback 
         return switch (type) {
             case BOOLEAN -> Boolean.parseBoolean(value);
             case INTEGER -> Integer.parseInt(value);
+            case LONG -> Long.parseLong(value);
             case DOUBLE -> Double.parseDouble(value);
             case STRING -> value;
             case OBJECT -> throw new IllegalArgumentException("OBJECT type not supported by @" + TestFlag.class.getName());

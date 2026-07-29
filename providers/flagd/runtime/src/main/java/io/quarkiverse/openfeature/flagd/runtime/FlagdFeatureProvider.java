@@ -28,6 +28,11 @@ import io.vertx.core.Vertx;
 // Concurrency: the Evaluator (FlagdCore) is updated from the Vert.x event loop
 // and read from request threads. This is safe because FlagdCore uses a
 // ReentrantReadWriteLock internally.
+//
+// TODO when flagd-core Evaluator adds `resolveLongValue`:
+// - override `getLongEvaluation` here to call `evaluator.resolveLongValue`
+// - update test value in FlagdTest and flags.json (deployment + integration-tests)
+//   to use a value > Integer.MAX_VALUE (e.g. 10_000_000_000)
 public class FlagdFeatureProvider extends AbstractRemoteFeatureProvider {
     private static final Logger log = Logger.getLogger(FlagdFeatureProvider.class);
 
@@ -187,6 +192,8 @@ public class FlagdFeatureProvider extends AbstractRemoteFeatureProvider {
             return FlagValueType.BOOLEAN;
         } else if (value.isInt()) {
             return FlagValueType.INTEGER;
+        } else if (value.isLong()) {
+            return FlagValueType.LONG;
         } else if (value.isNumber()) {
             return FlagValueType.DOUBLE;
         } else if (value.isTextual()) {

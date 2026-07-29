@@ -49,11 +49,27 @@ public final class FlagOverrides {
             return null;
         }
         if (!expectedType.isInstance(value)) {
-            throw new TypeMismatchError("Flag \"" + key + "\" is not of expected type: " + expectedType);
+            value = coerceNumeric(value, expectedType);
+            if (value == null) {
+                throw new TypeMismatchError("Flag \"" + key + "\" is not of expected type: " + expectedType);
+            }
         }
         return ProviderEvaluation.<T> builder()
                 .value((T) value)
                 .reason(Reason.STATIC.toString())
                 .build();
+    }
+
+    private static Object coerceNumeric(Object value, Class<?> targetType) {
+        if (value instanceof Long l && targetType == Double.class) {
+            return l.doubleValue();
+        }
+        if (value instanceof Double d && targetType == Long.class) {
+            // NaN is rejected too: NaN != Math.floor(NaN) per IEEE-754
+            if (d == Math.floor(d) && !Double.isInfinite(d)) {
+                return (long) d.doubleValue();
+            }
+        }
+        return null;
     }
 }
