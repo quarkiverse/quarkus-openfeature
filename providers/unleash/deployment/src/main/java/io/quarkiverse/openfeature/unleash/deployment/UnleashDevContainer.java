@@ -14,8 +14,6 @@ import io.quarkus.deployment.builditem.Startable;
 class UnleashDevContainer extends GenericContainer<UnleashDevContainer> implements Startable {
     static final int HTTP_PORT = 4242;
 
-    static final String API_TOKEN = "default:development.api-token-for-testing";
-
     static final String DEFAULT_FLAG_SOURCE = "unleash.json";
 
     private final OptionalInt fixedExposedPort;
@@ -47,8 +45,8 @@ class UnleashDevContainer extends GenericContainer<UnleashDevContainer> implemen
         withNetwork(network);
         withEnv("DATABASE_URL", "postgres://unleash:unleash@unleash-db:5432/unleash");
         withEnv("DATABASE_SSL", "false");
-        withEnv("INIT_BACKEND_API_TOKENS", API_TOKEN);
         withEnv("CHECK_VERSION", "false");
+        withEnv("AUTH_TYPE", "none");
         waitingFor(Wait.forHttp("/health").forPort(HTTP_PORT).forStatusCode(200));
 
         if (flagsPath.isPresent()) {
@@ -82,9 +80,5 @@ class UnleashDevContainer extends GenericContainer<UnleashDevContainer> implemen
     @Override
     public String getConnectionInfo() {
         return "http://" + getHost() + ":" + getMappedPort(HTTP_PORT) + "/api";
-    }
-
-    String getApiToken() {
-        return API_TOKEN;
     }
 }

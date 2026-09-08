@@ -83,16 +83,13 @@ class UnleashDevServicesProcessor {
 
             String serviceConfigId = domain + ";" + Objects.hash(devServicesConfig) + ";" + fileModTimeHash(path);
 
-            String apiKeyConfigKey = configKey(domain, "unleash.api-key");
-
             devServices.produce(DevServicesResultBuildItem.owned()
                     .feature("openfeature-unleash")
                     .serviceName(domain)
                     .serviceConfig(serviceConfigId)
                     .startable(() -> new UnleashDevContainer(devServicesConfig, path))
                     .configProvider(Map.of(
-                            urlConfigKey, UnleashDevContainer::getConnectionInfo,
-                            apiKeyConfigKey, UnleashDevContainer::getApiToken))
+                            urlConfigKey, UnleashDevContainer::getConnectionInfo))
                     .build());
         }
     }
