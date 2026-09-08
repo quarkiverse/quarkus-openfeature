@@ -10,6 +10,9 @@ import java.util.Set;
 
 import jakarta.inject.Singleton;
 
+import org.eclipse.microprofile.config.Config;
+import org.eclipse.microprofile.config.ConfigProvider;
+
 import dev.openfeature.sdk.Client;
 import io.quarkiverse.openfeature.runtime.FeatureProviderFactory;
 import io.quarkiverse.openfeature.runtime.OpenFeatureBuildTimeConfig;
@@ -44,6 +47,8 @@ class OpenFeatureProcessor {
             List<OpenFeatureProviderBuildItem> providers,
             OpenFeatureRecorder recorder,
             BuildProducer<SyntheticBeanBuildItem> syntheticBeans) {
+        validateDomainNames(config, providers);
+
         Map<String, FeatureProviderFactory> factories = new HashMap<>();
         for (OpenFeatureProviderBuildItem item : providers) {
             if (factories.put(item.getName(), item.getFactory()) != null) {
@@ -61,6 +66,44 @@ class OpenFeatureProcessor {
         for (Map.Entry<String, DomainBuildTimeConfig> entry : config.domains().entrySet()) {
             if (!OpenFeatureBuildTimeConfig.DEFAULT_DOMAIN.equals(entry.getKey())) {
                 processDomain(entry.getKey(), entry.getValue(), factories, recorder, syntheticBeans);
+            }
+        }
+    }
+
+    // A domain must not be named after a provider, because the configuration of that provider
+    // occupies the same path for the default domain: a domain named `flagd` is configured under
+    // `quarkus.openfeature.flagd.*`, which is also where the flagd configuration of the default
+    // domain lives.
+    //
+    // Such a domain is not always present in `config.domains()`, so the domain names are also
+    // collected from the configuration properties. Setting `provider` for a domain is proof
+    // that the domain was meant to exist.
+    private void validateDomainNames(OpenFeatureBuildTimeConfig config, List<OpenFeatureProviderBuildItem> providers) {
+        Set<String> domains = new HashSet<>(config.domains().keySet());
+        String prefix = "quarkus.openfeature.";
+        String suffix = ".provider";
+        String defaultDomainProvider = "quarkus.openfeature.provider";
+        Config rawConfig = ConfigProvider.getConfig();
+        for (String propertyName : rawConfig.getPropertyNames()) {
+            if (propertyName.startsWith(prefix) && propertyName.endsWith(suffix)
+                    && !propertyName.equals(defaultDomainProvider)) {
+                String domain = propertyName.substring(prefix.length(), propertyName.length() - suffix.length());
+                if (domain.length() > 1 && domain.startsWith("\"") && domain.endsWith("\"")) {
+                    domain = domain.substring(1, domain.length() - 1);
+                }
+                if (!domain.isEmpty() && !domain.contains(".")) {
+                    domains.add(domain);
+                }
+            }
+        }
+
+        for (OpenFeatureProviderBuildItem provider : providers) {
+            if (domains.contains(provider.getName())) {
+                throw new IllegalStateException(
+                        "OpenFeature domain \"" + provider.getName() + "\" must not be named after the \""
+                                + provider.getName() + "\" provider, because the provider configuration "
+                                + "for the default domain occupies the same configuration path.\n"
+                                + "Rename the domain, for example to \"" + provider.getName() + "-domain\".");
             }
         }
     }
