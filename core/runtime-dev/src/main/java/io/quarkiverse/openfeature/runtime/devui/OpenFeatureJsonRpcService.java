@@ -26,6 +26,11 @@ import io.vertx.core.json.JsonObject;
 
 @ApplicationScoped
 public class OpenFeatureJsonRpcService {
+    // guarded by `this`: the overrides methods must update this map and push the result
+    // to the providers atomically, so that the two never disagree
+    //
+    // the `synchronized` override methods are `@NonBlocking`, but only do a bounded amount
+    // of in-memory work, so taking the lock on the event loop is fine
     private final Map<String, FlagOverrides> devOverrides = new HashMap<>();
 
     @NonBlocking
@@ -153,7 +158,7 @@ public class OpenFeatureJsonRpcService {
     }
 
     @NonBlocking
-    public JsonObject getOverrides(String domain) {
+    public synchronized JsonObject getOverrides(String domain) {
         FlagOverrides overrides = devOverrides.get(domain);
         JsonObject result = new JsonObject();
         if (overrides != null) {
@@ -165,7 +170,7 @@ public class OpenFeatureJsonRpcService {
     }
 
     @NonBlocking
-    public JsonObject setOverride(String domain, String key, String value, String type) {
+    public synchronized JsonObject setOverride(String domain, String key, String value, String type) {
         try {
             Object parsed = parseOverrideValue(value, type);
             FlagOverrides current = devOverrides.get(domain);
@@ -181,7 +186,7 @@ public class OpenFeatureJsonRpcService {
     }
 
     @NonBlocking
-    public JsonObject clearOverride(String domain, String key) {
+    public synchronized JsonObject clearOverride(String domain, String key) {
         FlagOverrides current = devOverrides.get(domain);
         if (current != null) {
             FlagOverrides updated = current.without(key);
@@ -197,7 +202,7 @@ public class OpenFeatureJsonRpcService {
     }
 
     @NonBlocking
-    public JsonObject clearAllOverrides(String domain) {
+    public synchronized JsonObject clearAllOverrides(String domain) {
         devOverrides.remove(domain);
         clearOverrides(domain);
         return new JsonObject().put("success", true);
