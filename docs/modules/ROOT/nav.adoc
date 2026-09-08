@@ -1,5 +1,6 @@
 * xref:index.adoc[Getting Started]
 * xref:public-api.adoc[Public API]
+* xref:compatibility.adoc[Compatibility]
 * xref:flagd.adoc[flagd Provider]
 * xref:flipt.adoc[Flipt Provider]
 * xref:gofeatureflag.adoc[GO Feature Flag Provider]

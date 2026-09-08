@@ -1,0 +1,20 @@
+= Compatibility
+
+include::./includes/attributes.adoc[]
+:maintained: ✅
+:unmaintained: ❌
+
+Each stream of this extension supports a range of Quarkus versions.
+Only maintained streams receive bug fixes and dependency updates.
+
+[cols="1,1,1"]
+|===
+|Quarkus OpenFeature |Quarkus |Maintained
+
+|1.0.x
+|3.33+
+|{maintained}
+|===
+
+Future `1.x` streams may target the next Quarkus 3 LTS.
+Quarkus 4 support is expected in a `2.0` stream.
