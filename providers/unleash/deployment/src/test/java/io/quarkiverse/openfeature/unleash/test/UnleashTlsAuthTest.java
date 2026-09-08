@@ -16,15 +16,14 @@ import io.smallrye.certs.Format;
 import io.smallrye.certs.junit5.Certificate;
 import io.smallrye.certs.junit5.Certificates;
 
-@Certificates(baseDir = "target/certs", certificates = @Certificate(name = "unleash-tls", formats = Format.PEM))
-public class UnleashTlsTest {
-    private static final UnleashTestContainer unleash = new UnleashTestContainer("unleash.json")
-            .withEnv("AUTH_TYPE", "none");
+@Certificates(baseDir = "target/certs", certificates = @Certificate(name = "unleash-tls-auth", formats = Format.PEM))
+public class UnleashTlsAuthTest {
+    private static final UnleashTestContainer unleash = new UnleashTestContainer("unleash.json");
 
     @RegisterExtension
     @Order(1)
-    static final TlsProxyExtension proxy = TlsProxyExtension.create("target/certs/unleash-tls.key",
-            "target/certs/unleash-tls.crt", unleash, UnleashTestContainer.HTTP_PORT);
+    static final TlsProxyExtension proxy = TlsProxyExtension.create("target/certs/unleash-tls-auth.key",
+            "target/certs/unleash-tls-auth.crt", unleash, UnleashTestContainer.HTTP_PORT);
 
     @RegisterExtension
     @Order(2)
@@ -33,9 +32,10 @@ public class UnleashTlsTest {
 
     static {
         test.setBeforeAllCustomizer(() -> {
-            test.overrideConfigKey("quarkus.tls.unleash.trust-store.pem.certs", "target/certs/unleash-tls-ca.crt");
+            test.overrideConfigKey("quarkus.tls.unleash.trust-store.pem.certs", "target/certs/unleash-tls-auth-ca.crt");
 
             test.overrideConfigKey("quarkus.openfeature.unleash.url", "https://localhost:" + proxy.port() + "/api");
+            test.overrideConfigKey("quarkus.openfeature.unleash.api-key", UnleashTestContainer.API_TOKEN);
             test.overrideConfigKey("quarkus.openfeature.unleash.tls-configuration-name", "unleash");
         });
     }

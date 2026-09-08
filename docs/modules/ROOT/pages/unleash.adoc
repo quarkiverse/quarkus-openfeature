@@ -63,8 +63,8 @@ See the https://quarkus.io/guides/tls-registry-reference[Quarkus TLS registry do
 The Unleash server requires a https://docs.getunleash.io/concepts/api-tokens-and-client-keys[backend token] to access the API.
 Without a valid token, API requests are rejected and the provider enters the FATAL state.
 
-The Unleash dev service configures the token automatically -- no manual configuration is needed.
-Without dev services, configure the API key explicitly:
+The Unleash dev service runs with authentication disabled, so no token is needed in dev and test mode.
+Otherwise, configure the API key explicitly:
 
 [source,properties]
 ----
