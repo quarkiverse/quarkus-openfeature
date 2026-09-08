@@ -1,0 +1,55 @@
+= Dev UI
+
+include::./includes/attributes.adoc[]
+
+When this extension is present, the https://quarkus.io/guides/dev-ui[Quarkus Dev UI] is extended with an OpenFeature card.
+The card offers two pages: *Feature Flags* and *Providers*.
+
+Both pages share a header that selects the domain to inspect.
+The header also shows the current state of that domain and the names of the providers bound to it.
+If the application uses xref:index.adoc#multiple-domains[multiple domains], each is inspected separately.
+
+== Feature Flags
+
+The *Feature Flags* page lists the flags known to the domain's providers and lets you search them.
+
+Selecting a flag lets you evaluate it without leaving the browser.
+You can choose the value type, supply a default value to be returned when evaluation fails, and pass an evaluation context as JSON:
+
+[source,json]
+----
+{"targetingKey": "user-123"}
+----
+
+The result shows the resolved value together with the variant, the reason and, when evaluation failed, the error code and message.
+Evaluating from the Dev UI goes through the same client as your application code, so targeting rules apply exactly as they would at runtime.
+
+=== Overriding flag values
+
+You can also override the value of an individual flag.
+An override replaces the value returned for that flag, for every provider in the domain, until you clear it.
+Flags that are currently overridden are marked in the flag list.
+
+Overrides support the same value types as `@TestFlag`:
+
+* `boolean` -- parsed via `Boolean.parseBoolean()`, so only `"true"` (case-insensitive) produces `true`
+* `string` -- used as-is
+* `integer` -- parsed via `Integer.parseInt()`
+* `double` -- parsed via `Double.parseDouble()`
+
+Object flags cannot be overridden.
+
+Flags that are not overridden fall through to the real provider, so you can override a single flag and leave the rest of the application untouched.
+Overrides are held in memory by the running application and are discarded when it restarts.
+
+Overrides use the same mechanism as the `@TestFlag` annotation described in xref:testing.adoc[Testing].
+The Dev UI is the interactive counterpart: use `@TestFlag` to pin a flag value in a test, and the Dev UI to try values out by hand while the application is running.
+
+IMPORTANT: Overrides exist only in dev mode and never affect a production build.
+
+== Providers
+
+The *Providers* page shows the lifecycle events recorded by the domain's providers, most recent first.
+Each entry has a timestamp, the provider that emitted it, the event (ready, configuration changed, stale, or error) and a message.
+
+This is the fastest way to tell whether a provider actually connected to its flag source, and to see reconnections as they happen.

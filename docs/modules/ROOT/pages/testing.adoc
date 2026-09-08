@@ -50,6 +50,8 @@ public class MyFeatureTest {
 }
 ----
 
+To override flag values by hand in a running application, instead of in a test, use the xref:dev-ui.adoc[Dev UI].
+
 == Value types
 
 The `@TestFlag` annotation supports the following value types (via the `type` attribute):
