@@ -2,6 +2,7 @@ package io.quarkiverse.openfeature.runtime;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import dev.openfeature.sdk.FlagValueType;
 import dev.openfeature.sdk.ProviderEvent;
@@ -21,6 +22,14 @@ public interface DevFeatureAccess {
      */
     default List<EventInfo> getEventLog() {
         return List.of();
+    }
+
+    /**
+     * Providers whose flag server has a management console should return its URL,
+     * so that the dev UI can link to it.
+     */
+    default Optional<String> getConsoleUrl() {
+        return Optional.empty();
     }
 
     /**

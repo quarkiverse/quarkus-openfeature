@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.jboss.logging.Logger;
 
@@ -35,6 +36,8 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
     private final ObjectMapper mapper;
     private final FliptWasmEnginePool enginePool;
     private final FliptSyncClient syncClient;
+    // the Flipt server serves its management console on the same URL that is used for flag sync
+    private final String url;
 
     FliptFeatureProvider(ObjectMapper mapper, FliptWasmEnginePool enginePool, Vertx vertx,
             FliptConfig.ProviderConfig config, TlsConfigurationRegistry tlsRegistry,
@@ -49,6 +52,7 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
         this.mapper = mapper;
         this.enginePool = enginePool;
         this.syncClient = new FliptSyncClient(mapper, vertx, context(), config, enginePool, tlsRegistry, authHeader, syncState);
+        this.url = config.url();
     }
 
     @Override
@@ -330,5 +334,10 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
             log.debugf(e, "Failed to parse flags from snapshot");
             return List.of();
         }
+    }
+
+    @Override
+    public Optional<String> getConsoleUrl() {
+        return Optional.of(url);
     }
 }
