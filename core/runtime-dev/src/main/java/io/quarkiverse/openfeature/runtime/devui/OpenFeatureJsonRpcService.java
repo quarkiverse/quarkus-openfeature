@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -38,7 +39,14 @@ public class OpenFeatureJsonRpcService {
         Client client = getClient(domain);
         JsonArray providers = new JsonArray();
         for (FeatureProvider provider : OpenFeatureRecorder.getProviders(domain)) {
-            providers.add(provider.getMetadata().getName());
+            JsonObject json = new JsonObject().put("name", provider.getMetadata().getName());
+            if (provider instanceof DevFeatureAccess devSpi) {
+                Optional<String> consoleUrl = devSpi.getConsoleUrl();
+                if (consoleUrl.isPresent()) {
+                    json.put("consoleUrl", consoleUrl.get());
+                }
+            }
+            providers.add(json);
         }
         return new JsonObject()
                 .put("state", client.getProviderState().name())

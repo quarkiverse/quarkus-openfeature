@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.jboss.logging.Logger;
 
@@ -38,6 +39,8 @@ public class UnleashFeatureProvider extends AbstractRemoteFeatureProvider {
     private final UnleashEngine engine;
     private final String appName;
     private final String environment;
+    // the Unleash server serves its management console next to the API, so `.../api` becomes `...`
+    private final String consoleUrl;
 
     public UnleashFeatureProvider(UnleashEngine engine, Vertx vertx,
             UnleashConfig.ProviderConfig config, TlsConfigurationRegistry tlsRegistry,
@@ -53,6 +56,18 @@ public class UnleashFeatureProvider extends AbstractRemoteFeatureProvider {
         this.engine = engine;
         this.appName = appName;
         this.environment = environment;
+        this.consoleUrl = consoleUrl(config.url());
+    }
+
+    static String consoleUrl(String url) {
+        String result = url;
+        if (result.endsWith("/")) {
+            result = result.substring(0, result.length() - 1);
+        }
+        if (result.endsWith("/api")) {
+            result = result.substring(0, result.length() - "/api".length());
+        }
+        return result;
     }
 
     @Override
@@ -299,5 +314,10 @@ public class UnleashFeatureProvider extends AbstractRemoteFeatureProvider {
             log.debugf(e, "Failed to list flags");
             return List.of();
         }
+    }
+
+    @Override
+    public Optional<String> getConsoleUrl() {
+        return Optional.of(consoleUrl);
     }
 }

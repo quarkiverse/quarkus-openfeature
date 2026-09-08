@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit';
+import '@vaadin/icon';
 import '@vaadin/select';
 
 export class QwcOpenfeatureSelector extends LitElement {
@@ -36,6 +37,19 @@ export class QwcOpenfeatureSelector extends LitElement {
         .provider-names {
             color: var(--lumo-body-text-color);
         }
+        .console-link {
+            color: var(--lumo-primary-text-color);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .console-link:hover {
+            text-decoration: underline;
+        }
+        .console-link vaadin-icon {
+            width: 12px;
+            height: 12px;
+            vertical-align: -1px;
+        }
     `;
 
     static properties = {
@@ -70,13 +84,29 @@ export class QwcOpenfeatureSelector extends LitElement {
 
     _renderProviderInfo() {
         const state = this.providerStatus.state;
-        const providers = this.providerStatus.providers;
-        const names = providers && providers.length > 0 ? providers.join(', ') : 'No provider';
+        const providers = this.providerStatus.providers || [];
         return html`
             <span class="state-dot state-${state}"></span>
             <span>${state}</span>
-            <span class="header-label" style="margin-left: 16px">${providers && providers.length > 1 ? 'Providers:' : 'Provider:'}</span>
-            <span class="provider-names">${names}</span>
+            <span class="header-label" style="margin-left: 16px">${providers.length > 1 ? 'Providers:' : 'Provider:'}</span>
+            <span class="provider-names">
+                ${providers.length > 0
+                    ? providers.map((provider, index) => html`${index > 0 ? ', ' : ''}${this._renderProvider(provider)}`)
+                    : html`No provider`}
+            </span>
+        `;
+    }
+
+    _renderProvider(provider) {
+        if (!provider.consoleUrl) {
+            return html`${provider.name}`;
+        }
+        return html`
+            <a class="console-link" href="${provider.consoleUrl}" target="_blank" rel="noopener"
+               title="Open the ${provider.name} management console">
+                ${provider.name}
+                <vaadin-icon icon="font-awesome-solid:up-right-from-square"></vaadin-icon>
+            </a>
         `;
     }
 }
