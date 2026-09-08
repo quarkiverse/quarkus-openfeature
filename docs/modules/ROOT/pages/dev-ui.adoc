@@ -9,6 +9,9 @@ Both pages share a header that selects the domain to inspect.
 The header also shows the current state of that domain and the names of the providers bound to it.
 If the application uses xref:index.adoc#multiple-domains[multiple domains], each is inspected separately.
 
+A provider whose flag server has a management console is shown as a link that opens that console in a new tab.
+This is currently the case for xref:flipt.adoc[Flipt] and xref:unleash.adoc[Unleash].
+
 == Feature Flags
 
 The *Feature Flags* page lists the flags known to the domain's providers and lets you search them.
