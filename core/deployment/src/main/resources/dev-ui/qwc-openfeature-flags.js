@@ -22,6 +22,15 @@ export class QwcOpenfeatureFlags extends LitElement {
             flex: 1;
             min-height: 0;
         }
+        /* Lumo has no outlined button variant, so tertiary buttons get an
+           explicit border to read as buttons. The transparent border on all
+           other buttons keeps them the same height. */
+        vaadin-button {
+            border: 1px solid transparent;
+        }
+        vaadin-button[theme~="tertiary"] {
+            border-color: var(--lumo-primary-color-50pct);
+        }
         .flag-panel {
             flex: 0 0 35%;
             border-right: 1px solid var(--lumo-contrast-10pct);
@@ -38,6 +47,12 @@ export class QwcOpenfeatureFlags extends LitElement {
         .flag-list {
             flex: 1;
             overflow-y: auto;
+        }
+        .clear-all {
+            padding: 8px 12px 0;
+        }
+        .clear-all vaadin-button {
+            width: 100%;
         }
         .flag-item {
             padding: 6px 12px;
@@ -80,7 +95,10 @@ export class QwcOpenfeatureFlags extends LitElement {
         }
         .override-buttons {
             display: flex;
-            gap: 4px;
+            gap: 8px;
+        }
+        .override-buttons vaadin-button {
+            flex: 1;
         }
         .right-panel {
             flex: 1;
@@ -121,6 +139,10 @@ export class QwcOpenfeatureFlags extends LitElement {
         }
         .result-error {
             color: var(--lumo-error-text-color);
+        }
+        .error-text {
+            color: var(--lumo-error-text-color);
+            font-size: var(--lumo-font-size-s);
         }
         .unsupported {
             padding: 16px;
@@ -354,11 +376,12 @@ export class QwcOpenfeatureFlags extends LitElement {
         return html`
             ${filtered.map(flag => this._renderFlagItem(flag))}
             ${this._hasOverrides() ? html`
-                <vaadin-button
-                    theme="small primary"
-                    style="margin: 8px 12px 0"
-                    @click="${this._onClearAllOverrides}"
-                >Clear overrides</vaadin-button>
+                <div class="clear-all">
+                    <vaadin-button
+                        theme="tertiary small"
+                        @click="${this._onClearAllOverrides}"
+                    >Clear overrides</vaadin-button>
+                </div>
             ` : ''}
         `;
     }
@@ -434,7 +457,7 @@ export class QwcOpenfeatureFlags extends LitElement {
             <div class="override-section">
                 <h3>Override Flag</h3>
                 ${this._selectedFlagType === 'object' ? html`
-                    <div class="result-error" style="font-size: var(--lumo-font-size-s)">Object flags cannot be overridden at the moment. Please file an issue if you need this.</div>
+                    <div class="error-text">Object flags cannot be overridden at the moment. Please file an issue if you need this.</div>
                 ` : ''}
                 <div class="override-form">
                     <vaadin-text-field
@@ -446,19 +469,19 @@ export class QwcOpenfeatureFlags extends LitElement {
                     ></vaadin-text-field>
                     <div class="override-buttons">
                         <vaadin-button
-                            theme="small primary"
+                            theme="primary small"
                             @click="${() => this._onSetOverride(this._selectedFlag)}"
                             ?disabled="${!this._selectedFlag || this._selectedFlagType === 'object'}"
                         >Override</vaadin-button>
                         ${override ? html`
                             <vaadin-button
-                                theme="small primary"
+                                theme="tertiary small"
                                 @click="${() => this._onClearOverride(this._selectedFlag)}"
                             >Clear</vaadin-button>
                         ` : ''}
                     </div>
                     ${this._overrideError ? html`
-                        <div class="result-error" style="font-size: var(--lumo-font-size-s)">${this._overrideError}</div>
+                        <div class="error-text">${this._overrideError}</div>
                     ` : ''}
                 </div>
             </div>
