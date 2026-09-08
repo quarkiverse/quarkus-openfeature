@@ -5,4 +5,5 @@
 * xref:gofeatureflag.adoc[GO Feature Flag Provider]
 * xref:unleash.adoc[Unleash Provider]
 * xref:config-providers.adoc[Configuration Providers]
+* xref:dev-ui.adoc[Dev UI]
 * xref:testing.adoc[Testing]
