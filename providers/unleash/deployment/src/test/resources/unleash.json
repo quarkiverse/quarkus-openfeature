@@ -27,7 +27,7 @@
       "parameters": {},
       "variants": [
         {"name": "ten", "weight": 1000, "weightType": "variable", "stickiness": "default",
-         "payload": {"type": "string", "value": "10"}}
+         "payload": {"type": "number", "value": "10"}}
       ]
     },
     {
@@ -36,7 +36,7 @@
       "parameters": {},
       "variants": [
         {"name": "big", "weight": 1000, "weightType": "variable", "stickiness": "default",
-         "payload": {"type": "string", "value": "10000000000"}}
+         "payload": {"type": "number", "value": "10000000000"}}
       ]
     }
   ],
