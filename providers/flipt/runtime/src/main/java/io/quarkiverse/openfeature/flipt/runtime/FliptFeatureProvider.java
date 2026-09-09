@@ -283,11 +283,15 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
         }
     }
 
-    private Value jsonNodeToValue(JsonNode node) {
+    // Deliberately duplicated in GoFeatureFlagFeatureProvider; the two providers share no
+    // module and core/runtime has no Jackson dependency. Fix both copies, never just one.
+    static Value jsonNodeToValue(JsonNode node) {
         if (node.isBoolean()) {
             return new Value(node.asBoolean());
-        } else if (node.isInt() || node.isLong()) {
+        } else if (node.isInt()) {
             return new Value(node.asInt());
+        } else if (node.isLong()) {
+            return new Value(node.asLong());
         } else if (node.isDouble() || node.isFloat()) {
             return new Value(node.asDouble());
         } else if (node.isTextual()) {

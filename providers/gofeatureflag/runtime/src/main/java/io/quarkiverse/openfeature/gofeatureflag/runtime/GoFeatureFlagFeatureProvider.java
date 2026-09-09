@@ -241,11 +241,15 @@ public class GoFeatureFlagFeatureProvider extends AbstractRemoteFeatureProvider 
         return defaultValue;
     }
 
-    private Value jsonNodeToValue(JsonNode node) {
+    // Deliberately duplicated in FliptFeatureProvider; the two providers share no
+    // module and core/runtime has no Jackson dependency. Fix both copies, never just one.
+    static Value jsonNodeToValue(JsonNode node) {
         if (node.isBoolean()) {
             return new Value(node.asBoolean());
-        } else if (node.isInt() || node.isLong()) {
+        } else if (node.isInt()) {
             return new Value(node.asInt());
+        } else if (node.isLong()) {
+            return new Value(node.asLong());
         } else if (node.isDouble() || node.isFloat()) {
             return new Value(node.asDouble());
         } else if (node.isTextual()) {
@@ -280,6 +284,8 @@ public class GoFeatureFlagFeatureProvider extends AbstractRemoteFeatureProvider 
                         type = FlagValueType.STRING;
                     } else if ("integer".equalsIgnoreCase(typeStr) || "int".equalsIgnoreCase(typeStr)) {
                         type = FlagValueType.INTEGER;
+                    } else if ("long".equalsIgnoreCase(typeStr)) {
+                        type = FlagValueType.LONG;
                     } else if ("double".equalsIgnoreCase(typeStr) || "float".equalsIgnoreCase(typeStr)) {
                         type = FlagValueType.DOUBLE;
                     }

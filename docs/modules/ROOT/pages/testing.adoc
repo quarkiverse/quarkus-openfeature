@@ -59,6 +59,7 @@ The `@TestFlag` annotation supports the following value types (via the `type` at
 * `BOOLEAN` (default) -- parsed via `Boolean.parseBoolean()`, so only `"true"` (case-insensitive) produces `true`
 * `STRING` -- used as-is
 * `INTEGER` -- parsed via `Integer.parseInt()`
+* `LONG` -- parsed via `Long.parseLong()`
 * `DOUBLE` -- parsed via `Double.parseDouble()`
 
 Note that `OBJECT` is not supported and will result in an exception.

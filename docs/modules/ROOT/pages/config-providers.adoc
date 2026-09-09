@@ -29,12 +29,13 @@ Define flags in `application.properties`:
 quarkus.openfeature.runtime.new-feature=true
 quarkus.openfeature.runtime.greeting=hello
 quarkus.openfeature.runtime.max-retries=3
+quarkus.openfeature.runtime.max-bytes=10000000000
 quarkus.openfeature.runtime.threshold=0.75
 ----
 
 Values are stored as strings and converted to the requested type at evaluation time.
 Boolean evaluation never fails because a value cannot be parsed, but note that only `true` is truthy, all other values are false.
-Integer and double evaluation throw an error if the value cannot be parsed.
+Integer, long and double evaluation throw an error if the value cannot be parsed.
 
 For named domains, flags are scoped under the domain name:
 

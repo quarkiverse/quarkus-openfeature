@@ -38,6 +38,7 @@ Overrides support the same value types as `@TestFlag`:
 * `boolean` -- parsed via `Boolean.parseBoolean()`, so only `"true"` (case-insensitive) produces `true`
 * `string` -- used as-is
 * `integer` -- parsed via `Integer.parseInt()`
+* `long` -- parsed via `Long.parseLong()`
 * `double` -- parsed via `Double.parseDouble()`
 
 Object flags cannot be overridden.

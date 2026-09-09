@@ -259,7 +259,7 @@ public class OpenFeatureJsonRpcService {
         return api.getClient(domain);
     }
 
-    private EvaluationContext parseContext(String contextJson) {
+    static EvaluationContext parseContext(String contextJson) {
         if (contextJson == null || contextJson.isBlank()) {
             return new ImmutableContext();
         }
@@ -269,12 +269,12 @@ public class OpenFeatureJsonRpcService {
             Object val = json.getValue(field);
             if (val instanceof Boolean b) {
                 attributes.put(field, new Value(b));
+            } else if (val instanceof Integer i) {
+                attributes.put(field, new Value(i));
+            } else if (val instanceof Long l) {
+                attributes.put(field, new Value(l));
             } else if (val instanceof Number n) {
-                if (val instanceof Integer || val instanceof Long) {
-                    attributes.put(field, new Value(n.intValue()));
-                } else {
-                    attributes.put(field, new Value(n.doubleValue()));
-                }
+                attributes.put(field, new Value(n.doubleValue()));
             } else {
                 attributes.put(field, new Value(String.valueOf(val)));
             }
@@ -313,14 +313,19 @@ public class OpenFeatureJsonRpcService {
         }
     }
 
-    private Object valueToJson(Value value) {
+    static Object valueToJson(Value value) {
         if (value == null || value.isNull()) {
             return null;
         } else if (value.isBoolean()) {
             return value.asBoolean();
         } else if (value.isNumber()) {
-            if (value.asInteger() != null && value.asDouble() == value.asInteger().doubleValue()) {
+            // out-of-range values never survive the roundtrip through `asInteger`/`asLong`,
+            // so this also rejects a long that doesn't fit an int and a double that doesn't fit a long
+            if (value.asInteger().doubleValue() == value.asDouble()) {
                 return value.asInteger();
+            }
+            if (value.asLong().doubleValue() == value.asDouble()) {
+                return value.asLong();
             }
             return value.asDouble();
         } else if (value.isString()) {
