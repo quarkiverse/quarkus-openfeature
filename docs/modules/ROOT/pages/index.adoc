@@ -123,16 +123,20 @@ public class MyService {
 }
 ----
 
-The `Client` supports boolean, string, integer, double, and object flag evaluations:
+The `Client` supports boolean, string, integer, long, double, and object flag evaluations:
 
 [source,java]
 ----
 boolean enabled = client.getBooleanValue("feature-enabled", false);
 String variant = client.getStringValue("ui-variant", "default");
 int maxRetries = client.getIntegerValue("max-retries", 3);
+long maxBytes = client.getLongValue("max-bytes", 10_000_000_000L);
 double threshold = client.getDoubleValue("threshold", 0.5);
 Value config = client.getObjectValue("complex-config", new Value());
 ----
+
+NOTE: Only the configuration-based providers resolve `long` flags natively.
+The remote-sync providers fall back to the OpenFeature SDK default, which resolves the flag as a `double`, so values outside the range of `[-(2^53^ - 1), 2^53^ - 1]` result in an error.
 
 NOTE: Object evaluation returns structured data whose richness depends on the provider.
 Providers like flagd support full JSON structures, while the configuration-based providers return the raw config value as a string wrapped in a `Value`.

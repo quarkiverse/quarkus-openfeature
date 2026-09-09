@@ -60,14 +60,42 @@ public final class FlagOverrides {
                 .build();
     }
 
+    // A coercion is allowed only when it is lossless; anything else is a type mismatch.
+    // Narrowing conversions truncate or saturate, so comparing the result back against
+    // the original value rejects everything that doesn't convert exactly.
     private static Object coerceNumeric(Object value, Class<?> targetType) {
-        if (value instanceof Long l && targetType == Double.class) {
-            return l.doubleValue();
-        }
-        if (value instanceof Double d && targetType == Long.class) {
-            // NaN is rejected too: NaN != Math.floor(NaN) per IEEE-754
-            if (d == Math.floor(d) && !Double.isInfinite(d)) {
-                return (long) d.doubleValue();
+        if (value instanceof Integer i) {
+            // int fits both long and double exactly
+            if (targetType == Long.class) {
+                return i.longValue();
+            }
+            if (targetType == Double.class) {
+                return i.doubleValue();
+            }
+        } else if (value instanceof Long l) {
+            if (targetType == Integer.class) {
+                return l.intValue() == l ? (Object) l.intValue() : null;
+            }
+            // long doesn't always fit a double exactly, but a feature flag override
+            // of that magnitude is not worth rejecting
+            if (targetType == Double.class) {
+                return l.doubleValue();
+            }
+        } else if (value instanceof Double d) {
+            // NaN and infinity are rejected here as well: NaN compares equal to nothing
+            // and infinity saturates
+            if (targetType == Integer.class) {
+                return d.intValue() == d ? (Object) d.intValue() : null;
+            }
+            if (targetType == Long.class) {
+                // Negative saturation yields Long.MIN_VALUE, which is exactly representable
+                // as a double and so is caught by the comparison. Positive saturation yields
+                // Long.MAX_VALUE, which rounds back up to 2^63 and would therefore compare
+                // equal to a d of 2^63; it is rejected outright instead. That is safe because
+                // a conversion that didn't saturate always yields a long that is exactly
+                // representable as a double, which Long.MAX_VALUE is not.
+                long result = d.longValue();
+                return result != Long.MAX_VALUE && result == d ? (Object) result : null;
             }
         }
         return null;
