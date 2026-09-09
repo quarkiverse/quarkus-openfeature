@@ -13,6 +13,7 @@ import org.jboss.logging.Logger;
 import dev.openfeature.sdk.ErrorCode;
 import dev.openfeature.sdk.EvaluationContext;
 import dev.openfeature.sdk.FlagValueType;
+import dev.openfeature.sdk.ImmutableStructure;
 import dev.openfeature.sdk.Metadata;
 import dev.openfeature.sdk.ProviderEvaluation;
 import dev.openfeature.sdk.Reason;
@@ -28,6 +29,10 @@ import io.quarkiverse.openfeature.runtime.AbstractRemoteFeatureProvider;
 import io.quarkiverse.openfeature.runtime.SyncClientState;
 import io.quarkus.tls.TlsConfigurationRegistry;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.DecodeException;
+import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 // Concurrency: the UnleashEngine is updated from the Vert.x event loop
 // and read from request threads. This is safe because the native Yggdrasil
@@ -41,6 +46,9 @@ public class UnleashFeatureProvider extends AbstractRemoteFeatureProvider {
     private final String environment;
     // the Unleash server serves its management console next to the API, so `.../api` becomes `...`
     private final String consoleUrl;
+    // the engine only exposes flag names, so the value types are derived from the raw flag
+    // data; written on the event loop when flags are synced, read from request threads
+    private volatile Map<String, FlagValueType> flagTypes = Map.of();
 
     public UnleashFeatureProvider(UnleashEngine engine, Vertx vertx,
             UnleashConfig.ProviderConfig config, TlsConfigurationRegistry tlsRegistry,
@@ -81,6 +89,7 @@ public class UnleashFeatureProvider extends AbstractRemoteFeatureProvider {
             @Override
             public void onUpdate(String features, boolean reconnected) throws YggdrasilInvalidInputException {
                 engine.takeState(features);
+                flagTypes = parseFlagTypes(features);
                 if (reconnected) {
                     handleReconnected();
                 } else {
@@ -238,9 +247,77 @@ public class UnleashFeatureProvider extends AbstractRemoteFeatureProvider {
         } else if (expectedType == Double.class) {
             return (T) Double.valueOf(payloadValue);
         } else if (expectedType == Value.class) {
-            return (T) new Value(payloadValue);
+            return (T) payloadValue(payload);
         }
         return defaultValue;
+    }
+
+    // The declared payload type is authoritative: `json` becomes a structure and `number`
+    // becomes a number, while `string` and `csv` are text. A payload whose value doesn't
+    // match its declared type is returned as text as well, which is more useful than
+    // failing the evaluation outright.
+    static Value payloadValue(Payload payload) {
+        String type = payload.getType();
+        if ("json".equalsIgnoreCase(type)) {
+            try {
+                return jsonValue(Json.decodeValue(payload.getValue()));
+            } catch (DecodeException e) {
+                return new Value(payload.getValue());
+            }
+        } else if ("number".equalsIgnoreCase(type)) {
+            Value number = numberValue(payload.getValue());
+            if (number != null) {
+                return number;
+            }
+        }
+        return new Value(payload.getValue());
+    }
+
+    // the narrowest type that holds the value exactly, so that the resolved value agrees
+    // with the type that `getFlags` reports for the same payload
+    private static Value numberValue(String value) {
+        try {
+            return new Value(Integer.parseInt(value));
+        } catch (NumberFormatException e) {
+            // not an int, try wider
+        }
+        try {
+            return new Value(Long.parseLong(value));
+        } catch (NumberFormatException e) {
+            // not a long, try wider
+        }
+        try {
+            return new Value(Double.parseDouble(value));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private static Value jsonValue(Object json) {
+        if (json == null) {
+            return new Value();
+        } else if (json instanceof JsonObject object) {
+            Map<String, Value> map = new HashMap<>();
+            for (Map.Entry<String, Object> entry : object) {
+                map.put(entry.getKey(), jsonValue(entry.getValue()));
+            }
+            return new Value(new ImmutableStructure(map));
+        } else if (json instanceof JsonArray array) {
+            List<Value> list = new ArrayList<>(array.size());
+            for (Object item : array) {
+                list.add(jsonValue(item));
+            }
+            return new Value(list);
+        } else if (json instanceof Boolean bool) {
+            return new Value(bool);
+        } else if (json instanceof Integer integer) {
+            return new Value(integer);
+        } else if (json instanceof Long number) {
+            return new Value(number);
+        } else if (json instanceof Number number) {
+            return new Value(number.doubleValue());
+        }
+        return new Value(json.toString());
     }
 
     private Context mapContext(EvaluationContext ctx) {
@@ -297,23 +374,124 @@ public class UnleashFeatureProvider extends AbstractRemoteFeatureProvider {
         try {
             List<FeatureDef> toggles = engine.listKnownToggles();
             List<FlagInfo> result = new ArrayList<>();
+            Map<String, FlagValueType> types = flagTypes;
             for (FeatureDef toggle : toggles) {
-                FlagValueType type = null;
-                if (toggle.getType().isPresent()) {
-                    String typeStr = toggle.getType().get();
-                    if ("release".equalsIgnoreCase(typeStr) || "kill-switch".equalsIgnoreCase(typeStr)) {
-                        type = FlagValueType.BOOLEAN;
-                    } else if ("experiment".equalsIgnoreCase(typeStr)) {
-                        type = FlagValueType.STRING;
-                    }
-                }
-                result.add(new FlagInfo(toggle.getName(), type));
+                result.add(new FlagInfo(toggle.getName(), types.get(toggle.getName())));
             }
             return result;
         } catch (Exception e) {
             log.debugf(e, "Failed to list flags");
             return List.of();
         }
+    }
+
+    // `FeatureDef.getType()` is the Unleash flag type (release, experiment, kill-switch, ...),
+    // a lifecycle classification that says nothing about the value type. The value type follows
+    // from the variants instead: a flag without variants is evaluated through `isEnabled` and is
+    // therefore boolean, while a flag with variants carries its type in the variant payload.
+    static Map<String, FlagValueType> parseFlagTypes(String featuresJson) {
+        JsonArray features = new JsonObject(featuresJson).getJsonArray("features");
+        if (features == null) {
+            return Map.of();
+        }
+
+        Map<String, FlagValueType> result = new HashMap<>();
+        for (int i = 0; i < features.size(); i++) {
+            JsonObject feature = features.getJsonObject(i);
+            String name = feature.getString("name");
+            if (name != null) {
+                result.put(name, flagType(variantsOf(feature)));
+            }
+        }
+        return result;
+    }
+
+    // Variants can be attached to the flag itself or to one of its strategies. A real Unleash
+    // server puts everything created through the admin UI in the latter place and leaves the
+    // flag-level array empty, so both have to be taken into account.
+    private static List<JsonObject> variantsOf(JsonObject feature) {
+        List<JsonObject> result = new ArrayList<>();
+        addAll(result, feature.getJsonArray("variants"));
+
+        JsonArray strategies = feature.getJsonArray("strategies");
+        if (strategies != null) {
+            for (int i = 0; i < strategies.size(); i++) {
+                addAll(result, strategies.getJsonObject(i).getJsonArray("variants"));
+            }
+        }
+        return result;
+    }
+
+    private static void addAll(List<JsonObject> result, JsonArray variants) {
+        if (variants == null) {
+            return;
+        }
+        for (int i = 0; i < variants.size(); i++) {
+            result.add(variants.getJsonObject(i));
+        }
+    }
+
+    private static FlagValueType flagType(List<JsonObject> variants) {
+        if (variants.isEmpty()) {
+            return FlagValueType.BOOLEAN;
+        }
+
+        // a variant without a payload evaluates to its own name, which is a string
+        String payloadType = null;
+        List<String> numbers = new ArrayList<>();
+        for (int i = 0; i < variants.size(); i++) {
+            JsonObject payload = variants.get(i).getJsonObject("payload");
+            String type = payload != null ? payload.getString("type", "string") : "string";
+            if (i == 0) {
+                payloadType = type;
+            } else if (!payloadType.equals(type)) {
+                // the variants of one flag are expected to agree; if they don't, there is
+                // no single type to report
+                return null;
+            }
+            if (payload != null) {
+                numbers.add(payload.getString("value"));
+            }
+        }
+
+        return switch (payloadType) {
+            case "string", "csv" -> FlagValueType.STRING;
+            case "json" -> FlagValueType.OBJECT;
+            case "number" -> numberType(numbers);
+            default -> null;
+        };
+    }
+
+    // Unleash stores number payloads as strings, so the type is the narrowest one that
+    // holds every variant exactly, the same way `ConfigFeatureProvider` infers it
+    private static FlagValueType numberType(List<String> values) {
+        boolean allInt = true;
+        boolean allLong = true;
+        for (String value : values) {
+            if (allInt) {
+                try {
+                    Integer.parseInt(value);
+                    continue;
+                } catch (NumberFormatException e) {
+                    allInt = false;
+                }
+            }
+            if (allLong) {
+                try {
+                    Long.parseLong(value);
+                } catch (NumberFormatException e) {
+                    allLong = false;
+                }
+            }
+        }
+
+        if (allInt) {
+            return FlagValueType.INTEGER;
+        }
+        if (allLong) {
+            return FlagValueType.LONG;
+        }
+        return FlagValueType.DOUBLE;
     }
 
     @Override
