@@ -41,7 +41,7 @@
         <maven.compiler.release>17</maven.compiler.release>
 
         <assertj.version>3.27.7</assertj.version>
-        <cucumber.version>7.34.7</cucumber.version>
+        <cucumber.version>7.34.8</cucumber.version>
         <endive.version>1.1.0</endive.version>
         <flagd-core.version>2.0.1</flagd-core.version>
         <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
