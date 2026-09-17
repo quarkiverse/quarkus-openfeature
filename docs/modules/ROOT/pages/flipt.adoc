@@ -172,8 +172,11 @@ Changes to the flag definition file are detected during live reload and the Flip
 
 Flag evaluation runs locally in a WebAssembly engine.
 Each engine instance can only evaluate one flag at a time, so a pool of engine instances is maintained.
-The pool size controls the maximum number of concurrent flag evaluations; the default is 16.
-If all instances are in use, an evaluation request waits up to 100 milliseconds for an instance to become available.
+The configured pool size is the minimum number of engine instances; they are created when the provider starts.
+The default is 16.
+When all instances are in use, the pool creates more, up to 4 times the configured size.
+Instances above the minimum are discarded again when they become idle: the peak capacity above twice the configured size after a minute, the remaining extra instances after 10 minutes.
+Only when the pool has reached its maximum size does an evaluation request wait for an instance to become available, and only for up to 10 milliseconds.
 If no instance is available within that time, the default value is returned.
 To increase the pool size:
 

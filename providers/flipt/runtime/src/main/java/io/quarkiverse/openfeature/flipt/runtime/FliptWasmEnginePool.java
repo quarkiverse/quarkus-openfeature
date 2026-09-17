@@ -1,30 +1,22 @@
 package io.quarkiverse.openfeature.flipt.runtime;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
-
-import org.jboss.logging.Logger;
+import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-final class FliptWasmEnginePool {
-    private static final Logger log = Logger.getLogger(FliptWasmEnginePool.class);
+import io.quarkiverse.openfeature.runtime.Pool;
 
-    private final BlockingQueue<FliptWasmEngine> pool;
+final class FliptWasmEnginePool {
+    private final Pool<FliptWasmEngine> pool;
     private volatile String latestSnapshot;
-    private volatile boolean closed;
 
     FliptWasmEnginePool(int size, String namespace, String initialSnapshot, ObjectMapper mapper) {
-        this.pool = new ArrayBlockingQueue<>(size);
         this.latestSnapshot = initialSnapshot;
-        for (int i = 0; i < size; i++) {
+        this.pool = new Pool<>("Flipt WASM engine", size, () -> {
             FliptWasmEngine engine = new FliptWasmEngine(mapper);
-            engine.initialize(namespace, initialSnapshot);
-            pool.add(engine);
-        }
+            engine.initialize(namespace, latestSnapshot);
+            return engine;
+        }, FliptWasmEngine::destroy);
     }
 
     String getLatestSnapshot() {
@@ -36,56 +28,21 @@ final class FliptWasmEnginePool {
     }
 
     String evaluateBoolean(String requestJson) {
-        FliptWasmEngine engine = borrow();
-        try {
-            return engine.evaluateBoolean(requestJson);
-        } finally {
-            returnEngine(engine);
-        }
+        return evaluate(engine -> engine.evaluateBoolean(requestJson));
     }
 
     String evaluateVariant(String requestJson) {
-        FliptWasmEngine engine = borrow();
-        try {
-            return engine.evaluateVariant(requestJson);
-        } finally {
-            returnEngine(engine);
-        }
+        return evaluate(engine -> engine.evaluateVariant(requestJson));
     }
 
     void close() {
-        closed = true;
-        List<FliptWasmEngine> drained = new ArrayList<>();
-        pool.drainTo(drained);
-        for (FliptWasmEngine engine : drained) {
-            engine.destroy();
-        }
+        pool.close();
     }
 
-    private FliptWasmEngine borrow() {
-        try {
-            FliptWasmEngine engine = pool.poll(100, TimeUnit.MILLISECONDS);
-            if (engine == null) {
-                log.error("Timed out waiting for WASM engine instance");
-                throw new RuntimeException("Timed out waiting for WASM engine instance");
-            }
+    private String evaluate(Function<FliptWasmEngine, String> action) {
+        return pool.withInstance(engine -> {
             engine.updateIfNecessary(latestSnapshot);
-            return engine;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Interrupted while waiting for WASM engine instance", e);
-        }
-    }
-
-    private void returnEngine(FliptWasmEngine engine) {
-        if (closed) {
-            engine.destroy();
-            return;
-        }
-        if (!pool.offer(engine)) {
-            // this should never happen
-            log.error("Failed to return WASM engine to pool");
-            engine.destroy();
-        }
+            return action.apply(engine);
+        });
     }
 }

@@ -450,7 +450,7 @@ endif::add-copy-button-to-config-props[]
 
 [.description]
 --
-Number of WASM engine instances in the evaluation pool. Each engine can evaluate one flag at a time, so this controls the maximum concurrency of flag evaluations.
+Minimum number of WASM engine instances in the evaluation pool. Each engine can evaluate one flag at a time, so this controls the concurrency of flag evaluations. The instances are created eagerly and the pool grows on demand up to 4 times this number; instances above the minimum are discarded when they become idle.
 
 
 ifdef::add-copy-button-to-env-var[]

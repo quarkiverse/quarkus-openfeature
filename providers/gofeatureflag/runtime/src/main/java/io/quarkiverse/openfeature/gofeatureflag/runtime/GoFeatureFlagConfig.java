@@ -80,9 +80,11 @@ public interface GoFeatureFlagConfig {
         Duration gracePeriod();
 
         /**
-         * Number of WASM engine instances in the evaluation pool.
+         * Minimum number of WASM engine instances in the evaluation pool.
          * Each engine can evaluate one flag at a time, so this controls
-         * the maximum concurrency of flag evaluations.
+         * the concurrency of flag evaluations. The instances are created
+         * eagerly and the pool grows on demand up to 4 times this number;
+         * instances above the minimum are discarded when they become idle.
          */
         @WithDefault("16")
         int wasmInstances();
