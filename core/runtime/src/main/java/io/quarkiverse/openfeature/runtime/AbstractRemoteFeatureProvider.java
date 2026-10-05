@@ -92,6 +92,7 @@ public abstract class AbstractRemoteFeatureProvider extends EventProvider implem
         if (!syncState.wasEverReady()) {
             recordEvent(ProviderEvent.PROVIDER_ERROR, message);
             emitProviderError(ProviderEventDetails.builder()
+                    .errorCode(ErrorCode.PROVIDER_NOT_READY)
                     .message(message)
                     .build());
             return;
@@ -111,6 +112,7 @@ public abstract class AbstractRemoteFeatureProvider extends EventProvider implem
                         gracePeriod.toSeconds());
                 recordEvent(ProviderEvent.PROVIDER_ERROR, message);
                 emitProviderError(ProviderEventDetails.builder()
+                        .errorCode(ErrorCode.GENERAL)
                         .message(message)
                         .build());
             }
