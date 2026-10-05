@@ -18,6 +18,8 @@ import dev.openfeature.sdk.Metadata;
 import dev.openfeature.sdk.ProviderEvaluation;
 import dev.openfeature.sdk.Reason;
 import dev.openfeature.sdk.Value;
+import dev.openfeature.sdk.exceptions.InvalidContextError;
+import dev.openfeature.sdk.exceptions.TypeMismatchError;
 import io.getunleash.engine.Context;
 import io.getunleash.engine.FeatureDef;
 import io.getunleash.engine.FlatResponse;
@@ -137,13 +139,8 @@ public class UnleashFeatureProvider extends AbstractRemoteFeatureProvider {
                     .value(response.value)
                     .reason(Reason.TARGETING_MATCH.name())
                     .build();
-        } catch (Exception e) {
-            return ProviderEvaluation.<Boolean> builder()
-                    .value(defaultValue)
-                    .reason(Reason.ERROR.name())
-                    .errorCode(ErrorCode.GENERAL)
-                    .errorMessage(e.getMessage())
-                    .build();
+        } catch (YggdrasilInvalidInputException e) {
+            throw new InvalidContextError(e.getMessage());
         }
     }
 
@@ -211,20 +208,8 @@ public class UnleashFeatureProvider extends AbstractRemoteFeatureProvider {
                     .variant(variant.getName())
                     .reason(Reason.TARGETING_MATCH.name())
                     .build();
-        } catch (NumberFormatException e) {
-            return ProviderEvaluation.<T> builder()
-                    .value(defaultValue)
-                    .reason(Reason.ERROR.name())
-                    .errorCode(ErrorCode.TYPE_MISMATCH)
-                    .errorMessage(e.getMessage())
-                    .build();
-        } catch (Exception e) {
-            return ProviderEvaluation.<T> builder()
-                    .value(defaultValue)
-                    .reason(Reason.ERROR.name())
-                    .errorCode(ErrorCode.GENERAL)
-                    .errorMessage(e.getMessage())
-                    .build();
+        } catch (YggdrasilInvalidInputException e) {
+            throw new InvalidContextError(e.getMessage());
         }
     }
 
@@ -243,9 +228,17 @@ public class UnleashFeatureProvider extends AbstractRemoteFeatureProvider {
         if (expectedType == String.class) {
             return (T) payloadValue;
         } else if (expectedType == Integer.class) {
-            return (T) Integer.valueOf(payloadValue);
+            try {
+                return (T) Integer.valueOf(payloadValue);
+            } catch (NumberFormatException e) {
+                throw new TypeMismatchError("Variant payload is not an integer: " + payloadValue);
+            }
         } else if (expectedType == Double.class) {
-            return (T) Double.valueOf(payloadValue);
+            try {
+                return (T) Double.valueOf(payloadValue);
+            } catch (NumberFormatException e) {
+                throw new TypeMismatchError("Variant payload is not a number: " + payloadValue);
+            }
         } else if (expectedType == Value.class) {
             return (T) payloadValue(payload);
         }

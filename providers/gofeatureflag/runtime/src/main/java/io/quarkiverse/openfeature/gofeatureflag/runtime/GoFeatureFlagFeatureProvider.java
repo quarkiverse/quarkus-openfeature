@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.jboss.logging.Logger;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -21,6 +22,8 @@ import dev.openfeature.sdk.Metadata;
 import dev.openfeature.sdk.ProviderEvaluation;
 import dev.openfeature.sdk.Reason;
 import dev.openfeature.sdk.Value;
+import dev.openfeature.sdk.exceptions.GeneralError;
+import dev.openfeature.sdk.exceptions.ParseError;
 import io.quarkiverse.openfeature.runtime.AbstractRemoteFeatureProvider;
 import io.quarkiverse.openfeature.runtime.SyncClientState;
 import io.quarkus.tls.TlsConfigurationRegistry;
@@ -154,37 +157,35 @@ public class GoFeatureFlagFeatureProvider extends AbstractRemoteFeatureProvider 
                     .build();
         }
 
+        String inputJson = buildWasmInput(key, flagDef, defaultValue, ctx);
+        String outputJson = enginePool.evaluate(inputJson);
+        JsonNode response;
         try {
-            String inputJson = buildWasmInput(key, flagDef, defaultValue, ctx);
-            String outputJson = enginePool.evaluate(inputJson);
-            JsonNode response = mapper.readTree(outputJson);
+            response = mapper.readTree(outputJson);
+        } catch (JsonProcessingException e) {
+            throw new ParseError("Wrong response from the GO Feature Flag WASM engine: " + e.getMessage());
+        }
 
-            if (response.path("failed").asBoolean(false)) {
-                return ProviderEvaluation.<T> builder()
-                        .value(defaultValue)
-                        .reason(Reason.ERROR.name())
-                        .errorCode(mapErrorCode(response.path("errorCode").asText("GENERAL")))
-                        .errorMessage(response.path("errorDetails").asText("Unknown error"))
-                        .build();
-            }
-
-            return ProviderEvaluation.<T> builder()
-                    .value(convertValue(response.get("value"), expectedType, defaultValue))
-                    .variant(response.path("variationType").asText(null))
-                    .reason(response.path("reason").asText(Reason.UNKNOWN.name()))
-                    .build();
-        } catch (Exception e) {
+        // the engine reports an evaluation failure with its own error code, which is more
+        // specific than anything that could be derived from an exception
+        if (response.path("failed").asBoolean(false)) {
             return ProviderEvaluation.<T> builder()
                     .value(defaultValue)
                     .reason(Reason.ERROR.name())
-                    .errorCode(ErrorCode.GENERAL)
-                    .errorMessage(e.getMessage())
+                    .errorCode(mapErrorCode(response.path("errorCode").asText("GENERAL")))
+                    .errorMessage(response.path("errorDetails").asText("Unknown error"))
                     .build();
         }
+
+        return ProviderEvaluation.<T> builder()
+                .value(convertValue(response.get("value"), expectedType, defaultValue))
+                .variant(response.path("variationType").asText(null))
+                .reason(response.path("reason").asText(Reason.UNKNOWN.name()))
+                .build();
     }
 
     private String buildWasmInput(String flagKey, JsonNode flagDef, Object defaultValue,
-            EvaluationContext ctx) throws Exception {
+            EvaluationContext ctx) {
         ObjectNode input = mapper.createObjectNode();
         input.put("flagKey", flagKey);
         input.set("flag", flagDef);
@@ -205,7 +206,11 @@ public class GoFeatureFlagFeatureProvider extends AbstractRemoteFeatureProvider 
         }
         input.set("flagContext", flagContext);
 
-        return mapper.writeValueAsString(input);
+        try {
+            return mapper.writeValueAsString(input);
+        } catch (JsonProcessingException e) {
+            throw new GeneralError("Failed to build the GO Feature Flag evaluation request: " + e.getMessage());
+        }
     }
 
     private ErrorCode mapErrorCode(String code) {

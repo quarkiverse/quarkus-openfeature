@@ -9,11 +9,11 @@ import java.util.Optional;
 
 import org.jboss.logging.Logger;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import dev.openfeature.sdk.ErrorCode;
 import dev.openfeature.sdk.EvaluationContext;
 import dev.openfeature.sdk.FlagValueType;
 import dev.openfeature.sdk.ImmutableStructure;
@@ -21,6 +21,9 @@ import dev.openfeature.sdk.Metadata;
 import dev.openfeature.sdk.ProviderEvaluation;
 import dev.openfeature.sdk.Reason;
 import dev.openfeature.sdk.Value;
+import dev.openfeature.sdk.exceptions.GeneralError;
+import dev.openfeature.sdk.exceptions.ParseError;
+import dev.openfeature.sdk.exceptions.TypeMismatchError;
 import io.quarkiverse.openfeature.runtime.AbstractRemoteFeatureProvider;
 import io.quarkiverse.openfeature.runtime.DevFeatureAccess.FlagInfo;
 import io.quarkiverse.openfeature.runtime.SyncClientState;
@@ -102,20 +105,11 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
         }
         String requestJson = buildEvaluationRequest(key, ctx);
         String responseJson = enginePool.evaluateBoolean(requestJson);
-        try {
-            JsonNode response = parseWasmResponse(responseJson);
-            return ProviderEvaluation.<Boolean> builder()
-                    .value(response.path("enabled").asBoolean())
-                    .reason(mapReason(response.path("reason").asText()))
-                    .build();
-        } catch (Exception e) {
-            return ProviderEvaluation.<Boolean> builder()
-                    .value(defaultValue)
-                    .reason(Reason.ERROR.name())
-                    .errorCode(ErrorCode.GENERAL)
-                    .errorMessage(e.getMessage())
-                    .build();
-        }
+        JsonNode response = parseWasmResponse(responseJson);
+        return ProviderEvaluation.<Boolean> builder()
+                .value(response.path("enabled").asBoolean())
+                .reason(mapReason(response.path("reason").asText()))
+                .build();
     }
 
     @Override
@@ -126,22 +120,13 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
         }
         String requestJson = buildEvaluationRequest(key, ctx);
         String responseJson = enginePool.evaluateVariant(requestJson);
-        try {
-            JsonNode response = parseWasmResponse(responseJson);
-            String variantKey = response.path("variant_key").asText();
-            return ProviderEvaluation.<String> builder()
-                    .value(variantKey)
-                    .variant(variantKey)
-                    .reason(mapReason(response.path("reason").asText()))
-                    .build();
-        } catch (Exception e) {
-            return ProviderEvaluation.<String> builder()
-                    .value(defaultValue)
-                    .reason(Reason.ERROR.name())
-                    .errorCode(ErrorCode.GENERAL)
-                    .errorMessage(e.getMessage())
-                    .build();
-        }
+        JsonNode response = parseWasmResponse(responseJson);
+        String variantKey = response.path("variant_key").asText();
+        return ProviderEvaluation.<String> builder()
+                .value(variantKey)
+                .variant(variantKey)
+                .reason(mapReason(response.path("reason").asText()))
+                .build();
     }
 
     @Override
@@ -152,29 +137,19 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
         }
         String requestJson = buildEvaluationRequest(key, ctx);
         String responseJson = enginePool.evaluateVariant(requestJson);
+        JsonNode response = parseWasmResponse(responseJson);
+        String variantKey = response.path("variant_key").asText();
+        int value;
         try {
-            JsonNode response = parseWasmResponse(responseJson);
-            String variantKey = response.path("variant_key").asText();
-            return ProviderEvaluation.<Integer> builder()
-                    .value(Integer.parseInt(variantKey))
-                    .variant(variantKey)
-                    .reason(mapReason(response.path("reason").asText()))
-                    .build();
+            value = Integer.parseInt(variantKey);
         } catch (NumberFormatException e) {
-            return ProviderEvaluation.<Integer> builder()
-                    .value(defaultValue)
-                    .reason(Reason.ERROR.name())
-                    .errorCode(ErrorCode.TYPE_MISMATCH)
-                    .errorMessage("Variant key is not an integer: " + e.getMessage())
-                    .build();
-        } catch (Exception e) {
-            return ProviderEvaluation.<Integer> builder()
-                    .value(defaultValue)
-                    .reason(Reason.ERROR.name())
-                    .errorCode(ErrorCode.GENERAL)
-                    .errorMessage(e.getMessage())
-                    .build();
+            throw new TypeMismatchError("Variant key is not an integer: " + variantKey);
         }
+        return ProviderEvaluation.<Integer> builder()
+                .value(value)
+                .variant(variantKey)
+                .reason(mapReason(response.path("reason").asText()))
+                .build();
     }
 
     @Override
@@ -185,29 +160,19 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
         }
         String requestJson = buildEvaluationRequest(key, ctx);
         String responseJson = enginePool.evaluateVariant(requestJson);
+        JsonNode response = parseWasmResponse(responseJson);
+        String variantKey = response.path("variant_key").asText();
+        double value;
         try {
-            JsonNode response = parseWasmResponse(responseJson);
-            String variantKey = response.path("variant_key").asText();
-            return ProviderEvaluation.<Double> builder()
-                    .value(Double.parseDouble(variantKey))
-                    .variant(variantKey)
-                    .reason(mapReason(response.path("reason").asText()))
-                    .build();
+            value = Double.parseDouble(variantKey);
         } catch (NumberFormatException e) {
-            return ProviderEvaluation.<Double> builder()
-                    .value(defaultValue)
-                    .reason(Reason.ERROR.name())
-                    .errorCode(ErrorCode.TYPE_MISMATCH)
-                    .errorMessage("Variant key is not a number: " + e.getMessage())
-                    .build();
-        } catch (Exception e) {
-            return ProviderEvaluation.<Double> builder()
-                    .value(defaultValue)
-                    .reason(Reason.ERROR.name())
-                    .errorCode(ErrorCode.GENERAL)
-                    .errorMessage(e.getMessage())
-                    .build();
+            throw new TypeMismatchError("Variant key is not a number: " + variantKey);
         }
+        return ProviderEvaluation.<Double> builder()
+                .value(value)
+                .variant(variantKey)
+                .reason(mapReason(response.path("reason").asText()))
+                .build();
     }
 
     @Override
@@ -218,24 +183,15 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
         }
         String requestJson = buildEvaluationRequest(key, ctx);
         String responseJson = enginePool.evaluateVariant(requestJson);
-        try {
-            JsonNode response = parseWasmResponse(responseJson);
-            String variantKey = response.path("variant_key").asText();
-            String variantAttachment = response.path("variant_attachment").asText(null);
-            Value value = variantAttachment != null ? parseJsonValue(variantAttachment) : new Value(variantKey);
-            return ProviderEvaluation.<Value> builder()
-                    .value(value)
-                    .variant(variantKey)
-                    .reason(mapReason(response.path("reason").asText()))
-                    .build();
-        } catch (Exception e) {
-            return ProviderEvaluation.<Value> builder()
-                    .value(defaultValue)
-                    .reason(Reason.ERROR.name())
-                    .errorCode(ErrorCode.GENERAL)
-                    .errorMessage(e.getMessage())
-                    .build();
-        }
+        JsonNode response = parseWasmResponse(responseJson);
+        String variantKey = response.path("variant_key").asText();
+        String variantAttachment = response.path("variant_attachment").asText(null);
+        Value value = variantAttachment != null ? parseJsonValue(variantAttachment) : new Value(variantKey);
+        return ProviderEvaluation.<Value> builder()
+                .value(value)
+                .variant(variantKey)
+                .reason(mapReason(response.path("reason").asText()))
+                .build();
     }
 
     private String buildEvaluationRequest(String flagKey, EvaluationContext ctx) {
@@ -248,16 +204,23 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
                 result.set("context", mapper.valueToTree(ctx.asObjectMap()));
             }
             return mapper.writeValueAsString(result);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to build evaluation request", e);
+        } catch (JsonProcessingException e) {
+            throw new GeneralError("Failed to build the Flipt evaluation request: " + e.getMessage());
         }
     }
 
-    private JsonNode parseWasmResponse(String responseJson) throws Exception {
-        JsonNode root = mapper.readTree(responseJson);
+    // throws only unchecked exceptions, so that the evaluation methods can let them bubble up
+    // to the SDK, which turns them into the default value with an error code
+    private JsonNode parseWasmResponse(String responseJson) {
+        JsonNode root;
+        try {
+            root = mapper.readTree(responseJson);
+        } catch (JsonProcessingException e) {
+            throw new ParseError("Wrong response from the Flipt WASM engine: " + e.getMessage());
+        }
         String status = root.path("status").asText();
         if (!"success".equals(status)) {
-            throw new RuntimeException(root.path("error_message").asText("Unknown WASM error"));
+            throw new GeneralError(root.path("error_message").asText("Unknown WASM error"));
         }
         return root.path("result");
     }
