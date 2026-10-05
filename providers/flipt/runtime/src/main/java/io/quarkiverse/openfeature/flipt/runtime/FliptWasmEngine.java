@@ -33,7 +33,10 @@ final class FliptWasmEngine {
     private final ExportFunction destroyEngineFn;
 
     private long enginePtr;
-    private String lastAppliedSnapshot;
+    // the snapshot this engine last tried to apply, regardless of success or failure;
+    // a rejected snapshot is ignored and a new attempt is made when the sync client
+    // polls the next snapshot, not on every evaluation
+    private String lastAttemptedSnapshot;
 
     FliptWasmEngine(ObjectMapper mapper) {
         this.mapper = mapper;
@@ -69,7 +72,7 @@ final class FliptWasmEngine {
             if (enginePtr == 0) {
                 throw new RuntimeException("Failed to initialize Flipt WASM engine");
             }
-            lastAppliedSnapshot = snapshot;
+            lastAttemptedSnapshot = snapshot;
         } finally {
             deallocate(nsPtr, nsBytes.length);
             deallocate(payloadPtr, payloadBytes.length);
@@ -78,9 +81,10 @@ final class FliptWasmEngine {
 
     void updateIfNecessary(String snapshot) {
         // intentional reference equality
-        if (lastAppliedSnapshot == snapshot) {
+        if (lastAttemptedSnapshot == snapshot) {
             return;
         }
+        lastAttemptedSnapshot = snapshot;
 
         byte[] bytes = snapshot.getBytes(StandardCharsets.UTF_8);
         int ptr = allocate(bytes);
@@ -90,12 +94,12 @@ final class FliptWasmEngine {
             try {
                 JsonNode node = mapper.readTree(response);
                 if (!"success".equals(node.path("status").asText())) {
+                    // the engine keeps evaluating against the previous flag data
                     log.error("Flipt snapshot update failed: " + node.path("error_message").asText());
                 }
             } catch (JsonProcessingException e) {
                 log.error("Wrong response from Flipt snapshot update", e);
             }
-            lastAppliedSnapshot = snapshot;
         } finally {
             deallocate(ptr, bytes.length);
         }
