@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import org.jboss.logging.Logger;
 
@@ -20,9 +21,17 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.RequestOptions;
+import io.vertx.core.parsetools.RecordParser;
 
 public class FliptSyncClient {
     private static final Logger log = Logger.getLogger(FliptSyncClient.class);
+
+    /**
+     * A whole flag snapshot arrives as a single NDJSON line, so the limit has to be
+     * generous; it only exists so that a server which never sends a newline cannot
+     * make the client buffer without bound.
+     */
+    private static final int MAX_RECORD_SIZE = 32 * 1024 * 1024;
 
     private final ObjectMapper mapper;
     private final Vertx vertx;
@@ -136,24 +145,38 @@ public class FliptSyncClient {
                             return;
                         }
 
-                        String[] remainder = { "" };
-                        response.handler(chunk -> {
-                            processLines(remainder, chunk.toString(), listener);
-                        });
-                        response.endHandler(v -> {
-                            log.debug("Flipt sync stream completed, will reconnect");
-                            state.setError();
-                            listener.onError("stream completed unexpectedly");
-                            state.scheduleReconnect(() -> connectStream(listener));
-                        });
-                        response.exceptionHandler(t -> {
-                            if (state.isShutdown()) {
+                        boolean[] failed = { false };
+                        Consumer<String> fail = msg -> {
+                            if (failed[0] || state.isShutdown()) {
                                 return;
                             }
-                            log.warnf(t, "Flipt sync stream error, will reconnect");
+                            failed[0] = true;
                             state.setError();
-                            listener.onError(t.getMessage());
+                            listener.onError(msg);
                             state.scheduleReconnect(() -> connectStream(listener));
+                        };
+
+                        RecordParser parser = RecordParser.newDelimited("\n",
+                                line -> processLine(line.toString(StandardCharsets.UTF_8), listener));
+                        parser.maxRecordSize(MAX_RECORD_SIZE);
+                        parser.exceptionHandler(t -> {
+                            // the oversized record stays buffered, so every further chunk would
+                            // raise again; stop reading and let the reconnect start from scratch
+                            response.handler(null);
+                            request.connection().close();
+                            log.warnf(t, "Flipt sync stream exceeded %d bytes per record, will reconnect",
+                                    MAX_RECORD_SIZE);
+                            fail.accept(t.getMessage());
+                        });
+
+                        response.handler(parser);
+                        response.endHandler(v -> {
+                            log.debug("Flipt sync stream completed, will reconnect");
+                            fail.accept("stream completed unexpectedly");
+                        });
+                        response.exceptionHandler(t -> {
+                            log.warnf(t, "Flipt sync stream error, will reconnect");
+                            fail.accept(t.getMessage());
                         });
                     }).onFailure(t -> {
                         log.warnf(t, "Failed to send request to Flipt, will reconnect");
@@ -170,39 +193,27 @@ public class FliptSyncClient {
                 });
     }
 
-    private void processLines(String[] remainder, String chunk, Listener listener) {
-        String data = remainder[0] + chunk;
-        int lastNewline = data.lastIndexOf('\n');
-        if (lastNewline < 0) {
-            remainder[0] = data;
+    private void processLine(String line, Listener listener) {
+        line = line.trim();
+        if (line.isEmpty()) {
             return;
         }
-
-        String complete = data.substring(0, lastNewline);
-        remainder[0] = data.substring(lastNewline + 1);
-
-        for (String line : complete.split("\n")) {
-            line = line.trim();
-            if (line.isEmpty()) {
-                continue;
+        try {
+            JsonNode node = mapper.readTree(line);
+            JsonNode result = node.get("result");
+            if (result == null) {
+                log.debugf("Received NDJSON line without 'result' field: %s", line);
+                return;
             }
-            try {
-                JsonNode node = mapper.readTree(line);
-                JsonNode result = node.get("result");
-                if (result == null) {
-                    log.debugf("Received NDJSON line without 'result' field: %s", line);
-                    continue;
-                }
-                String snapshotJson = mapper.writeValueAsString(result);
-                log.debugf("Received flag data from Flipt: %d bytes", snapshotJson.length());
-                enginePool.updateSnapshot(snapshotJson);
-                state.resetReconnectDelay();
-                listener.onUpdate(state.isError());
-                state.setReady();
-            } catch (Exception e) {
-                log.errorf(e, "Failed to process Flipt sync data");
-                listener.onError("Failed to process flag data: " + e.getMessage());
-            }
+            String snapshotJson = mapper.writeValueAsString(result);
+            log.debugf("Received flag data from Flipt: %d bytes", snapshotJson.length());
+            enginePool.updateSnapshot(snapshotJson);
+            state.resetReconnectDelay();
+            listener.onUpdate(state.isError());
+            state.setReady();
+        } catch (Exception e) {
+            log.errorf(e, "Failed to process Flipt sync data");
+            listener.onError("Failed to process flag data: " + e.getMessage());
         }
     }
 

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.jboss.logging.Logger;
 
@@ -27,9 +28,17 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.RequestOptions;
+import io.vertx.core.parsetools.RecordParser;
 
 public class GoFeatureFlagSyncClient {
     private static final Logger log = Logger.getLogger(GoFeatureFlagSyncClient.class);
+
+    /**
+     * A flag diff arrives as a single SSE line, so the limit has to be generous; it
+     * only exists so that a server which never sends a newline cannot make the client
+     * buffer without bound.
+     */
+    private static final int MAX_RECORD_SIZE = 32 * 1024 * 1024;
 
     private final ObjectMapper mapper;
     private final Vertx vertx;
@@ -123,36 +132,51 @@ public class GoFeatureFlagSyncClient {
                                 // Buffer diffs received while fetching full config
                                 boolean[] live = { false };
                                 List<JsonNode> bufferedDiffs = new ArrayList<>();
-                                String[] remainder = { "" };
-
-                                sseResponse.handler(chunk -> {
-                                    List<JsonNode> diffs = parseSseDiffs(remainder, chunk.toString());
-                                    if (live[0]) {
-                                        for (JsonNode diff : diffs) {
-                                            Set<String> changedKeys = applyDiff(diff);
-                                            if (!changedKeys.isEmpty()) {
-                                                log.debugf("Applied flag diff: %d keys changed", changedKeys.size());
-                                                listener.onConfigurationChanged(changedKeys);
-                                            }
-                                        }
-                                    } else {
-                                        bufferedDiffs.addAll(diffs);
-                                    }
-                                });
-                                sseResponse.endHandler(v -> {
-                                    log.debug("GO Feature Flag SSE stream completed, will reconnect");
-                                    state.setError();
-                                    listener.onError("SSE stream completed unexpectedly");
-                                    state.scheduleReconnect(() -> fetchConfigAndConnectStream(listener));
-                                });
-                                sseResponse.exceptionHandler(t -> {
-                                    if (state.isShutdown()) {
+                                boolean[] failed = { false };
+                                Consumer<String> fail = msg -> {
+                                    if (failed[0] || state.isShutdown()) {
                                         return;
                                     }
-                                    log.warnf(t, "GO Feature Flag SSE stream error, will reconnect");
+                                    failed[0] = true;
                                     state.setError();
-                                    listener.onError(t.getMessage());
+                                    listener.onError(msg);
                                     state.scheduleReconnect(() -> fetchConfigAndConnectStream(listener));
+                                };
+
+                                RecordParser parser = RecordParser.newDelimited("\n", line -> {
+                                    JsonNode diff = parseSseDiff(line.toString(StandardCharsets.UTF_8));
+                                    if (diff == null) {
+                                        return;
+                                    }
+                                    if (live[0]) {
+                                        Set<String> changedKeys = applyDiff(diff);
+                                        if (!changedKeys.isEmpty()) {
+                                            log.debugf("Applied flag diff: %d keys changed", changedKeys.size());
+                                            listener.onConfigurationChanged(changedKeys);
+                                        }
+                                    } else {
+                                        bufferedDiffs.add(diff);
+                                    }
+                                });
+                                parser.maxRecordSize(MAX_RECORD_SIZE);
+                                parser.exceptionHandler(t -> {
+                                    // the oversized record stays buffered, so every further chunk would
+                                    // raise again; stop reading and let the reconnect start from scratch
+                                    sseResponse.handler(null);
+                                    request.connection().close();
+                                    log.warnf(t, "GO Feature Flag SSE stream exceeded %d bytes per line, will reconnect",
+                                            MAX_RECORD_SIZE);
+                                    fail.accept(t.getMessage());
+                                });
+
+                                sseResponse.handler(parser);
+                                sseResponse.endHandler(v -> {
+                                    log.debug("GO Feature Flag SSE stream completed, will reconnect");
+                                    fail.accept("SSE stream completed unexpectedly");
+                                });
+                                sseResponse.exceptionHandler(t -> {
+                                    log.warnf(t, "GO Feature Flag SSE stream error, will reconnect");
+                                    fail.accept(t.getMessage());
                                 });
 
                                 fetchFullConfig(baseUri, port, listener, () -> {
@@ -292,33 +316,25 @@ public class GoFeatureFlagSyncClient {
         }
     }
 
-    private List<JsonNode> parseSseDiffs(String[] remainder, String chunk) {
-        String data = remainder[0] + chunk;
-        int lastNewline = data.lastIndexOf('\n');
-        if (lastNewline < 0) {
-            remainder[0] = data;
-            return List.of();
+    /**
+     * Returns the diff carried by one SSE line, or {@code null} if the line carries none.
+     */
+    private JsonNode parseSseDiff(String line) {
+        line = line.trim();
+        if (!line.startsWith("data:")) {
+            return null;
         }
 
-        String complete = data.substring(0, lastNewline);
-        remainder[0] = data.substring(lastNewline + 1);
-
-        List<JsonNode> diffs = new ArrayList<>();
-        for (String line : complete.split("\n")) {
-            line = line.trim();
-            if (line.startsWith("data:")) {
-                String jsonData = line.substring(5).trim();
-                if (jsonData.isEmpty()) {
-                    continue;
-                }
-                try {
-                    diffs.add(mapper.readTree(jsonData));
-                } catch (Exception e) {
-                    log.errorf(e, "Failed to parse SSE event data");
-                }
-            }
+        String jsonData = line.substring(5).trim();
+        if (jsonData.isEmpty()) {
+            return null;
         }
-        return diffs;
+        try {
+            return mapper.readTree(jsonData);
+        } catch (Exception e) {
+            log.errorf(e, "Failed to parse SSE event data");
+            return null;
+        }
     }
 
     private Set<String> applyDiff(JsonNode diff) {
