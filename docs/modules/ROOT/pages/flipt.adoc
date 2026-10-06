@@ -19,6 +19,10 @@ This extension depends on:
 |https://github.com/flipt-io/flipt-client-sdks[flipt-io/flipt-client-sdks]
 |===
 
+The engine is not a regular dependency.
+It is compiled to Java bytecode during the build and embedded in the extension artifact, where it is distributed under the MIT license.
+The full license text is in `META-INF/NOTICE`.
+
 == Installation
 
 [source,xml,subs=attributes+]
