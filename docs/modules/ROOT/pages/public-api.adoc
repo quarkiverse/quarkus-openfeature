@@ -5,10 +5,20 @@ include::./includes/attributes.adoc[]
 This extension tries to not define public APIs.
 It integrates the https://openfeature.dev/[OpenFeature] SDK into Quarkus, so you use the standard https://javadoc.io/doc/dev.openfeature/sdk/latest/index.html[OpenFeature API] directly.
 
-All classes under a `runtime` package are internal and may change without notice.
-Only classes outside of `runtime` are considered public API.
-A list of public APIs follows, categorized by area.
+== Applications API
 
-== Testing
+The public API consists only of the classes listed below, categorized by area.
+All other classes available at application runtime live under a `runtime` package and are therefore internal and may change without notice.
+
+=== Testing
 
 * `io.quarkiverse.openfeature.junit.TestFlag`
+
+== Extensions API
+
+The `deployment` artifacts of this extension contain no public API at all.
+Everything in them is internal and may change without notice, including all build items and the contracts they expose.
+
+In particular, there is no supported way to contribute a feature flag provider from outside of this extension.
+All contracts for this purpose are internal; they only exist so that the providers in this repository can plug into the core extension, and they evolve together with it.
+If you need a provider that this extension doesn't have, please https://github.com/quarkiverse/quarkus-openfeature/issues[file an issue].
