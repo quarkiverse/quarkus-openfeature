@@ -33,9 +33,24 @@ quarkus.openfeature.runtime.max-bytes=10000000000
 quarkus.openfeature.runtime.threshold=0.75
 ----
 
-Values are stored as strings and converted to the requested type at evaluation time.
-Boolean evaluation never fails because a value cannot be parsed, but note that only `true` is truthy, all other values are false.
-Integer, long and double evaluation throw an error if the value cannot be parsed.
+Values are written as strings, so the type of a flag is inferred from its value.
+The narrowest type that holds the value exactly wins: `true` and `false` are booleans, a whole number is an integer or, if it doesn't fit, a long, and any other number is a double.
+A JSON object or array is a structure, and everything else is a string.
+
+Structured flags are therefore written as JSON:
+
+[source,properties]
+----
+quarkus.openfeature.runtime.limits={"max":10,"enabled":true}
+quarkus.openfeature.runtime.regions=["eu","us"]
+----
+
+A flag can be evaluated as a type other than the inferred one:
+
+Boolean evaluation:: Never fails. A value that is not a boolean is false, so note that only `true` is truthy (case insensitive), all other values are false.
+Integer, long and double evaluation:: Throw an error unless the flag is a number of that type. A long or a fractional value is not truncated to an integer; a whole number is a valid long and a valid double.
+String evaluation:: Never fails. A flag of any other type is rendered in its canonical form, which is not always the text that was configured: `3.10` reads back as `3.1`, and the whitespace in a JSON value is not preserved.
+Object evaluation:: Never fails. A flag of any other type is returned as a value of that type.
 
 For named domains, flags are scoped under the domain name:
 
