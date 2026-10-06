@@ -1,6 +1,8 @@
 package io.quarkiverse.openfeature.gofeatureflag.runtime;
 
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -88,10 +90,7 @@ public class GoFeatureFlagSyncClient {
 
         // Connect SSE first, then fetch full config, to avoid missing
         // changes that occur between fetch and subscribe
-        String sseUri = "/stream/v1/sse/flag/change";
-        if (apiKey != null) {
-            sseUri += "?apiKey=" + apiKey;
-        }
+        String sseUri = sseUri(apiKey);
 
         RequestOptions sseOptions = new RequestOptions()
                 .setMethod(HttpMethod.GET)
@@ -371,6 +370,20 @@ public class GoFeatureFlagSyncClient {
         if (httpClient != null) {
             httpClient.close();
         }
+    }
+
+    // The SSE endpoint of the relay proxy only authorizes through the `apiKey` query
+    // parameter; unlike the rest of the API, it ignores the `Authorization` header.
+    // The key therefore has to go into the URI, where it must be encoded: it is an
+    // arbitrary string, and an unencoded `&` or `#` would truncate it.
+    //
+    // visible for testing
+    static String sseUri(String apiKey) {
+        String uri = "/stream/v1/sse/flag/change";
+        if (apiKey != null) {
+            uri += "?apiKey=" + URLEncoder.encode(apiKey, StandardCharsets.UTF_8);
+        }
+        return uri;
     }
 
     private static boolean isHttps(URI uri) {
