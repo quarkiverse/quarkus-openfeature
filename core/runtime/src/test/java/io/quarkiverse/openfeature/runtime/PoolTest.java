@@ -18,6 +18,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -40,6 +41,8 @@ public class PoolTest {
     static class Instance {
         final int id;
         volatile boolean destroyed;
+        // lets a test detect the same instance being borrowed by two threads at the same time
+        final AtomicBoolean inUse = new AtomicBoolean();
 
         Instance(int id) {
             this.id = id;
@@ -50,6 +53,35 @@ public class PoolTest {
     static final class DestructionError extends Error {
         DestructionError(String message) {
             super(message);
+        }
+    }
+
+    static final class CreationFailure extends RuntimeException {
+        CreationFailure(String message) {
+            super(message);
+        }
+    }
+
+    // failures only start once the creator is enabled, so that the pool can still be
+    // constructed with a full set of minimum size instances
+    static final class FailingCreator implements Supplier<Instance> {
+        private final Instances instances;
+        private final int failEvery;
+        private final AtomicInteger calls = new AtomicInteger();
+        volatile boolean enabled;
+
+        FailingCreator(Instances instances, int failEvery) {
+            this.instances = instances;
+            this.failEvery = failEvery;
+        }
+
+        @Override
+        public Instance get() {
+            // a failed creation never shows up in `Instances.created`
+            if (enabled && calls.incrementAndGet() % failEvery == 0) {
+                throw new CreationFailure("cannot create");
+            }
+            return instances.get();
         }
     }
 
@@ -99,6 +131,19 @@ public class PoolTest {
             Duration slowIdleTimeout) {
         return new Pool<>("test instance", minSize, MAX_WAIT, fastIdleTimeout, slowIdleTimeout,
                 factory, instances);
+    }
+
+    private Pool<Instance> poolWithMaxWait(int minSize, Duration maxWait, Duration idleTimeout) {
+        return new Pool<>("test instance", minSize, maxWait, idleTimeout, idleTimeout,
+                instances, instances);
+    }
+
+    // A leaked permit is invisible to every other assertion: the pool simply loses capacity,
+    // so this is the only way to tell that permit accounting is still intact.
+    private static void assertFullCapacityAvailable(Pool<Instance> pool, int maxSize) {
+        List<Instance> all = borrowAll(pool, maxSize);
+        assertThrows(IllegalStateException.class, pool::borrow);
+        releaseAll(pool, all);
     }
 
     private static List<Instance> borrowAll(Pool<Instance> pool, int count) {
@@ -571,6 +616,7 @@ public class PoolTest {
         assertTrue(instances.created.get() <= maxSize, "created " + instances.created.get() + " instances");
         assertTrue(pool.size() <= maxSize);
         assertTrue(pool.size() >= minSize);
+        assertFullCapacityAvailable(pool, maxSize);
     }
 
     @Test
@@ -609,5 +655,185 @@ public class PoolTest {
 
         assertEquals(minSize, pool.size());
         assertEquals(instances.created.get() - minSize, instances.destroyed.size());
+        // must come last, it grows the pool again
+        assertFullCapacityAvailable(pool, maxSize);
+    }
+
+    @Test
+    public void concurrentBorrowNeverHandsOutTheSameInstanceTwice() throws Exception {
+        assertExclusiveUse(NEVER_IDLE_TIMEOUT);
+    }
+
+    @Test
+    public void concurrentEvictionNeverHandsOutTheSameInstanceTwice() throws Exception {
+        // every idle instance is immediately eligible, so eviction races with borrowing
+        assertExclusiveUse(IMMEDIATE_IDLE_TIMEOUT);
+    }
+
+    // An instance may only be used by one thread at a time, which is the entire point of
+    // the pool. Nothing but this check would notice the same instance being handed out twice.
+    private void assertExclusiveUse(Duration idleTimeout) throws Exception {
+        int minSize = 4;
+        int maxSize = Pool.MAX_FACTOR * minSize;
+        Pool<Instance> pool = pool(minSize, idleTimeout);
+
+        int threads = 16;
+        ExecutorService executor = Executors.newFixedThreadPool(threads);
+        try {
+            CountDownLatch start = new CountDownLatch(1);
+            List<Future<?>> futures = new ArrayList<>();
+            for (int i = 0; i < threads; i++) {
+                futures.add(executor.submit(() -> {
+                    start.await();
+                    for (int j = 0; j < 2000; j++) {
+                        pool.withInstance(borrowed -> {
+                            assertTrue(borrowed.inUse.compareAndSet(false, true),
+                                    "instance was handed out to two threads at the same time");
+                            // widen the window during which the instance is held
+                            for (int k = 0; k < 50; k++) {
+                                Thread.onSpinWait();
+                            }
+                            borrowed.inUse.set(false);
+                            return null;
+                        });
+                    }
+                    return null;
+                }));
+            }
+            start.countDown();
+            for (Future<?> future : futures) {
+                future.get(60, TimeUnit.SECONDS);
+            }
+        } finally {
+            executor.shutdownNow();
+        }
+
+        assertFullCapacityAvailable(pool, maxSize);
+    }
+
+    @Test
+    public void concurrentCreationFailuresDoNotLeakPermits() throws Exception {
+        int minSize = 4;
+        int maxSize = Pool.MAX_FACTOR * minSize;
+        FailingCreator creator = new FailingCreator(instances, 7);
+        // every idle instance is immediately eligible, so instances are constantly
+        // destroyed and created again, and creation keeps failing throughout the test
+        Pool<Instance> pool = pool(creator, minSize, IMMEDIATE_IDLE_TIMEOUT, IMMEDIATE_IDLE_TIMEOUT);
+        creator.enabled = true;
+
+        int threads = 16;
+        ExecutorService executor = Executors.newFixedThreadPool(threads);
+        try {
+            CountDownLatch start = new CountDownLatch(1);
+            List<Future<?>> futures = new ArrayList<>();
+            for (int i = 0; i < threads; i++) {
+                futures.add(executor.submit(() -> {
+                    start.await();
+                    for (int j = 0; j < 2000; j++) {
+                        try {
+                            pool.withInstance(borrowed -> null);
+                        } catch (CreationFailure e) {
+                            // the creator fails on purpose, the permit must still be handed back
+                        }
+                    }
+                    return null;
+                }));
+            }
+            start.countDown();
+            for (Future<?> future : futures) {
+                future.get(60, TimeUnit.SECONDS);
+            }
+        } finally {
+            executor.shutdownNow();
+        }
+
+        creator.enabled = false;
+        assertFullCapacityAvailable(pool, maxSize);
+    }
+
+    @Test
+    public void concurrentBorrowWithMoreThreadsThanInstances() throws Exception {
+        int minSize = 4;
+        int maxSize = Pool.MAX_FACTOR * minSize;
+        // long enough that no thread may ever time out, so that the test fails when
+        // a permit is lost or a waiting thread is not woken up
+        Duration maxWait = Duration.ofSeconds(10);
+        Pool<Instance> pool = poolWithMaxWait(minSize, maxWait, NEVER_IDLE_TIMEOUT);
+
+        // far more threads than instances, so that borrowing actually has to wait
+        int threads = 4 * maxSize;
+        ExecutorService executor = Executors.newFixedThreadPool(threads);
+        try {
+            CountDownLatch start = new CountDownLatch(1);
+            List<Future<?>> futures = new ArrayList<>();
+            for (int i = 0; i < threads; i++) {
+                futures.add(executor.submit(() -> {
+                    start.await();
+                    for (int j = 0; j < 200; j++) {
+                        pool.withInstance(borrowed -> {
+                            assertFalse(borrowed.destroyed);
+                            return null;
+                        });
+                        assertTrue(pool.size() <= maxSize);
+                    }
+                    return null;
+                }));
+            }
+            start.countDown();
+            for (Future<?> future : futures) {
+                future.get(120, TimeUnit.SECONDS);
+            }
+        } finally {
+            executor.shutdownNow();
+        }
+
+        // the pool only grows as far as contention actually forces it, which with a trivial
+        // action and a fair semaphore can be well below the maximum size
+        assertTrue(pool.size() >= minSize);
+        assertTrue(pool.size() <= maxSize);
+        assertFullCapacityAvailable(pool, maxSize);
+    }
+
+    @Test
+    public void concurrentCloseWithCreationFailuresDestroysEveryInstance() throws Exception {
+        FailingCreator creator = new FailingCreator(instances, 7);
+        // every idle instance is immediately eligible, so eviction runs on every operation
+        Pool<Instance> pool = pool(creator, 4, IMMEDIATE_IDLE_TIMEOUT, IMMEDIATE_IDLE_TIMEOUT);
+        creator.enabled = true;
+
+        int threads = 16;
+        ExecutorService executor = Executors.newFixedThreadPool(threads);
+        try {
+            CountDownLatch start = new CountDownLatch(1);
+            List<Future<?>> futures = new ArrayList<>();
+            for (int i = 0; i < threads; i++) {
+                futures.add(executor.submit(() -> {
+                    start.await();
+                    for (int j = 0; j < 2000; j++) {
+                        try {
+                            pool.withInstance(borrowed -> null);
+                        } catch (CreationFailure e) {
+                            // the creator fails on purpose, carry on
+                        } catch (IllegalStateException e) {
+                            // the pool was closed by the main thread, which is expected
+                            return null;
+                        }
+                    }
+                    return null;
+                }));
+            }
+            start.countDown();
+            pool.close();
+            for (Future<?> future : futures) {
+                future.get(60, TimeUnit.SECONDS);
+            }
+        } finally {
+            executor.shutdownNow();
+        }
+
+        // an instance created while the pool was closing is destroyed by the thread
+        // that created it, so nothing may be left behind
+        assertEquals(instances.created.get(), instances.destroyed.size());
+        assertEquals(0, pool.size());
     }
 }
