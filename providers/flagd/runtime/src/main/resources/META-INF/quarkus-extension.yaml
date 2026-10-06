@@ -7,5 +7,5 @@ metadata:
     - flagd
   categories:
     - "miscellaneous"
-  status: "preview"
+  status: "stable"
   hide-in-dev-ui: true

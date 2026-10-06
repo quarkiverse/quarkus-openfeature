@@ -6,5 +6,5 @@ metadata:
     - toggles
   categories:
     - "miscellaneous"
-  status: "preview"
+  status: "stable"
   hide-in-dev-ui: true
