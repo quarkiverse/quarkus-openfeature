@@ -3,8 +3,10 @@ package io.quarkiverse.openfeature.junit;
 import java.lang.reflect.AnnotatedElement;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
@@ -23,6 +25,9 @@ class OpenFeatureTestExtension implements BeforeEachCallback, AfterEachCallback 
 
     private static final String OVERRIDDEN_DOMAINS_KEY = "overriddenDomains";
 
+    // overridable in tests
+    Function<String, List<FeatureProvider>> providerLookup = OpenFeatureRecorder::getProviders;
+
     @Override
     public void beforeEach(ExtensionContext context) {
         Map<String, Map<String, Object>> overridesByDomain = collectOverrides(context);
@@ -30,20 +35,7 @@ class OpenFeatureTestExtension implements BeforeEachCallback, AfterEachCallback 
             return;
         }
 
-        Set<String> overriddenDomains = new HashSet<>();
-        for (Map.Entry<String, Map<String, Object>> entry : overridesByDomain.entrySet()) {
-            String domain = entry.getKey();
-            FlagOverrides overrides = new FlagOverrides(entry.getValue());
-            for (FeatureProvider provider : OpenFeatureRecorder.getProviders(domain)) {
-                if (provider instanceof OverrideFeatureAccess overrideAccess) {
-                    overrideAccess.setFlagOverrides(overrides);
-                    overriddenDomains.add(domain);
-                } else {
-                    throw new IllegalStateException("Provider \"" + provider.getMetadata().getName()
-                            + "\" does not support test overrides");
-                }
-            }
-        }
+        Set<String> overriddenDomains = applyOverrides(overridesByDomain);
 
         context.getStore(NAMESPACE).put(OVERRIDDEN_DOMAINS_KEY, overriddenDomains);
     }
@@ -56,8 +48,39 @@ class OpenFeatureTestExtension implements BeforeEachCallback, AfterEachCallback 
         if (overriddenDomains == null) {
             return;
         }
+        clearOverrides(overriddenDomains);
+    }
+
+    /**
+     * Applies the given overrides and returns the domains that were actually overridden.
+     * All providers are checked before any of them is touched, so that a provider that
+     * does not support overrides cannot leave some other domain overridden.
+     */
+    Set<String> applyOverrides(Map<String, Map<String, Object>> overridesByDomain) {
+        for (String domain : overridesByDomain.keySet()) {
+            for (FeatureProvider provider : providerLookup.apply(domain)) {
+                if (!(provider instanceof OverrideFeatureAccess)) {
+                    throw new IllegalStateException("Provider \"" + provider.getMetadata().getName()
+                            + "\" does not support test overrides");
+                }
+            }
+        }
+
+        Set<String> overriddenDomains = new HashSet<>();
+        for (Map.Entry<String, Map<String, Object>> entry : overridesByDomain.entrySet()) {
+            String domain = entry.getKey();
+            FlagOverrides overrides = new FlagOverrides(entry.getValue());
+            for (FeatureProvider provider : providerLookup.apply(domain)) {
+                ((OverrideFeatureAccess) provider).setFlagOverrides(overrides);
+                overriddenDomains.add(domain);
+            }
+        }
+        return overriddenDomains;
+    }
+
+    void clearOverrides(Set<String> overriddenDomains) {
         for (String domain : overriddenDomains) {
-            for (FeatureProvider provider : OpenFeatureRecorder.getProviders(domain)) {
+            for (FeatureProvider provider : providerLookup.apply(domain)) {
                 if (provider instanceof OverrideFeatureAccess overrideAccess) {
                     overrideAccess.clearFlagOverrides();
                 }
@@ -74,7 +97,7 @@ class OpenFeatureTestExtension implements BeforeEachCallback, AfterEachCallback 
         return result;
     }
 
-    private void collectFromElement(AnnotatedElement element, Map<String, Map<String, Object>> result) {
+    void collectFromElement(AnnotatedElement element, Map<String, Map<String, Object>> result) {
         TestFlag[] annotations = element.getAnnotationsByType(TestFlag.class);
         for (TestFlag annotation : annotations) {
             String domain = annotation.domain().isEmpty()
