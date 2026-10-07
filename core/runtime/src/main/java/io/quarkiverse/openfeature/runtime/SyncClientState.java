@@ -30,6 +30,10 @@ public final class SyncClientState {
     private static final long INITIAL_DELAY_MS = 1000;
     private static final long MAX_DELAY_MS = 30_000;
 
+    static long nextDelay(long currentDelay) {
+        return Math.min(currentDelay * 2, MAX_DELAY_MS);
+    }
+
     private final AtomicInteger state = new AtomicInteger(CONNECTING);
     private final CountDownLatch initializedBarrier = new CountDownLatch(1);
 
@@ -97,7 +101,7 @@ public final class SyncClientState {
             return;
         }
         long delay = reconnectDelay;
-        reconnectDelay = Math.min(reconnectDelay * 2, MAX_DELAY_MS);
+        reconnectDelay = nextDelay(reconnectDelay);
         log.debugf("Scheduling reconnect in %d ms", delay);
         reconnectTimerId = vertx.setTimer(delay, id -> {
             reconnectTimerId = -1;
@@ -114,5 +118,10 @@ public final class SyncClientState {
             vertx.cancelTimer(reconnectTimerId);
             reconnectTimerId = -1;
         }
+    }
+
+    // visible for tests
+    long reconnectDelay() {
+        return reconnectDelay;
     }
 }
