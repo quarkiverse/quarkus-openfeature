@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.jboss.logging.Logger;
 
@@ -39,7 +37,6 @@ public class FlagdFeatureProvider extends AbstractRemoteFeatureProvider {
     private final ObjectMapper mapper;
     private final Evaluator evaluator;
     private final FlagdSyncClient syncClient;
-    private final Set<String> knownFlagKeys = ConcurrentHashMap.newKeySet();
 
     private volatile EvaluationContext syncContext;
 
@@ -76,7 +73,6 @@ public class FlagdFeatureProvider extends AbstractRemoteFeatureProvider {
                 if (syncClient.isShutdown()) {
                     return;
                 }
-                knownFlagKeys.addAll(changedKeys);
                 if (newSyncContext != null) {
                     syncContext = newSyncContext;
                 }
@@ -152,30 +148,30 @@ public class FlagdFeatureProvider extends AbstractRemoteFeatureProvider {
 
     @Override
     public Collection<FlagInfo> getFlags() {
-        String json = syncClient.getLatestFlagConfiguration();
-        if (json != null) {
-            try {
-                JsonNode root = mapper.readTree(json);
-                JsonNode flags = root.get("flags");
-                if (flags == null || !flags.isObject()) {
-                    return List.of();
-                }
-                List<FlagInfo> result = new ArrayList<>();
-                for (Map.Entry<String, JsonNode> property : flags.properties()) {
-                    result.add(new FlagInfo(property.getKey(), inferType(property.getValue())));
-                }
-                return result;
-            } catch (Exception e) {
-                log.debugf(e, "Failed to parse flags from configuration");
-            }
-        }
+        return parseFlags(mapper, syncClient.getLatestFlagConfiguration());
+    }
 
-        List<FlagInfo> result = new ArrayList<>();
-        for (String key : knownFlagKeys) {
-            FlagInfo flagInfo = new FlagInfo(key, null);
-            result.add(flagInfo);
+    // the latest configuration is the single source of truth, so that flags deleted
+    // on the server disappear from the list instead of lingering forever
+    static Collection<FlagInfo> parseFlags(ObjectMapper mapper, String json) {
+        if (json == null) {
+            return List.of();
         }
-        return result;
+        try {
+            JsonNode root = mapper.readTree(json);
+            JsonNode flags = root.get("flags");
+            if (flags == null || !flags.isObject()) {
+                return List.of();
+            }
+            List<FlagInfo> result = new ArrayList<>();
+            for (Map.Entry<String, JsonNode> property : flags.properties()) {
+                result.add(new FlagInfo(property.getKey(), inferType(property.getValue())));
+            }
+            return result;
+        } catch (Exception e) {
+            log.debugf(e, "Failed to parse flags from configuration");
+            return List.of();
+        }
     }
 
     private static FlagValueType inferType(JsonNode flagNode) {
