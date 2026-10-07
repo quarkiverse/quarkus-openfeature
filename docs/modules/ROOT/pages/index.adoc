@@ -229,6 +229,18 @@ quarkus.openfeature.await-providers=true
 quarkus.openfeature.await-providers=false
 ----
 
+== Application health
+
+This extension deliberately does not contribute a health check for provider state.
+A flag server outage is not an application outage: the provider keeps evaluating the flag definitions it synchronized last, so the application continues to serve the values it was serving before the outage.
+If a flag definition was never synchronized (the provider has not become ready yet, or the flag does not exist), the default value is used.
+
+The default value is also used for all flags when the server rejects the provider's credentials, which puts the provider in the `FATAL` state.
+This may happen when a token is rotated on the server but not in the application.
+Note that when the provider enters the `FATAL` state, it stays there until the application restarts.
+
+The application may observe provider state by registering a provider event handler through the OpenFeature SDK.
+
 == Testing
 
 The `quarkus-openfeature-junit` artifact provides a `@TestFlag` annotation for overriding feature flag values in tests.
