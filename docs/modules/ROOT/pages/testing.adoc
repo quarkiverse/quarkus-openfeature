@@ -92,6 +92,15 @@ void experimentEnabled() {
 Testing support requires the provider to expose an additional contract.
 All providers included in this extension do this and so support testing out of the box.
 
+== Parallel test execution
+
+`@TestFlag` is not safe under parallel test execution.
+Overrides are applied to the provider itself, which is a singleton shared by the whole application, so they are visible to every test running at the same time.
+Two tests that override the same flag with different values, or one test that overrides a flag while another expects the real provider value, will interfere with each other, and the failures depend on timing.
+
+Do not enable JUnit parallel execution (`junit.jupiter.execution.parallel.enabled`) for test classes that use `@TestFlag`.
+If you need parallelism elsewhere in the test suite, keep the flag-overriding tests in classes that run sequentially, for example with `@Execution(ExecutionMode.SAME_THREAD)`.
+
 == Comparison with the upstream OpenFeature JUnit extension
 
 The https://github.com/open-feature/java-sdk-contrib/tree/main/tools/junit-openfeature[upstream OpenFeature JUnit extension] (`dev.openfeature.contrib.tools:junitopenfeature`) provides similar annotation-driven flag overrides for tests.
