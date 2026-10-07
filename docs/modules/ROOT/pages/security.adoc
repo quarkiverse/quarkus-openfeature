@@ -1,0 +1,86 @@
+= Security Considerations
+
+include::./includes/attributes.adoc[]
+
+This page collects the security-relevant properties of the extension in one place.
+The details are on the individual provider pages; what follows is the overview and the rules that hold everywhere.
+
+== Evaluation is in-process
+
+No provider in this extension performs a remote call to evaluate a flag.
+The remote-sync providers (xref:flagd.adoc[flagd], xref:flipt.adoc[Flipt], xref:gofeatureflag.adoc[GO Feature Flag], xref:unleash.adoc[Unleash]) fetch the flag _definitions_ from their server in the background and evaluate them locally; the xref:config-providers.adoc[configuration providers] have no server at all.
+
+The consequence that matters here is that no flag evaluation discloses anything.
+Targeting keys and any other attributes you put into the evaluation context are used locally and are never sent anywhere, and the extension reports no evaluation telemetry back to the flag server.
+Whatever you are allowed to put into an evaluation context is therefore not constrained by what you are willing to share with the flag server vendor.
+
+An outage of the flag server does not change the values being served: the provider keeps evaluating the definitions it synchronized last, so losing the server cannot silently flip a flag.
+Default values are served only for flags that were never synchronized and when the server rejects the provider's credentials; see xref:index.adoc#application-health[Application health].
+Choose defaults that are safe to serve, because those are the cases in which you get them.
+
+== Credentials
+
+Only the flag server connection is authenticated, and only by those providers whose server supports it:
+
+[cols="1,2"]
+|===
+|Provider |Authentication
+
+|xref:flagd.adoc[flagd]
+|None. The flagd sync protocol defines no authentication mechanism; use TLS and network-level controls.
+
+|xref:flipt.adoc[Flipt]
+|`quarkus.openfeature.flipt.auth-type` and `auth-token` (client token).
+
+|xref:gofeatureflag.adoc[GO Feature Flag]
+|`quarkus.openfeature.gofeatureflag.api-key`.
+
+|xref:unleash.adoc[Unleash]
+|`quarkus.openfeature.unleash.api-key` (backend token).
+
+|xref:config-providers.adoc[Configuration providers]
+|None. Flag values come from Quarkus configuration; there is no connection.
+|===
+
+Setting the token directly in configuration is fine for development and testing.
+In production, keep it out of `application.properties` and use a https://quarkus.io/guides/credentials-provider[credentials provider] such as Vault, through the `credentials-provider` and `credentials-provider-name` properties that each of those providers documents.
+Two things about that mechanism hold for all of them and are easy to get wrong:
+
+* *The directly configured token wins.*
+  If both `api-key` (or `auth-token`) and `credentials-provider` are set, the directly configured value is used and the credentials provider is never consulted.
+* *Credentials are read once, during application startup*, when the provider is created.
+  Rotating a token in the secret store does not affect a running application; it takes effect on the next restart.
+
+CAUTION: The GO Feature Flag relay proxy authorizes its event stream from an `apiKey` query parameter and ignores the `Authorization` header, so that provider has to put the key in the request URI.
+Over HTTPS this is no more exposed on the wire than a header would be, because the whole request is inside TLS.
+The difference is at the endpoints: request URIs are written to access logs, and those logs are usually handled far more casually than a secret store.
+The relay proxy's own access log includes the full request URI, and its log level decides whether the key is written: a successful connection is logged at debug level, so the valid key appears only when the proxy runs with `logLevel: debug`, but a connection that fails authorization is logged at warn level, so a *rejected* key is written out at the default log level.
+An expired or mistyped key therefore lands in the log of a proxy that is otherwise quiet.
+The same applies to every hop that terminates TLS on the way to the proxy -- a reverse proxy, an L7 load balancer, an API gateway, a service mesh sidecar -- each of which sees and usually logs the URI.
+So avoid terminating TLS between the application and the relay proxy, don't run the proxy at debug level in production, and rotate a key that has been through a failed connection against a logging proxy.
+
+== TLS
+
+Every remote-sync provider configures TLS through the https://quarkus.io/guides/tls-registry-reference[Quarkus TLS registry] and nothing else; there are no extension-specific certificate properties to review separately.
+Each provider page shows the `tls-configuration-name` property.
+
+For flagd, which has no authentication of its own, TLS is also the only thing that authenticates the server to the application, and mutual TLS the only way to authenticate the application to the server.
+
+== Dev UI and Dev Services
+
+The xref:dev-ui.adoc[Dev UI] only exists in dev mode.
+Its JSON-RPC service lives in a separate artifact and the build step that registers it is guarded so that it does not run for a production build.
+There is therefore no endpoint in a production application that lists flags, evaluates them on request, or overrides their values.
+
+Dev Services, which start a containerized flag server, are likewise guarded by launch mode and run in dev and test only.
+In production you always connect to the server you configured.
+
+The `@TestFlag` overrides described in xref:testing.adoc[Testing] use the same mechanism as the Dev UI overrides and are applied only by the JUnit extension, which is not on a production classpath.
+
+== Flag values are not a secret store
+
+Flag definitions are replicated into the application and, in dev mode, listed in the Dev UI.
+With the xref:config-providers.adoc[build-time configuration provider], flag values are additionally baked into the built artifact and cannot be changed without rebuilding.
+
+Do not put credentials, connection strings or other secrets into flag values.
+Use flags to decide _whether_ a code path runs; use the Quarkus configuration and credentials mechanisms for the secrets that path needs.
