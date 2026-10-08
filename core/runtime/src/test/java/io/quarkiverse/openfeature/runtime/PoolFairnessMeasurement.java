@@ -94,6 +94,9 @@ public class PoolFairnessMeasurement {
         Pool<Object> pool = new Pool<>("instance", minSize, maxWait,
                 Duration.ofMinutes(Pool.FAST_IDLE_TIMEOUT_MINUTES),
                 Duration.ofMinutes(Pool.SLOW_IDLE_TIMEOUT_MINUTES),
+                // the measurement sheds load by design and counts the timeouts itself,
+                // so the pool's own reporting would only be noise in the output
+                Duration.ofDays(1),
                 Object::new, instance -> {
                 }, fair);
 

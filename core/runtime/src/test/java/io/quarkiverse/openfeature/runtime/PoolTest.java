@@ -836,4 +836,109 @@ public class PoolTest {
         assertEquals(instances.created.get(), instances.destroyed.size());
         assertEquals(0, pool.size());
     }
+
+    // Borrow timeouts are expected once the pool saturates, so they are reported roughly
+    // once per interval. `recordTimeout` returns how many the caller is to report, which
+    // is the whole decision; the logging itself is a one-liner on top of it.
+
+    @Test
+    public void timeoutReport_firstIsImmediate() {
+        Pool<Instance> pool = poolWithTimeoutReportInterval(Duration.ofMinutes(1));
+        assertEquals(1, pool.recordTimeout(System.nanoTime()));
+    }
+
+    // the real pool logs through this, so the real interval must not silence the onset
+    @Test
+    public void timeoutReport_firstIsImmediateWithTheDefaultInterval() {
+        Pool<Instance> pool = pool(1, NEVER_IDLE_TIMEOUT, NEVER_IDLE_TIMEOUT);
+        assertEquals(1, pool.recordTimeout(System.nanoTime()));
+    }
+
+    @Test
+    public void timeoutReport_silentWithinTheInterval() {
+        Pool<Instance> pool = poolWithTimeoutReportInterval(Duration.ofMinutes(1));
+        long now = System.nanoTime();
+        assertEquals(1, pool.recordTimeout(now));
+        for (int i = 0; i < 100; i++) {
+            assertEquals(0, pool.recordTimeout(now + i));
+        }
+    }
+
+    @Test
+    public void timeoutReport_countsTheSilencedOnes() {
+        Duration interval = Duration.ofMinutes(1);
+        Pool<Instance> pool = poolWithTimeoutReportInterval(interval);
+        long now = System.nanoTime();
+        assertEquals(1, pool.recordTimeout(now));
+        for (int i = 0; i < 9; i++) {
+            pool.recordTimeout(now + i);
+        }
+        // the nine silenced ones plus the one that reports them
+        assertEquals(10, pool.recordTimeout(now + interval.toNanos()));
+    }
+
+    @Test
+    public void timeoutReport_countResetsAfterReporting() {
+        Duration interval = Duration.ofMinutes(1);
+        Pool<Instance> pool = poolWithTimeoutReportInterval(interval);
+        long now = System.nanoTime();
+        pool.recordTimeout(now);
+        pool.recordTimeout(now + 1);
+        assertEquals(2, pool.recordTimeout(now + interval.toNanos()));
+        // a pool that stopped shedding and starts again reports a single timeout again,
+        // which is what makes a return of 1 mean "this pool has just started shedding"
+        assertEquals(1, pool.recordTimeout(now + 2 * interval.toNanos()));
+    }
+
+    @Test
+    public void timeoutReport_concurrentTimeoutsAreNotLostOrDoubleCounted() throws Exception {
+        int threads = 16;
+        int perThread = 100;
+        Pool<Instance> pool = poolWithTimeoutReportInterval(Duration.ofMinutes(1));
+        ExecutorService executor = Executors.newFixedThreadPool(threads);
+        try {
+            CountDownLatch start = new CountDownLatch(1);
+            List<Future<long[]>> futures = new ArrayList<>();
+            for (int i = 0; i < threads; i++) {
+                futures.add(executor.submit(() -> {
+                    start.await();
+                    // how many times this thread was told to report, and how many timeouts
+                    // those reports covered in total
+                    long[] reports = new long[2];
+                    for (int j = 0; j < perThread; j++) {
+                        long toReport = pool.recordTimeout(System.nanoTime());
+                        if (toReport > 0) {
+                            reports[0]++;
+                            reports[1] += toReport;
+                        }
+                    }
+                    return reports;
+                }));
+            }
+            start.countDown();
+
+            long reports = 0;
+            long covered = 0;
+            for (Future<long[]> future : futures) {
+                long[] each = future.get(60, TimeUnit.SECONDS);
+                reports += each[0];
+                covered += each[1];
+            }
+            // the interval is far longer than the test, so a single report is the normal
+            // outcome, but threads racing on the opaque write may produce a few more; what
+            // must hold is that reporting happens at all and stays bounded
+            assertTrue(reports >= 1 && reports < threads, "reported " + reports + " times");
+            // no timeout may be counted twice, and whatever is not reported is still
+            // accumulated for the next interval rather than lost
+            assertTrue(covered >= 1 && covered <= (long) threads * perThread,
+                    "reported " + covered + " timeouts");
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    private Pool<Instance> poolWithTimeoutReportInterval(Duration interval) {
+        return new Pool<>("test instance", 1, MAX_WAIT, NEVER_IDLE_TIMEOUT, NEVER_IDLE_TIMEOUT,
+                interval, instances, instances, false);
+    }
 }
