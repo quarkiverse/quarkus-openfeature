@@ -120,6 +120,10 @@ quarkus.openfeature.unleash.app-name=my-app
 quarkus.openfeature.unleash.environment=production
 ----
 
+An Unleash context is a map of strings, so every attribute is rendered as one.
+Numbers and booleans use their usual textual form, and instants are rendered as ISO-8601, which is what the `DATE_AFTER` and `DATE_BEFORE` operators expect.
+Attributes whose value is a list or a structure have no faithful string form and are ignored.
+
 == Dev Services
 
 In dev and test mode, an Unleash server container (with a PostgreSQL database) is started automatically if no `quarkus.openfeature.unleash.url` is configured and Docker is available.
