@@ -1,7 +1,9 @@
 {
   "features": [
     {"name": "app-name-flag", "type": "release", "project": "default"},
-    {"name": "env-flag", "type": "release", "project": "default"}
+    {"name": "env-flag", "type": "release", "project": "default"},
+    {"name": "age-flag", "type": "release", "project": "default"},
+    {"name": "date-flag", "type": "release", "project": "default"}
   ],
   "featureStrategies": [
     {
@@ -45,10 +47,54 @@
         {"name": "v", "weight": 1000, "weightType": "variable", "stickiness": "default",
          "payload": {"type": "string", "value": "not-matched"}}
       ]
+    },
+    {
+      "name": "default",
+      "featureName": "age-flag",
+      "sortOrder": 0,
+      "parameters": {},
+      "constraints": [{"contextName": "age", "operator": "NUM_GTE", "value": "18"}],
+      "variants": [
+        {"name": "v", "weight": 1000, "weightType": "variable", "stickiness": "default",
+         "payload": {"type": "string", "value": "matched"}}
+      ]
+    },
+    {
+      "name": "default",
+      "featureName": "age-flag",
+      "sortOrder": 1,
+      "parameters": {},
+      "variants": [
+        {"name": "v", "weight": 1000, "weightType": "variable", "stickiness": "default",
+         "payload": {"type": "string", "value": "not-matched"}}
+      ]
+    },
+    {
+      "name": "default",
+      "featureName": "date-flag",
+      "sortOrder": 0,
+      "parameters": {},
+      "constraints": [{"contextName": "signedUpAt", "operator": "DATE_AFTER", "value": "2020-01-01T00:00:00Z"}],
+      "variants": [
+        {"name": "v", "weight": 1000, "weightType": "variable", "stickiness": "default",
+         "payload": {"type": "string", "value": "matched"}}
+      ]
+    },
+    {
+      "name": "default",
+      "featureName": "date-flag",
+      "sortOrder": 1,
+      "parameters": {},
+      "variants": [
+        {"name": "v", "weight": 1000, "weightType": "variable", "stickiness": "default",
+         "payload": {"type": "string", "value": "not-matched"}}
+      ]
     }
   ],
   "featureEnvironments": [
     {"enabled": true, "featureName": "app-name-flag", "environment": "development", "name": "app-name-flag"},
-    {"enabled": true, "featureName": "env-flag", "environment": "development", "name": "env-flag"}
+    {"enabled": true, "featureName": "env-flag", "environment": "development", "name": "env-flag"},
+    {"enabled": true, "featureName": "age-flag", "environment": "development", "name": "age-flag"},
+    {"enabled": true, "featureName": "date-flag", "environment": "development", "name": "date-flag"}
   ]
 }

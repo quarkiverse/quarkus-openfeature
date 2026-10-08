@@ -125,7 +125,7 @@ public class UnleashFeatureProvider extends AbstractRemoteFeatureProvider {
         }
 
         try {
-            Context context = mapContext(ctx);
+            Context context = mapContext(ctx, appName, environment);
             FlatResponse<Boolean> response = engine.isEnabled(key, context);
             if (response.value == null) {
                 return ProviderEvaluation.<Boolean> builder()
@@ -183,7 +183,7 @@ public class UnleashFeatureProvider extends AbstractRemoteFeatureProvider {
     private <T> ProviderEvaluation<T> evaluateVariant(String key, T defaultValue, Class<T> expectedType,
             EvaluationContext ctx) {
         try {
-            Context context = mapContext(ctx);
+            Context context = mapContext(ctx, appName, environment);
             FlatResponse<VariantDef> response = engine.getVariant(key, context);
             if (response.value == null) {
                 return ProviderEvaluation.<T> builder()
@@ -313,7 +313,19 @@ public class UnleashFeatureProvider extends AbstractRemoteFeatureProvider {
         return new Value(json.toString());
     }
 
-    private Context mapContext(EvaluationContext ctx) {
+    // An Unleash context is a map of strings, so every attribute has to be rendered as one.
+    // `Value.asString()` returns `null` for everything that is not already a string, which is
+    // why numbers, booleans and instants go through the underlying object instead; an instant
+    // renders as ISO-8601, which is what the Unleash date operators expect. Lists and structures
+    // have no faithful string form and are dropped.
+    private static String stringValue(Value value) {
+        if (value == null || value.isNull() || value.isList() || value.isStructure()) {
+            return null;
+        }
+        return value.asObject().toString();
+    }
+
+    static Context mapContext(EvaluationContext ctx, String appName, String environment) {
         Context context = new Context();
         if (ctx == null) {
             return context;
@@ -325,24 +337,25 @@ public class UnleashFeatureProvider extends AbstractRemoteFeatureProvider {
 
         Map<String, String> properties = new HashMap<>();
         ctx.asMap().forEach((key, value) -> {
-            if (value == null) {
+            String string = stringValue(value);
+            if (string == null) {
                 return;
             }
             switch (key) {
                 // static
-                case "appName" -> context.setAppName(value.asString());
-                case "environment" -> context.setEnvironment(value.asString());
+                case "appName" -> context.setAppName(string);
+                case "environment" -> context.setEnvironment(string);
 
                 // dynamic
                 case "targetingKey" -> {
                     // already set above
                 }
-                case "sessionId" -> context.setSessionId(value.asString());
-                case "remoteAddress" -> context.setRemoteAddress(value.asString());
-                case "currentTime" -> context.setCurrentTime(value.asString());
+                case "sessionId" -> context.setSessionId(string);
+                case "remoteAddress" -> context.setRemoteAddress(string);
+                case "currentTime" -> context.setCurrentTime(string);
 
                 // additional
-                default -> properties.put(key, value.asString());
+                default -> properties.put(key, string);
             }
         });
         if (!properties.isEmpty()) {
