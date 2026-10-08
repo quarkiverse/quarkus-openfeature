@@ -333,6 +333,32 @@ endif::add-copy-button-to-env-var[]
 |string
 |
 
+a| [[quarkus-openfeature-unleash_quarkus-openfeature-unleash-request-timeout]] [.property-path]##link:#quarkus-openfeature-unleash_quarkus-openfeature-unleash-request-timeout[`+++quarkus.openfeature.unleash.request-timeout+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.unleash.request-timeout+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".unleash.request-timeout+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".unleash.request-timeout+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Timeout for a single synchronization poll. Covers both connecting and waiting for the response; when it expires, the poll is retried on the reconnect schedule. Without it, a request that is accepted but never answered would stop the polling loop for good.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_UNLEASH_REQUEST_TIMEOUT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_UNLEASH_REQUEST_TIMEOUT+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-openfeature-unleash_quarkus-openfeature[icon:question-circle[title=More information about the Duration format]]
+|`+++10S+++`
+
 a| [[quarkus-openfeature-unleash_quarkus-openfeature-unleash-grace-period]] [.property-path]##link:#quarkus-openfeature-unleash_quarkus-openfeature-unleash-grace-period[`+++quarkus.openfeature.unleash.grace-period+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++quarkus.openfeature.unleash.grace-period+++[]

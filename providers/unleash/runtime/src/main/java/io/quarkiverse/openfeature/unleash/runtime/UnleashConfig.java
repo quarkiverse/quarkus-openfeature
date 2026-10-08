@@ -78,6 +78,15 @@ public interface UnleashConfig {
         Optional<String> tlsConfigurationName();
 
         /**
+         * Timeout for a single synchronization poll. Covers both connecting and waiting
+         * for the response; when it expires, the poll is retried on the reconnect schedule.
+         * Without it, a request that is accepted but never answered would stop the polling
+         * loop for good.
+         */
+        @WithDefault("10s")
+        Duration requestTimeout();
+
+        /**
          * Grace period before transitioning from STALE to ERROR
          * after a connection loss. During this period, the provider continues
          * serving cached flag values while attempting to reconnect.

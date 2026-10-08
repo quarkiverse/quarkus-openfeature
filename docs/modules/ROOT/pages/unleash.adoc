@@ -182,6 +182,14 @@ The grace period is configurable:
 quarkus.openfeature.unleash.grace-period=10m
 ----
 
+A poll request that is accepted and never answered would stop the polling loop for good, so each poll has a timeout of its own.
+When it expires, the poll is retried on the reconnect schedule:
+
+[source,properties]
+----
+quarkus.openfeature.unleash.request-timeout=5s
+----
+
 [[configuration-reference]]
 == Configuration Reference
 

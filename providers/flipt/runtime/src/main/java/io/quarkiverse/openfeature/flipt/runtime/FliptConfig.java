@@ -95,6 +95,13 @@ public interface FliptConfig {
         Optional<String> reference();
 
         /**
+         * Idle timeout for the flag stream. If no data is received within this period,
+         * the stream is closed and a reconnect is attempted.
+         */
+        @WithDefault("10m")
+        Duration streamDeadline();
+
+        /**
          * Grace period before transitioning from STALE to ERROR
          * after a connection loss. During this period, the provider continues
          * serving cached flag values while attempting to reconnect.
