@@ -130,8 +130,10 @@ The configured pool size is the minimum number of engine instances; they are cre
 The default is 16.
 When all instances are in use, the pool creates more, up to 4 times the configured size.
 Instances above the minimum are discarded again when they become idle: the peak capacity above twice the configured size after a minute, the remaining extra instances after 10 minutes.
-Only when the pool has reached its maximum size does an evaluation request wait for an instance to become available, and only for up to 10 milliseconds.
+Only when the pool has reached its maximum size does an evaluation request wait for an instance to become available, and only for up to 20 milliseconds.
 If no instance is available within that time, the default value is returned.
+Waiting requests are not served in order, so an application that keeps the pool saturated will see a small fraction of its evaluations fall back to the default value.
+That is a signal to increase the pool size.
 To increase the pool size:
 
 [source,properties]
