@@ -111,6 +111,44 @@ public class RemoteFeatureProviderEventsTest {
         assertEquals("unauthenticated", event.details().getMessage());
     }
 
+    @Test
+    public void eventLogKeepsTheHundredNewestEvents() {
+        for (int i = 0; i < 250; i++) {
+            provider.handleConfigurationChanged("event " + i);
+        }
+
+        List<DevFeatureAccess.EventInfo> log = provider.getEventLog();
+        assertEquals(100, log.size());
+        assertEquals("event 150", log.get(0).message());
+        assertEquals("event 249", log.get(99).message());
+    }
+
+    @Test
+    public void eventLogStaysBoundedUnderConcurrentRecording() throws InterruptedException {
+        int threads = 8;
+        CountDownLatch start = new CountDownLatch(1);
+        CountDownLatch done = new CountDownLatch(threads);
+        for (int t = 0; t < threads; t++) {
+            int threadId = t;
+            new Thread(() -> {
+                try {
+                    start.await();
+                    for (int i = 0; i < 500; i++) {
+                        provider.handleConfigurationChanged(threadId + "-" + i);
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } finally {
+                    done.countDown();
+                }
+            }).start();
+        }
+        start.countDown();
+        assertTrue(done.await(TIMEOUT_SECONDS, TimeUnit.SECONDS), "recording threads did not finish");
+
+        assertEquals(100, provider.getEventLog().size());
+    }
+
     private record Event(ProviderEvent type, ProviderEventDetails details) {
     }
 

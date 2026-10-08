@@ -1,10 +1,10 @@
 package io.quarkiverse.openfeature.runtime;
 
 import java.time.Duration;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedDeque;
 
 import org.jboss.logging.Logger;
 
@@ -27,7 +27,8 @@ public abstract class AbstractRemoteFeatureProvider extends EventProvider implem
     private final Duration gracePeriod;
     private final SyncClientState syncState;
 
-    private final Deque<DevFeatureAccess.EventInfo> eventLog = new ConcurrentLinkedDeque<>();
+    // guarded by itself; a fixed-capacity ring buffer, so the oldest event is dropped on overflow
+    private final Deque<DevFeatureAccess.EventInfo> eventLog = new ArrayDeque<>(MAX_EVENTS);
 
     private volatile FlagOverrides flagOverrides;
 
@@ -154,15 +155,20 @@ public abstract class AbstractRemoteFeatureProvider extends EventProvider implem
     protected abstract void doShutdown();
 
     private void recordEvent(ProviderEvent type, String message) {
-        eventLog.addLast(new DevFeatureAccess.EventInfo(System.currentTimeMillis(), type, message));
-        while (eventLog.size() > MAX_EVENTS) {
-            eventLog.pollFirst();
+        DevFeatureAccess.EventInfo event = new DevFeatureAccess.EventInfo(System.currentTimeMillis(), type, message);
+        synchronized (eventLog) {
+            if (eventLog.size() == MAX_EVENTS) {
+                eventLog.removeFirst();
+            }
+            eventLog.addLast(event);
         }
     }
 
     @Override
     public List<DevFeatureAccess.EventInfo> getEventLog() {
-        return new ArrayList<>(eventLog);
+        synchronized (eventLog) {
+            return new ArrayList<>(eventLog);
+        }
     }
 
     @Override
