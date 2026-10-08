@@ -44,6 +44,10 @@ For named domains:
 quarkus.openfeature."experimentation".flagd.url=flagd-experiments.example.com:8015
 ----
 
+The URL is normally a bare `host:port`; the default port is 8015.
+A scheme is accepted only in the two forms the provider implements, `grpc://` for TCP and `unix://` for a Unix domain socket.
+Anything else -- including `https://`, and the gRPC name-resolver schemes `dns://`, `xds://` and `envoy://` -- is rejected at startup.
+
 === TLS
 
 The provider uses the Quarkus TLS registry for TLS configuration.

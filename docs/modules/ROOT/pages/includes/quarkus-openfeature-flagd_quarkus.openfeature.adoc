@@ -186,7 +186,7 @@ endif::add-copy-button-to-config-props[]
 
 [.description]
 --
-flagd server URL.
+flagd server URL, normally a bare `host:port` with 8015 as the default port. The only accepted schemes are `grpc://` and `unix://` (a Unix domain socket); anything else, `https://` included, is rejected at startup. The scheme does not control TLS; use `tls-configuration-name()` for that.
 
 
 ifdef::add-copy-button-to-env-var[]

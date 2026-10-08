@@ -69,8 +69,11 @@ public class FlagdSyncClient {
         if (config.offlinePath().isPresent()) {
             startOffline(config.offlinePath().get());
         } else {
+            // parsed here, not on the event loop, so that a bad URL fails application
+            // startup instead of disappearing into the Vert.x exception handler
+            SocketAddress address = parseAddress(config.url());
             context.runOnContext(v -> {
-                startGrpc(listener);
+                startGrpc(address, listener);
             });
         }
     }
@@ -86,9 +89,8 @@ public class FlagdSyncClient {
         state.setReady();
     }
 
-    private void startGrpc(Listener listener) {
+    private void startGrpc(SocketAddress address, Listener listener) {
         grpcClient = createGrpcClient();
-        SocketAddress address = parseAddress(config.url());
         connectStream(address, listener);
     }
 
@@ -196,9 +198,20 @@ public class FlagdSyncClient {
         }
     }
 
-    private static SocketAddress parseAddress(String url) {
+    static SocketAddress parseAddress(String url) {
         URI uri = URI.create(url.contains("://") ? url : "grpc://" + url);
-        if ("unix".equals(uri.getScheme())) {
+
+        // the scheme carries no TLS meaning here: flagd sync is gRPC, where a URI scheme
+        // selects a name resolver. Rather than ignore an `https://` that the user wrote
+        // expecting encryption, refuse everything we don't actually implement
+        String scheme = uri.getScheme();
+        if (!"grpc".equals(scheme) && !"unix".equals(scheme)) {
+            throw new IllegalArgumentException("Unsupported flagd URL scheme '" + scheme + "' in '" + url
+                    + "'; flagd sync is gRPC, use 'host:port' or 'unix:///path'"
+                    + " and enable TLS with quarkus.openfeature.flagd.tls-configuration-name");
+        }
+
+        if ("unix".equals(scheme)) {
             return SocketAddress.domainSocketAddress(uri.getPath());
         }
         String host = uri.getHost();

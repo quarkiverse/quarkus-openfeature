@@ -35,7 +35,10 @@ public interface FlagdConfig {
 
     interface ProviderConfig {
         /**
-         * flagd server URL.
+         * flagd server URL, normally a bare {@code host:port} with 8015 as the default port.
+         * The only accepted schemes are {@code grpc://} and {@code unix://} (a Unix domain socket);
+         * anything else, {@code https://} included, is rejected at startup. The scheme does not
+         * control TLS; use {@link #tlsConfigurationName()} for that.
          */
         @WithDefault("localhost:8015")
         String url();

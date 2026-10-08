@@ -64,6 +64,10 @@ So avoid terminating TLS between the application and the relay proxy, don't run 
 Every remote-sync provider configures TLS through the https://quarkus.io/guides/tls-registry-reference[Quarkus TLS registry] and nothing else; there are no extension-specific certificate properties to review separately.
 Each provider page shows the `tls-configuration-name` property.
 
+For the three HTTP providers, an `https://` URL also enables TLS on its own, verifying the server against the JVM's default trust store.
+flagd is different: its sync protocol is gRPC, so TLS is enabled only by `tls-configuration-name` and nothing else.
+To make sure that difference cannot turn into a silent downgrade, an `https://` flagd URL is rejected at startup rather than connected to in cleartext.
+
 For flagd, which has no authentication of its own, TLS is also the only thing that authenticates the server to the application, and mutual TLS the only way to authenticate the application to the server.
 
 == Dev UI and Dev Services
