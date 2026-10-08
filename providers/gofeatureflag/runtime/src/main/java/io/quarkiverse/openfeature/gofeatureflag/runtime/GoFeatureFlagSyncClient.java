@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.jboss.logging.Logger;
@@ -39,6 +40,13 @@ public class GoFeatureFlagSyncClient {
      * buffer without bound.
      */
     private static final int MAX_RECORD_SIZE = 32 * 1024 * 1024;
+
+    /**
+     * How long to wait for the response to the configuration fetch, and for the response
+     * headers of the SSE stream. Not configurable: unlike the stream deadline, this only
+     * has to accommodate a server that is reachable but busy.
+     */
+    private static final long REQUEST_TIMEOUT_MILLIS = 10_000;
 
     private final ObjectMapper mapper;
     private final Vertx vertx;
@@ -105,7 +113,10 @@ public class GoFeatureFlagSyncClient {
                 .setMethod(HttpMethod.GET)
                 .setHost(baseUri.getHost())
                 .setPort(port)
-                .setURI(sseUri);
+                .setURI(sseUri)
+                // only guards the wait for the response headers; once they arrive,
+                // the stream deadline configured on the HTTP client takes over
+                .setTimeout(REQUEST_TIMEOUT_MILLIS);
 
         httpClient.request(sseOptions)
                 .onSuccess(request -> {
@@ -212,7 +223,13 @@ public class GoFeatureFlagSyncClient {
     }
 
     private HttpClient createHttpClient() {
-        HttpClientOptions options = new HttpClientOptions();
+        // request timeout is cancelled once response headers arrive, so if the connection
+        // delivers the headers but stops delivering the body in the middle, it wouldn't be
+        // guarded by the request timeout and the response handler wouldn't be called either;
+        // we have to enforce the timeout at the socket
+        HttpClientOptions options = new HttpClientOptions()
+                .setReadIdleTimeout((int) config.streamDeadline().toMillis())
+                .setIdleTimeoutUnit(TimeUnit.MILLISECONDS);
 
         URI baseUri = URI.create(config.url());
         if (isHttps(baseUri) || config.tlsConfigurationName().isPresent()) {
@@ -236,7 +253,8 @@ public class GoFeatureFlagSyncClient {
                 .setMethod(HttpMethod.POST)
                 .setHost(baseUri.getHost())
                 .setPort(port)
-                .setURI("/v1/flag/configuration");
+                .setURI("/v1/flag/configuration")
+                .setTimeout(REQUEST_TIMEOUT_MILLIS);
 
         httpClient.request(requestOptions)
                 .onSuccess(request -> {

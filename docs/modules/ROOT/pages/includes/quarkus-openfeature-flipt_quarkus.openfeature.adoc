@@ -411,6 +411,32 @@ endif::add-copy-button-to-env-var[]
 |string
 |
 
+a| [[quarkus-openfeature-flipt_quarkus-openfeature-flipt-stream-deadline]] [.property-path]##link:#quarkus-openfeature-flipt_quarkus-openfeature-flipt-stream-deadline[`+++quarkus.openfeature.flipt.stream-deadline+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flipt.stream-deadline+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flipt.stream-deadline+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flipt.stream-deadline+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Idle timeout for the flag stream. If no data is received within this period, the stream is closed and a reconnect is attempted.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLIPT_STREAM_DEADLINE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLIPT_STREAM_DEADLINE+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-openfeature-flipt_quarkus-openfeature[icon:question-circle[title=More information about the Duration format]]
+|`+++10M+++`
+
 a| [[quarkus-openfeature-flipt_quarkus-openfeature-flipt-grace-period]] [.property-path]##link:#quarkus-openfeature-flipt_quarkus-openfeature-flipt-grace-period[`+++quarkus.openfeature.flipt.grace-period+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++quarkus.openfeature.flipt.grace-period+++[]

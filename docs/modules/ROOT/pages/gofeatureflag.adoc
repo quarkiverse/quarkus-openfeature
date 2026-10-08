@@ -159,6 +159,16 @@ The grace period is configurable:
 quarkus.openfeature.gofeatureflag.grace-period=10m
 ----
 
+A connection that is dropped silently somewhere in transit cannot be noticed from the stream alone.
+Therefore, a stream that has not delivered any data for configurable amount of time is closed, which triggers a reconnect:
+
+[source,properties]
+----
+quarkus.openfeature.gofeatureflag.stream-deadline=5m
+----
+
+The initial configuration fetch times out after 10 seconds; this is currently not configurable.
+
 [[configuration-reference]]
 == Configuration Reference
 

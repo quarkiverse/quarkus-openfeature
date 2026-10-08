@@ -210,6 +210,16 @@ The grace period is configurable:
 quarkus.openfeature.flipt.grace-period=10m
 ----
 
+A connection that is dropped silently somewhere in transit cannot be noticed from the stream alone.
+Therefore, a stream that has not delivered any data for configurable amount of time is closed, which triggers a reconnect:
+
+[source,properties]
+----
+quarkus.openfeature.flipt.stream-deadline=5m
+----
+
+The one-off requests the provider makes (the authentication check) time out after 10 seconds; this is currently not configurable.
+
 [[configuration-reference]]
 == Configuration Reference
 

@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.jboss.logging.Logger;
@@ -32,6 +33,13 @@ public class FliptSyncClient {
      * make the client buffer without bound.
      */
     private static final int MAX_RECORD_SIZE = 32 * 1024 * 1024;
+
+    /**
+     * How long to wait for the response to the authentication check, and for the response
+     * headers of the flag stream. Not configurable: unlike the stream deadline, this only
+     * has to accommodate a server that is reachable but busy.
+     */
+    private static final long REQUEST_TIMEOUT_MILLIS = 10_000;
 
     private final ObjectMapper mapper;
     private final Vertx vertx;
@@ -77,7 +85,8 @@ public class FliptSyncClient {
                 .setMethod(HttpMethod.GET)
                 .setHost(baseUri.getHost())
                 .setPort(port)
-                .setURI("/api/v1/auth/self");
+                .setURI("/api/v1/auth/self")
+                .setTimeout(REQUEST_TIMEOUT_MILLIS);
 
         httpClient.request(requestOptions)
                 .onSuccess(request -> {
@@ -119,7 +128,10 @@ public class FliptSyncClient {
                 .setMethod(HttpMethod.GET)
                 .setHost(baseUri.getHost())
                 .setPort(baseUri.getPort() > 0 ? baseUri.getPort() : (isHttps(baseUri) ? 443 : 8080))
-                .setURI(queryString.length() > 0 ? streamPath + "?" + queryString : streamPath);
+                .setURI(queryString.length() > 0 ? streamPath + "?" + queryString : streamPath)
+                // only guards the wait for the response headers; once they arrive, the
+                // stream deadline configured on the HTTP client takes over
+                .setTimeout(REQUEST_TIMEOUT_MILLIS);
 
         httpClient.request(requestOptions)
                 .onSuccess(request -> {
@@ -218,7 +230,13 @@ public class FliptSyncClient {
     }
 
     private HttpClient createHttpClient() {
-        HttpClientOptions options = new HttpClientOptions();
+        // request timeout is cancelled once response headers arrive, so if the connection
+        // delivers the headers but stops delivering the body in the middle, it wouldn't be
+        // guarded by the request timeout and the response handler wouldn't be called either;
+        // we have to enforce the timeout at the socket
+        HttpClientOptions options = new HttpClientOptions()
+                .setReadIdleTimeout((int) config.streamDeadline().toMillis())
+                .setIdleTimeoutUnit(TimeUnit.MILLISECONDS);
 
         URI baseUri = URI.create(config.url());
         if (isHttps(baseUri) || config.tlsConfigurationName().isPresent()) {

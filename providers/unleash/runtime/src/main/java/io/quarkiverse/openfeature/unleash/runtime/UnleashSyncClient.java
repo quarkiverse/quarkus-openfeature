@@ -2,6 +2,7 @@ package io.quarkiverse.openfeature.unleash.runtime;
 
 import java.net.URI;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import org.jboss.logging.Logger;
 
@@ -46,7 +47,13 @@ public class UnleashSyncClient {
 
     void start(Listener listener) {
         context.runOnContext(v -> {
-            HttpClientOptions options = new HttpClientOptions();
+            // request timeout is cancelled once response headers arrive, so if the connection
+            // delivers the headers but stops delivering the body in the middle, it wouldn't be
+            // guarded by the request timeout and the response handler wouldn't be called either;
+            // we have to enforce the timeout at the socket
+            HttpClientOptions options = new HttpClientOptions()
+                    .setReadIdleTimeout((int) config.requestTimeout().toMillis())
+                    .setIdleTimeoutUnit(TimeUnit.MILLISECONDS);
 
             URI baseUri = URI.create(config.url());
             if (isHttps(baseUri) || config.tlsConfigurationName().isPresent()) {
@@ -84,7 +91,8 @@ public class UnleashSyncClient {
                 .setMethod(HttpMethod.GET)
                 .setHost(baseUri.getHost())
                 .setPort(port)
-                .setURI(path + "/client/features");
+                .setURI(path + "/client/features")
+                .setTimeout(config.requestTimeout().toMillis());
 
         httpClient.request(requestOptions)
                 .onSuccess(request -> {
