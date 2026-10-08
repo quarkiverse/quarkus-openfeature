@@ -18,7 +18,8 @@ import org.jboss.logging.Logger;
  * The pool always holds at least {@code minSize} instances, which are created eagerly in
  * the constructor, and grows on demand up to {@value #MAX_FACTOR} * {@code minSize} instances. Only
  * when the pool is full does borrowing wait for an instance to be released, and only for a short
- * while ({@value #MAX_WAIT_MILLIS} ms) before failing.
+ * while ({@value #MAX_WAIT_MILLIS} ms) before failing. Waiting threads are not served in order,
+ * so a pool that stays saturated sheds a small fraction of the load through that timeout.
  * <p>
  * Instances created above the minimum size are destroyed again when they become idle. While
  * the pool is above {@value #PEAK_FACTOR} * {@code minSize} instances, idle instances are
@@ -36,7 +37,7 @@ public final class Pool<T> {
     static final int PEAK_FACTOR = 2;
     static final int MAX_FACTOR = 4;
 
-    static final int MAX_WAIT_MILLIS = 10;
+    static final int MAX_WAIT_MILLIS = 20;
     static final int FAST_IDLE_TIMEOUT_MINUTES = 1;
     static final int SLOW_IDLE_TIMEOUT_MINUTES = 10;
 
@@ -58,7 +59,7 @@ public final class Pool<T> {
 
     // one permit per instance that may be borrowed, so the pool never exceeds the maximum size
     private final Semaphore permits;
-    // LIFO: the most recently released instance is first, so the coldest instance is last
+    // LIFO: the most recently released instance is first, the coldest instance is last
     private final ConcurrentLinkedDeque<Idle<T>> idle = new ConcurrentLinkedDeque<>();
     // number of instances that exist, both idle and currently borrowed
     private final AtomicInteger total = new AtomicInteger();
@@ -77,6 +78,13 @@ public final class Pool<T> {
     // visible for testing
     Pool(String description, int minSize, Duration maxWait, Duration fastIdleTimeout, Duration slowIdleTimeout,
             Supplier<T> creator, Consumer<T> destroyer) {
+        this(description, minSize, maxWait, fastIdleTimeout, slowIdleTimeout, creator, destroyer, false);
+    }
+
+    // visible for testing; `fair` only exists so that the measurement harness can compare
+    // the two semaphore modes, production pools are always unfair
+    Pool(String description, int minSize, Duration maxWait, Duration fastIdleTimeout, Duration slowIdleTimeout,
+            Supplier<T> creator, Consumer<T> destroyer, boolean fair) {
         if (minSize < 1) {
             throw new IllegalArgumentException("Pool size of '" + description + "' must be at least 1");
         }
@@ -95,7 +103,10 @@ public final class Pool<T> {
                 log.errorf(e, "Failed to destroy a '%s' instance", description);
             }
         };
-        this.permits = new Semaphore(maxSize, true); // intentionally fair
+        // intentionally unfair: an instance is held for microseconds, so a fair semaphore,
+        // which hands the permit to a parked thread instead of letting the releasing thread
+        // take it again, makes every borrow of a saturated pool pay an unpark
+        this.permits = new Semaphore(maxSize, fair);
 
         long now = System.nanoTime();
         try {
@@ -144,8 +155,8 @@ public final class Pool<T> {
 
         // a permit is the right to hold an instance, so there are never more instances
         // than the maximum size; when the pool is full, the waiting thread is parked
-        // by the semaphore and woken up by whoever releases an instance, in the order
-        // in which the threads started waiting
+        // by the semaphore and woken up by whoever releases an instance, in no particular
+        // order, so a thread may be passed over repeatedly and run into the timeout
         try {
             if (!permits.tryAcquire(maxWaitNanos, TimeUnit.NANOSECONDS)) {
                 log.errorf("Timed out waiting for a '%s' instance, all %d instances are in use",
