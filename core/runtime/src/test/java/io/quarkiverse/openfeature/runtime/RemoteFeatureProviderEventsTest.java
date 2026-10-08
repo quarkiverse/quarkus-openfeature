@@ -97,6 +97,43 @@ public class RemoteFeatureProviderEventsTest {
     }
 
     @Test
+    public void freshDataWithinGracePeriodSuppressesError() throws InterruptedException {
+        syncState.setReady();
+
+        // no reconnect happens here: the stream stays alive, one flag document just failed
+        // to parse and the next one succeeded
+        provider.expectEvents(2);
+        provider.handleError("failed to process flag data");
+        provider.handleConfigurationChanged("flags updated", List.of("flag"));
+        provider.awaitEvents();
+
+        // wait out the grace period to make sure no delayed error arrives
+        Thread.sleep(10 * GRACE_PERIOD.toMillis());
+
+        assertEquals(2, provider.events.size());
+        assertEquals(ProviderEvent.PROVIDER_STALE, provider.events.get(0).type());
+
+        Event ready = provider.events.get(1);
+        assertEquals(ProviderEvent.PROVIDER_READY, ready.type());
+        assertEquals(List.of("flag"), ready.details().getFlagsChanged());
+    }
+
+    @Test
+    public void configurationChangedOutsideGracePeriodStaysConfigurationChanged() throws InterruptedException {
+        syncState.setReady();
+
+        provider.expectEvents(1);
+        provider.handleConfigurationChanged("flags updated", List.of("flag"));
+        provider.awaitEvents();
+
+        assertEquals(1, provider.events.size());
+        Event event = provider.events.get(0);
+        assertEquals(ProviderEvent.PROVIDER_CONFIGURATION_CHANGED, event.type());
+        assertEquals("flags updated", event.details().getMessage());
+        assertEquals(List.of("flag"), event.details().getFlagsChanged());
+    }
+
+    @Test
     public void fatalErrorIsProviderFatal() throws InterruptedException {
         syncState.setReady();
 

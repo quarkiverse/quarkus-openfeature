@@ -72,6 +72,17 @@ public abstract class AbstractRemoteFeatureProvider extends EventProvider implem
     }
 
     protected final void handleConfigurationChanged(String message) {
+        if (errorTimerId != null) {
+            // the provider went STALE without the connection ever dropping, typically because
+            // a single flag document failed to parse; fresh data means it is healthy again,
+            // and nothing else would ever emit READY and cancel the pending ERROR timer
+            cancelErrorTimer();
+            recordEvent(ProviderEvent.PROVIDER_READY, "recovered");
+            emitProviderReady(ProviderEventDetails.builder()
+                    .message("recovered")
+                    .build());
+            return;
+        }
         recordEvent(ProviderEvent.PROVIDER_CONFIGURATION_CHANGED, message);
         emitProviderConfigurationChanged(ProviderEventDetails.builder()
                 .message(message)
@@ -79,6 +90,18 @@ public abstract class AbstractRemoteFeatureProvider extends EventProvider implem
     }
 
     protected final void handleConfigurationChanged(String message, List<String> flagsChanged) {
+        if (errorTimerId != null) {
+            // the provider went STALE without the connection ever dropping, typically because
+            // a single flag document failed to parse; fresh data means it is healthy again,
+            // and nothing else would ever emit READY and cancel the pending ERROR timer
+            cancelErrorTimer();
+            recordEvent(ProviderEvent.PROVIDER_READY, "recovered");
+            emitProviderReady(ProviderEventDetails.builder()
+                    .flagsChanged(flagsChanged)
+                    .message("recovered")
+                    .build());
+            return;
+        }
         recordEvent(ProviderEvent.PROVIDER_CONFIGURATION_CHANGED, message);
         emitProviderConfigurationChanged(ProviderEventDetails.builder()
                 .flagsChanged(flagsChanged)
