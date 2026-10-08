@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -40,6 +41,7 @@ public final class Pool<T> {
     static final int MAX_WAIT_MILLIS = 20;
     static final int FAST_IDLE_TIMEOUT_MINUTES = 1;
     static final int SLOW_IDLE_TIMEOUT_MINUTES = 10;
+    static final int TIMEOUT_REPORT_INTERVAL_SECONDS = 10;
 
     private final String description;
     // instances below minSize are never destroyed
@@ -65,6 +67,21 @@ public final class Pool<T> {
     private final AtomicInteger total = new AtomicInteger();
     private volatile boolean closed;
 
+    // Borrow timeouts are expected, not exceptional: the semaphore is unfair, so a saturated
+    // pool passes some waiters over until they give up. Logging each one would mean thousands
+    // of messages per second exactly when the application is already in trouble, so timeouts
+    // are counted and reported roughly once per `timeoutReportIntervalNanos`.
+    private final long timeoutReportIntervalNanos;
+    private final AtomicLong unreportedTimeouts = new AtomicLong();
+    // Read and written in opaque mode, deliberately neither volatile nor a compare and set.
+    // Timeout reporting doesn't need to be prompt or exact. A thread reaching a deadline
+    // will log and update the deadline, which other threads are not guaranteed to see
+    // promptly. But the worst thing that may happen is other threads also reach a deadline,
+    // log and update their deadline, meaning there may be multiple logs, which is harmless.
+    // Note that opaque access prevents word tearing, which doesn't occur in practice anyway,
+    // but the JLS still permits it.
+    private final AtomicLong nextTimeoutReportNanos;
+
     /**
      * Creates a pool of {@code minSize} instances that may grow up to {@code 4 * minSize}.
      * The {@code description} is used in log and error messages, it should name a single
@@ -78,13 +95,14 @@ public final class Pool<T> {
     // visible for testing
     Pool(String description, int minSize, Duration maxWait, Duration fastIdleTimeout, Duration slowIdleTimeout,
             Supplier<T> creator, Consumer<T> destroyer) {
-        this(description, minSize, maxWait, fastIdleTimeout, slowIdleTimeout, creator, destroyer, false);
+        this(description, minSize, maxWait, fastIdleTimeout, slowIdleTimeout,
+                Duration.ofSeconds(TIMEOUT_REPORT_INTERVAL_SECONDS), creator, destroyer, false);
     }
 
     // visible for testing; `fair` only exists so that the measurement harness can compare
     // the two semaphore modes, production pools are always unfair
     Pool(String description, int minSize, Duration maxWait, Duration fastIdleTimeout, Duration slowIdleTimeout,
-            Supplier<T> creator, Consumer<T> destroyer, boolean fair) {
+            Duration timeoutReportInterval, Supplier<T> creator, Consumer<T> destroyer, boolean fair) {
         if (minSize < 1) {
             throw new IllegalArgumentException("Pool size of '" + description + "' must be at least 1");
         }
@@ -95,6 +113,10 @@ public final class Pool<T> {
         this.maxWaitNanos = maxWait.toNanos();
         this.fastIdleTimeoutNanos = fastIdleTimeout.toNanos();
         this.slowIdleTimeoutNanos = slowIdleTimeout.toNanos();
+        this.timeoutReportIntervalNanos = timeoutReportInterval.toNanos();
+        // the first deadline is at the moment the pool is created, so the first timeout
+        // is at or past it and reports immediately
+        this.nextTimeoutReportNanos = new AtomicLong(System.nanoTime());
         this.creator = creator;
         this.destroyer = instance -> {
             try {
@@ -159,8 +181,18 @@ public final class Pool<T> {
         // order, so a thread may be passed over repeatedly and run into the timeout
         try {
             if (!permits.tryAcquire(maxWaitNanos, TimeUnit.NANOSECONDS)) {
-                log.errorf("Timed out waiting for a '%s' instance, all %d instances are in use",
-                        description, maxSize);
+                long toReport = recordTimeout(System.nanoTime());
+                if (toReport == 1) {
+                    log.errorf("Timed out waiting for a '%s' instance, all %d instances are in use;"
+                            + " the evaluation falls back to its default value",
+                            description, maxSize);
+                } else if (toReport > 1) {
+                    log.errorf("Timed out waiting for a '%s' instance ~%d times in the last %d seconds,"
+                            + " all %d instances are in use; those evaluations fall back to their"
+                            + " default values",
+                            description, toReport, TimeUnit.NANOSECONDS.toSeconds(timeoutReportIntervalNanos),
+                            maxSize);
+                }
                 throw new IllegalStateException("Timed out waiting for a '" + description + "' instance");
             }
         } catch (InterruptedException e) {
@@ -182,6 +214,27 @@ public final class Pool<T> {
             permits.release();
             throw e;
         }
+    }
+
+    /**
+     * Counts a borrow timeout and decides whether the caller should log. Returns how many
+     * timeouts the caller is to report, including its own, or 0 if it is to stay silent
+     * because another timeout was reported less than the report interval ago.
+     * <p>
+     * A return of 1 therefore means a pool that was not shedding has started to, which is
+     * the interesting moment and is reported as soon as it happens; everything after that
+     * is accumulated and comes out as a count. Threads racing here may report more than
+     * once in an interval, which is an acceptable trade for not coordinating them, and is
+     * why the reported count covers an approximate window rather than exactly the interval.
+     */
+    // visible for testing
+    long recordTimeout(long now) {
+        unreportedTimeouts.incrementAndGet();
+        if (now - nextTimeoutReportNanos.getOpaque() >= 0) {
+            nextTimeoutReportNanos.setOpaque(now + timeoutReportIntervalNanos);
+            return unreportedTimeouts.getAndSet(0);
+        }
+        return 0;
     }
 
     // visible for testing
