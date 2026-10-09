@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.quarkiverse.openfeature.runtime.SyncClientState;
+import io.quarkiverse.openfeature.runtime.SyncClientUrls;
 import io.quarkus.tls.TlsConfiguration;
 import io.quarkus.tls.TlsConfigurationRegistry;
 import io.quarkus.tls.runtime.config.TlsConfigUtils;
@@ -103,11 +104,11 @@ public class GoFeatureFlagSyncClient {
         httpClient = createHttpClient();
 
         URI baseUri = URI.create(config.url());
-        int port = baseUri.getPort() > 0 ? baseUri.getPort() : (isHttps(baseUri) ? 443 : 1031);
+        int port = SyncClientUrls.port(baseUri, 1031);
 
         // Connect SSE first, then fetch full config, to avoid missing
         // changes that occur between fetch and subscribe
-        String sseUri = sseUri(apiKey);
+        String sseUri = sseUri(SyncClientUrls.basePath(baseUri), apiKey);
 
         RequestOptions sseOptions = new RequestOptions()
                 .setMethod(HttpMethod.GET)
@@ -232,7 +233,7 @@ public class GoFeatureFlagSyncClient {
                 .setIdleTimeoutUnit(TimeUnit.MILLISECONDS);
 
         URI baseUri = URI.create(config.url());
-        if (isHttps(baseUri) || config.tlsConfigurationName().isPresent()) {
+        if (SyncClientUrls.isHttps(baseUri) || config.tlsConfigurationName().isPresent()) {
             options.setSsl(true);
 
             if (config.tlsConfigurationName().isPresent()) {
@@ -253,7 +254,7 @@ public class GoFeatureFlagSyncClient {
                 .setMethod(HttpMethod.POST)
                 .setHost(baseUri.getHost())
                 .setPort(port)
-                .setURI("/v1/flag/configuration")
+                .setURI(SyncClientUrls.basePath(baseUri) + "/v1/flag/configuration")
                 .setTimeout(REQUEST_TIMEOUT_MILLIS);
 
         httpClient.request(requestOptions)
@@ -412,16 +413,12 @@ public class GoFeatureFlagSyncClient {
     // arbitrary string, and an unencoded `&` or `#` would truncate it.
     //
     // visible for testing
-    static String sseUri(String apiKey) {
-        String uri = "/stream/v1/sse/flag/change";
+    static String sseUri(String basePath, String apiKey) {
+        String uri = basePath + "/stream/v1/sse/flag/change";
         if (apiKey != null) {
             uri += "?apiKey=" + URLEncoder.encode(apiKey, StandardCharsets.UTF_8);
         }
         return uri;
-    }
-
-    private static boolean isHttps(URI uri) {
-        return "https".equals(uri.getScheme());
     }
 
     private static Object nodeToObject(JsonNode node) {

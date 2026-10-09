@@ -186,7 +186,7 @@ endif::add-copy-button-to-config-props[]
 
 [.description]
 --
-Flipt server URL.
+Flipt server URL. May include a path prefix, which all requests are relative to.
 
 
 ifdef::add-copy-button-to-env-var[]

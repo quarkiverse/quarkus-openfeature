@@ -35,7 +35,7 @@ public interface FliptConfig {
 
     interface ProviderConfig {
         /**
-         * Flipt server URL.
+         * Flipt server URL. May include a path prefix, which all requests are relative to.
          */
         @WithDefault("http://localhost:8080")
         String url();

@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.quarkiverse.openfeature.runtime.SyncClientState;
+import io.quarkiverse.openfeature.runtime.SyncClientUrls;
 import io.quarkus.tls.TlsConfiguration;
 import io.quarkus.tls.TlsConfigurationRegistry;
 import io.quarkus.tls.runtime.config.TlsConfigUtils;
@@ -79,13 +80,13 @@ public class FliptSyncClient {
 
     private void verifyAuth(Listener listener) {
         URI baseUri = URI.create(config.url());
-        int port = baseUri.getPort() > 0 ? baseUri.getPort() : (isHttps(baseUri) ? 443 : 8080);
+        int port = SyncClientUrls.port(baseUri, 8080);
 
         RequestOptions requestOptions = new RequestOptions()
                 .setMethod(HttpMethod.GET)
                 .setHost(baseUri.getHost())
                 .setPort(port)
-                .setURI("/api/v1/auth/self")
+                .setURI(SyncClientUrls.basePath(baseUri) + "/api/v1/auth/self")
                 .setTimeout(REQUEST_TIMEOUT_MILLIS);
 
         httpClient.request(requestOptions)
@@ -113,9 +114,9 @@ public class FliptSyncClient {
 
     // package-private and static to be unit-testable; only the path and query are built here,
     // the host and port come from the configured URL
-    static String streamUri(String environment, String namespace, Optional<String> reference) {
-        String path = String.format("/client/v2/environments/%s/namespaces/%s/stream",
-                environment, namespace);
+    static String streamUri(String basePath, String environment, String namespace, Optional<String> reference) {
+        String path = String.format("%s/client/v2/environments/%s/namespaces/%s/stream",
+                basePath, environment, namespace);
         // only the query value is encoded: `URLEncoder` is a form encoder, so it would turn a
         // space in a path segment into `+` rather than `%20`
         return reference
@@ -133,8 +134,9 @@ public class FliptSyncClient {
         RequestOptions requestOptions = new RequestOptions()
                 .setMethod(HttpMethod.GET)
                 .setHost(baseUri.getHost())
-                .setPort(baseUri.getPort() > 0 ? baseUri.getPort() : (isHttps(baseUri) ? 443 : 8080))
-                .setURI(streamUri(config.environment(), config.namespace(), config.reference()))
+                .setPort(SyncClientUrls.port(baseUri, 8080))
+                .setURI(streamUri(SyncClientUrls.basePath(baseUri), config.environment(), config.namespace(),
+                        config.reference()))
                 // only guards the wait for the response headers; once they arrive, the
                 // stream deadline configured on the HTTP client takes over
                 .setTimeout(REQUEST_TIMEOUT_MILLIS);
@@ -245,7 +247,7 @@ public class FliptSyncClient {
                 .setIdleTimeoutUnit(TimeUnit.MILLISECONDS);
 
         URI baseUri = URI.create(config.url());
-        if (isHttps(baseUri) || config.tlsConfigurationName().isPresent()) {
+        if (SyncClientUrls.isHttps(baseUri) || config.tlsConfigurationName().isPresent()) {
             options.setSsl(true);
 
             if (config.tlsConfigurationName().isPresent()) {
@@ -279,10 +281,6 @@ public class FliptSyncClient {
         if (httpClient != null) {
             httpClient.close();
         }
-    }
-
-    private static boolean isHttps(URI uri) {
-        return "https".equals(uri.getScheme());
     }
 
     interface Listener {
