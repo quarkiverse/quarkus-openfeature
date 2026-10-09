@@ -48,6 +48,8 @@ Two things about that mechanism hold for all of them and are easy to get wrong:
 
 * *The directly configured token wins.*
   If both `api-key` (or `auth-token`) and `credentials-provider` are set, the directly configured value is used and the credentials provider is never consulted.
+* *A credentials provider that resolves to nothing fails the application.*
+  If `credentials-provider` is set and the provider returns no `password` entry for that name, startup fails rather than falling back to an unauthenticated connection, which would otherwise hide the misconfiguration until the server rejected the request -- or not at all, against a server that does not require authentication.
 * *Credentials are read once, during application startup*, when the provider is created.
   Rotating a token in the secret store does not affect a running application; it takes effect on the next restart.
 

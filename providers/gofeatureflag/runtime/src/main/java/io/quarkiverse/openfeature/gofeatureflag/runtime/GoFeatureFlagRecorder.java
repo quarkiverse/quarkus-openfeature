@@ -53,13 +53,19 @@ public class GoFeatureFlagRecorder {
         }
 
         if (config.credentialsProvider().isPresent()) {
+            String credentialsName = config.credentialsProvider().get();
             CredentialsProvider provider = CredentialsProviderFinder.find(
                     config.credentialsProviderName().orElse(null));
-            Map<String, String> credentials = provider.getCredentials(config.credentialsProvider().get());
+            Map<String, String> credentials = provider.getCredentials(credentialsName);
             String token = credentials.get(CredentialsProvider.PASSWORD_PROPERTY_NAME);
-            if (token != null && !token.isEmpty()) {
-                return token;
+            // falling back to an unauthenticated connection here would hide the
+            // misconfiguration: these credentials were asked for by name
+            if (token == null || token.isEmpty()) {
+                throw new IllegalStateException("GO Feature Flag credentials-provider is set to '" + credentialsName
+                        + "' but that provider returned no '" + CredentialsProvider.PASSWORD_PROPERTY_NAME
+                        + "' entry");
             }
+            return token;
         }
 
         return null;
