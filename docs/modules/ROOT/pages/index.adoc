@@ -168,7 +168,10 @@ OpenFeature supports the concept of _domains_ -- named scopes that can use diffe
 For example, you might use one provider for payment-related flags and another for experimentation.
 
 Named domains must always declare their provider explicitly, even if only one provider extension is on the classpath.
-They are configured under quoted keys:
+This is how a domain comes into existence: the extension knows about a named domain only because `quarkus.openfeature."<domain>".provider` is configured for it.
+Provider-specific configuration such as `quarkus.openfeature."experimentation".flagd.url` does not declare the domain by itself, so if you set only that, no `Client` is produced for the domain and injecting `@Identifier("experimentation") Client` fails at build time with an unsatisfied dependency.
+
+Domains are configured under quoted keys:
 
 [source,properties]
 ----
