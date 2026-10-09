@@ -8,6 +8,7 @@ import org.jboss.logging.Logger;
 
 import io.getunleash.engine.YggdrasilInvalidInputException;
 import io.quarkiverse.openfeature.runtime.SyncClientState;
+import io.quarkiverse.openfeature.runtime.SyncClientUrls;
 import io.quarkus.tls.TlsConfiguration;
 import io.quarkus.tls.TlsConfigurationRegistry;
 import io.quarkus.tls.runtime.config.TlsConfigUtils;
@@ -56,7 +57,7 @@ public class UnleashSyncClient {
                     .setIdleTimeoutUnit(TimeUnit.MILLISECONDS);
 
             URI baseUri = URI.create(config.url());
-            if (isHttps(baseUri) || config.tlsConfigurationName().isPresent()) {
+            if (SyncClientUrls.isHttps(baseUri) || config.tlsConfigurationName().isPresent()) {
                 options.setSsl(true);
 
                 if (config.tlsConfigurationName().isPresent()) {
@@ -81,17 +82,12 @@ public class UnleashSyncClient {
         }
 
         URI baseUri = URI.create(config.url());
-        int port = baseUri.getPort() > 0 ? baseUri.getPort() : (isHttps(baseUri) ? 443 : 80);
-        String path = baseUri.getPath();
-        if (path.endsWith("/")) {
-            path = path.substring(0, path.length() - 1);
-        }
-
+        int port = SyncClientUrls.port(baseUri, 80);
         RequestOptions requestOptions = new RequestOptions()
                 .setMethod(HttpMethod.GET)
                 .setHost(baseUri.getHost())
                 .setPort(port)
-                .setURI(path + "/client/features")
+                .setURI(SyncClientUrls.basePath(baseUri) + "/client/features")
                 .setTimeout(config.requestTimeout().toMillis());
 
         httpClient.request(requestOptions)
@@ -178,10 +174,6 @@ public class UnleashSyncClient {
         if (httpClient != null) {
             httpClient.close();
         }
-    }
-
-    private static boolean isHttps(URI uri) {
-        return "https".equals(uri.getScheme());
     }
 
     interface Listener {
