@@ -65,6 +65,12 @@ class FlagdDevServicesProcessor {
                 continue;
             }
 
+            if (ConfigUtils.isPropertyNonEmpty(configKey(domain, "flagd.offline-path"))) {
+                log.debugf("Not starting Dev Services for flagd (%s) as it reads flags from a file",
+                        domainLabel(domain));
+                continue;
+            }
+
             String urlConfigKey = configKey(domain, "flagd.url");
             if (ConfigUtils.isPropertyNonEmpty(urlConfigKey)) {
                 log.debugf("Not starting Dev Services for flagd (%s) as a URL has been provided",

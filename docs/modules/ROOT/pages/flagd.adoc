@@ -48,6 +48,9 @@ The URL is normally a bare `host:port`; the default port is 8015.
 A scheme is accepted only in the two forms the provider implements, `grpc://` for TCP and `unix://` for a Unix domain socket.
 Anything else -- including `https://`, and the gRPC name-resolver schemes `dns://`, `xds://` and `envoy://` -- is rejected at startup.
 
+A `unix://` URL needs a Vert.x native transport, which is not enabled by default.
+Set `quarkus.vertx.prefer-native-transport=true` and add a dependency on `io.netty:netty-transport-native-epoll` (classifier derived from your OS and platform, for example `linux-x86_64`); without both, the application fails to start with a message saying so.
+
 === TLS
 
 The provider uses the Quarkus TLS registry for TLS configuration.
@@ -76,7 +79,8 @@ For testing or development without a running flagd instance, the provider can re
 quarkus.openfeature.flagd.offline-path=/path/to/flags.json
 ----
 
-In offline mode, no gRPC connection is made and flag values are static.
+In offline mode, no gRPC connection is made, Dev Services do not start a flagd container, and flag values are static.
+The file is read when the provider initializes, so a missing or malformed file fails application startup.
 
 === Selector
 
