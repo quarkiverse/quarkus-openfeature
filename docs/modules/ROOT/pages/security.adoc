@@ -15,8 +15,7 @@ Targeting keys and any other attributes you put into the evaluation context are 
 Whatever you are allowed to put into an evaluation context is therefore not constrained by what you are willing to share with the flag server vendor.
 
 An outage of the flag server does not change the values being served: the provider keeps evaluating the definitions it synchronized last, so losing the server cannot silently flip a flag.
-Default values are served only for flags that were never synchronized and when the server rejects the provider's credentials; see xref:index.adoc#application-health[Application health].
-Choose defaults that are safe to serve, because those are the cases in which you get them.
+Flag evaluation may return a default value: for flags that were never synchronized, when the server rejects the provider's credentials (see xref:index.adoc#application-health[Application health]), and, for the WebAssembly-based providers, when an evaluation times out waiting for an engine instance from a saturated pool.
 
 == Credentials
 
