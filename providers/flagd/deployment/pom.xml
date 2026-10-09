@@ -61,6 +61,14 @@
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- Vert.x only opens Unix domain sockets on a native transport, which flagd's
+             `unix://` URLs need; see FlagdUnixSocketTest -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-native-epoll</artifactId>
+            <classifier>linux-x86_64</classifier>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-junit-internal</artifactId>

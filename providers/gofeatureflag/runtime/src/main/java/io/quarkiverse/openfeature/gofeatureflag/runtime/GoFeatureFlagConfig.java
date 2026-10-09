@@ -92,6 +92,7 @@ public interface GoFeatureFlagConfig {
          * the concurrency of flag evaluations. The instances are created
          * eagerly and the pool grows on demand up to 4 times this number;
          * instances above the minimum are discarded when they become idle.
+         * Must be at least 1.
          */
         @WithDefault("16")
         int wasmInstances();

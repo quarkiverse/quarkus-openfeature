@@ -111,24 +111,30 @@ public class FliptSyncClient {
                 });
     }
 
+    // package-private and static to be unit-testable; only the path and query are built here,
+    // the host and port come from the configured URL
+    static String streamUri(String environment, String namespace, Optional<String> reference) {
+        String path = String.format("/client/v2/environments/%s/namespaces/%s/stream",
+                environment, namespace);
+        // only the query value is encoded: `URLEncoder` is a form encoder, so it would turn a
+        // space in a path segment into `+` rather than `%20`
+        return reference
+                .map(ref -> path + "?reference=" + URLEncoder.encode(ref, StandardCharsets.UTF_8))
+                .orElse(path);
+    }
+
     private void connectStream(Listener listener) {
         if (state.isShutdown()) {
             return;
         }
 
         URI baseUri = URI.create(config.url());
-        String streamPath = String.format("/client/v2/environments/%s/namespaces/%s/stream",
-                config.environment(), config.namespace());
-
-        StringBuilder queryString = new StringBuilder();
-        config.reference().ifPresent(ref -> queryString.append("reference=")
-                .append(URLEncoder.encode(ref, StandardCharsets.UTF_8)));
 
         RequestOptions requestOptions = new RequestOptions()
                 .setMethod(HttpMethod.GET)
                 .setHost(baseUri.getHost())
                 .setPort(baseUri.getPort() > 0 ? baseUri.getPort() : (isHttps(baseUri) ? 443 : 8080))
-                .setURI(queryString.length() > 0 ? streamPath + "?" + queryString : streamPath)
+                .setURI(streamUri(config.environment(), config.namespace(), config.reference()))
                 // only guards the wait for the response headers; once they arrive, the
                 // stream deadline configured on the HTTP client takes over
                 .setTimeout(REQUEST_TIMEOUT_MILLIS);

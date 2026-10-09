@@ -69,9 +69,15 @@ public class FlagdSyncClient {
         if (config.offlinePath().isPresent()) {
             startOffline(config.offlinePath().get());
         } else {
-            // parsed here, not on the event loop, so that a bad URL fails application
-            // startup instead of disappearing into the Vert.x exception handler
             SocketAddress address = parseAddress(config.url());
+            if (address.isDomainSocket() && !vertx.isNativeTransportEnabled()) {
+                // Vert.x would reject the connection attempt on the event loop, where it only
+                // shows up as a reconnect warning repeating forever
+                throw new IllegalStateException("The flagd URL '" + config.url() + "' is a Unix domain socket,"
+                        + " which Vert.x can only use with a native transport. Set"
+                        + " quarkus.vertx.prefer-native-transport=true"
+                        + " and add a dependency on io.netty:netty-transport-native-epoll.");
+            }
             context.runOnContext(v -> {
                 startGrpc(address, listener);
             });
