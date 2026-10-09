@@ -140,6 +140,10 @@ The remote-sync providers fall back to the OpenFeature SDK default, which resolv
 
 It is safe to call the `Client` methods on a non-blockable thread (such as Vert.x event loop), because this extension guarantees feature flags are evaluated purely in memory; no I/O occurs.
 
+CAUTION: The xref:flipt.adoc[Flipt] and xref:gofeatureflag.adoc[GO Feature Flag] providers evaluate in a pool of WebAssembly engine instances.
+When the pool has grown to its maximum size and all instances are in use, an evaluation waits up to 20 milliseconds for an instance to become available, which blocks the calling thread.
+Size the pool for the application's evaluation concurrency to avoid that; see "Evaluation concurrency" on the xref:flipt.adoc#evaluation-concurrency[Flipt] and xref:gofeatureflag.adoc#evaluation-concurrency[GO Feature Flag] pages.
+
 You can also inject `OpenFeatureAPI` directly if you need lower-level access.
 
 == Provider selection

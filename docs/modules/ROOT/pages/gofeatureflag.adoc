@@ -134,6 +134,10 @@ Only when the pool has reached its maximum size does an evaluation request wait 
 If no instance is available within that time, the default value is returned.
 Waiting requests are not served in order, so an application that keeps the pool saturated will see a small fraction of its evaluations fall back to the default value.
 That is a signal to increase the pool size.
+
+CAUTION: When the pool has grown to its maximum size and all instances are in use, an evaluation waits up to 20 milliseconds for an instance to become available, which blocks the calling thread.
+Size the pool for the application's evaluation concurrency to avoid that.
+
 To increase the pool size:
 
 [source,properties]
