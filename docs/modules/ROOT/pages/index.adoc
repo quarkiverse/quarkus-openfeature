@@ -236,6 +236,10 @@ quarkus.openfeature.await-providers=true
 quarkus.openfeature.await-providers=false
 ----
 
+A flag server that is down never fails the application.
+A provider that cannot connect is given 15 seconds, after which the error is logged, startup proceeds with that provider in the `ERROR` state, and its flags fall back to their default values until a reconnect succeeds.
+A misconfigured provider is the one exception: a URL the provider cannot use at all is reported at startup and does fail it, because no reconnect can fix it.
+
 == Application health
 
 This extension deliberately does not contribute a health check for provider state.

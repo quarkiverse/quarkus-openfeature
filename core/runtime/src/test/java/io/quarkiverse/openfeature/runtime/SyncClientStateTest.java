@@ -224,6 +224,23 @@ public class SyncClientStateTest {
         assertInstanceOf(FatalError.class, e.getCause());
     }
 
+    /**
+     * A server that accepts the connection and then stays silent counts down nothing, so without
+     * a bound of its own the wait would last until the provider's read deadline, which is measured
+     * in minutes.
+     */
+    @Test
+    public void awaitInitializedGivesUpAfterTheTimeout() throws Exception {
+        SyncClientState state = new SyncClientState(vertx, 200);
+
+        GeneralError e = assertThrows(GeneralError.class, () -> state.awaitInitialized());
+        assertEquals("Provider failed to connect in time", e.getMessage());
+
+        // giving up is an initial error like any other: never ready, and a reconnect may still win
+        assertTrue(state.isError());
+        assertFalse(state.wasEverReady());
+    }
+
     @Test
     public void awaitInitializedAfterErrorFailsEvenOnceReconnected() throws Exception {
         state.setError();

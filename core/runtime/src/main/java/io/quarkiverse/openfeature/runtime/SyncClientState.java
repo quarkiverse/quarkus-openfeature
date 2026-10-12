@@ -1,6 +1,7 @@
 package io.quarkiverse.openfeature.runtime;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jboss.logging.Logger;
@@ -30,12 +31,21 @@ public final class SyncClientState {
     private static final long INITIAL_DELAY_MS = 1000;
     private static final long MAX_DELAY_MS = 30_000;
 
+    /**
+     * How long {@link #awaitInitialized()} waits before giving up.
+     * <p>
+     * The provider request timeouts are generally 10 seconds, and we don't want
+     * to preempt those. Hence, this has to stay above 10 seconds.
+     */
+    private static final long INITIALIZATION_TIMEOUT_MS = 15_000;
+
     static long nextDelay(long currentDelay) {
         return Math.min(currentDelay * 2, MAX_DELAY_MS);
     }
 
     private final AtomicInteger state = new AtomicInteger(CONNECTING);
     private final CountDownLatch initializedBarrier = new CountDownLatch(1);
+    private final long initializationTimeoutMs;
 
     // only accessed from the Vert.x event loop, no synchronization needed
     private final Vertx vertx;
@@ -43,11 +53,21 @@ public final class SyncClientState {
     private long reconnectDelay = INITIAL_DELAY_MS;
 
     public SyncClientState(Vertx vertx) {
+        this(vertx, INITIALIZATION_TIMEOUT_MS);
+    }
+
+    // visible for tests
+    SyncClientState(Vertx vertx, long initializationTimeoutMs) {
         this.vertx = vertx;
+        this.initializationTimeoutMs = initializationTimeoutMs;
     }
 
     public void awaitInitialized() throws Exception {
-        initializedBarrier.await();
+        if (!initializedBarrier.await(initializationTimeoutMs, TimeUnit.MILLISECONDS)) {
+            log.errorf("Provider did not connect within %d ms, giving up", initializationTimeoutMs);
+            setError();
+            throw new GeneralError("Provider failed to connect in time");
+        }
 
         int state = this.state.get();
         if (state == SHUTDOWN) {

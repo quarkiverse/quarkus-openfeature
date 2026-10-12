@@ -14,6 +14,7 @@ import dev.openfeature.contrib.tools.flagd.api.Evaluator;
 import dev.openfeature.flagd.grpc.sync.Sync.SyncFlagsRequest;
 import dev.openfeature.flagd.grpc.sync.Sync.SyncFlagsResponse;
 import dev.openfeature.sdk.EvaluationContext;
+import io.quarkiverse.openfeature.runtime.ProviderConfigurationException;
 import io.quarkiverse.openfeature.runtime.SyncClientState;
 import io.quarkus.tls.TlsConfiguration;
 import io.quarkus.tls.TlsConfigurationRegistry;
@@ -73,7 +74,7 @@ public class FlagdSyncClient {
             if (address.isDomainSocket() && !vertx.isNativeTransportEnabled()) {
                 // Vert.x would reject the connection attempt on the event loop, where it only
                 // shows up as a reconnect warning repeating forever
-                throw new IllegalStateException("The flagd URL '" + config.url() + "' is a Unix domain socket,"
+                throw new ProviderConfigurationException("The flagd URL '" + config.url() + "' is a Unix domain socket,"
                         + " which Vert.x can only use with a native transport. Set"
                         + " quarkus.vertx.prefer-native-transport=true"
                         + " and add a dependency on io.netty:netty-transport-native-epoll.");
@@ -212,7 +213,7 @@ public class FlagdSyncClient {
         // expecting encryption, refuse everything we don't actually implement
         String scheme = uri.getScheme();
         if (!"grpc".equals(scheme) && !"unix".equals(scheme)) {
-            throw new IllegalArgumentException("Unsupported flagd URL scheme '" + scheme + "' in '" + url
+            throw new ProviderConfigurationException("Unsupported flagd URL scheme '" + scheme + "' in '" + url
                     + "'; flagd sync is gRPC, use 'host:port' or 'unix:///path'"
                     + " and enable TLS with quarkus.openfeature.flagd.tls-configuration-name");
         }
@@ -223,7 +224,7 @@ public class FlagdSyncClient {
         String host = uri.getHost();
         int port = uri.getPort();
         if (host == null) {
-            throw new IllegalArgumentException("Invalid flagd URL: " + url);
+            throw new ProviderConfigurationException("Invalid flagd URL: " + url);
         }
         return SocketAddress.inetSocketAddress(port > 0 ? port : 8015, host);
     }
