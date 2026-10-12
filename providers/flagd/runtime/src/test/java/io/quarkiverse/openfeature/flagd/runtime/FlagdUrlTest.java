@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
+import io.quarkiverse.openfeature.runtime.ProviderConfigurationException;
 import io.vertx.core.net.SocketAddress;
 
 public class FlagdUrlTest {
@@ -29,7 +30,7 @@ public class FlagdUrlTest {
         // not implement; `https` and `grpcs` are not gRPC schemes at all
         for (String scheme : new String[] { "https", "http", "grpcs", "dns", "xds", "envoy" }) {
             String url = scheme + "://flagd.example.com:8015";
-            IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+            ProviderConfigurationException e = assertThrows(ProviderConfigurationException.class,
                     () -> FlagdSyncClient.parseAddress(url), url);
             assertTrue(e.getMessage().contains("Unsupported flagd URL scheme '" + scheme + "'"), e.getMessage());
             assertTrue(e.getMessage().contains("tls-configuration-name"), e.getMessage());
@@ -45,6 +46,6 @@ public class FlagdUrlTest {
 
     @Test
     void invalidUrl() {
-        assertThrows(IllegalArgumentException.class, () -> FlagdSyncClient.parseAddress("grpc:///no-host"));
+        assertThrows(ProviderConfigurationException.class, () -> FlagdSyncClient.parseAddress("grpc:///no-host"));
     }
 }

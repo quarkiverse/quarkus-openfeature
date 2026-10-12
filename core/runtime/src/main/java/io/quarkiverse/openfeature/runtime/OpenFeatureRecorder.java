@@ -7,9 +7,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
+import org.jboss.logging.Logger;
+
 import dev.openfeature.sdk.Client;
 import dev.openfeature.sdk.FeatureProvider;
 import dev.openfeature.sdk.OpenFeatureAPI;
+import dev.openfeature.sdk.exceptions.OpenFeatureError;
 import dev.openfeature.sdk.multiprovider.MultiProvider;
 import io.quarkus.runtime.LaunchMode;
 import io.quarkus.runtime.RuntimeValue;
@@ -17,6 +20,8 @@ import io.quarkus.runtime.annotations.Recorder;
 
 @Recorder
 public class OpenFeatureRecorder {
+    private static final Logger log = Logger.getLogger(OpenFeatureRecorder.class);
+
     private static final Map<String, List<FeatureProvider>> providers = new ConcurrentHashMap<>();
 
     public static List<FeatureProvider> getProviders(String domain) {
@@ -44,10 +49,20 @@ public class OpenFeatureRecorder {
         FeatureProvider provider = createProvider(domain, factories);
 
         if (shouldAwaitProviders) {
-            if (OpenFeatureBuildTimeConfig.DEFAULT_DOMAIN.equals(domain)) {
-                api.setProviderAndWait(provider);
-            } else {
-                api.setProviderAndWait(domain, provider);
+            // a flag server outage is not an application outage: the provider stays registered
+            // in ERROR, flags fall back to their defaults, and the sync client keeps reconnecting.
+            // a misconfigured provider is the exception, because no reconnect can fix it
+            try {
+                if (OpenFeatureBuildTimeConfig.DEFAULT_DOMAIN.equals(domain)) {
+                    api.setProviderAndWait(provider);
+                } else {
+                    api.setProviderAndWait(domain, provider);
+                }
+            } catch (OpenFeatureError e) {
+                if (e.getCause() instanceof ProviderConfigurationException) {
+                    throw e;
+                }
+                log.errorf(e, "OpenFeature provider for domain '%s' failed to initialize", domain);
             }
         } else {
             if (OpenFeatureBuildTimeConfig.DEFAULT_DOMAIN.equals(domain)) {
