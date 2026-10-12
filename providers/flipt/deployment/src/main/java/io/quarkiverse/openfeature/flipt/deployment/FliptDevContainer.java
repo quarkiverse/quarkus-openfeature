@@ -12,11 +12,18 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
 import io.quarkus.deployment.builditem.Startable;
+import io.quarkus.devservices.common.ConfigureUtil;
+import io.quarkus.runtime.LaunchMode;
 
 class FliptDevContainer extends GenericContainer<FliptDevContainer> implements Startable {
     static final int HTTP_PORT = 8080;
 
     static final String DEFAULT_FLAG_SOURCE = "features.yaml";
+
+    /**
+     * Label attached to a shared Flipt container, so that other applications can discover it.
+     */
+    static final String DEV_SERVICE_LABEL = "quarkus-dev-service-flipt";
 
     private final OptionalInt fixedExposedPort;
     private final Optional<Path> flagsPath;
@@ -27,6 +34,10 @@ class FliptDevContainer extends GenericContainer<FliptDevContainer> implements S
         this.flagsPath = flagsPath;
 
         waitingFor(Wait.forHttp("/").forPort(HTTP_PORT).forStatusCode(200));
+    }
+
+    FliptDevContainer withSharedServiceLabel(LaunchMode launchMode, String serviceName) {
+        return ConfigureUtil.configureSharedServiceLabel(this, launchMode, DEV_SERVICE_LABEL, serviceName);
     }
 
     @Override

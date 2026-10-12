@@ -10,11 +10,18 @@ import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
 import io.quarkus.deployment.builditem.Startable;
+import io.quarkus.devservices.common.ConfigureUtil;
+import io.quarkus.runtime.LaunchMode;
 
 class UnleashDevContainer extends GenericContainer<UnleashDevContainer> implements Startable {
     static final int HTTP_PORT = 4242;
 
     static final String DEFAULT_FLAG_SOURCE = "unleash.json";
+
+    /**
+     * Label attached to a shared Unleash container, so that other applications can discover it.
+     */
+    static final String DEV_SERVICE_LABEL = "quarkus-dev-service-unleash";
 
     private final OptionalInt fixedExposedPort;
     private final Optional<String> flagsPath;
@@ -26,6 +33,10 @@ class UnleashDevContainer extends GenericContainer<UnleashDevContainer> implemen
         super(DockerImageName.parse(config.imageName()));
         this.fixedExposedPort = config.port();
         this.flagsPath = flagsPath;
+    }
+
+    UnleashDevContainer withSharedServiceLabel(LaunchMode launchMode, String serviceName) {
+        return ConfigureUtil.configureSharedServiceLabel(this, launchMode, DEV_SERVICE_LABEL, serviceName);
     }
 
     @Override

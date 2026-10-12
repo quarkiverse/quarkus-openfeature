@@ -13,11 +13,18 @@ import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
 import io.quarkus.deployment.builditem.Startable;
+import io.quarkus.devservices.common.ConfigureUtil;
+import io.quarkus.runtime.LaunchMode;
 
 class GoFeatureFlagDevContainer extends GenericContainer<GoFeatureFlagDevContainer> implements Startable {
     static final int HTTP_PORT = 1031;
 
     static final String DEFAULT_FLAG_SOURCE = "flags.goff.yaml";
+
+    /**
+     * Label attached to a shared GO Feature Flag container, so that other applications can discover it.
+     */
+    static final String DEV_SERVICE_LABEL = "quarkus-dev-service-gofeatureflag";
 
     private final OptionalInt fixedExposedPort;
     private final Optional<Path> flagsPath;
@@ -29,6 +36,10 @@ class GoFeatureFlagDevContainer extends GenericContainer<GoFeatureFlagDevContain
         this.flagsPath = flagsPath;
 
         waitingFor(Wait.forHttp("/health").forPort(HTTP_PORT).forStatusCode(200));
+    }
+
+    GoFeatureFlagDevContainer withSharedServiceLabel(LaunchMode launchMode, String serviceName) {
+        return ConfigureUtil.configureSharedServiceLabel(this, launchMode, DEV_SERVICE_LABEL, serviceName);
     }
 
     @Override

@@ -23,12 +23,18 @@ import io.quarkus.deployment.builditem.ArchiveRootBuildItem;
 import io.quarkus.deployment.builditem.DevServicesResultBuildItem;
 import io.quarkus.deployment.builditem.DockerStatusBuildItem;
 import io.quarkus.deployment.builditem.HotDeploymentWatchedFileBuildItem;
+import io.quarkus.deployment.builditem.LaunchModeBuildItem;
 import io.quarkus.deployment.dev.devservices.DevServicesConfig;
+import io.quarkus.devservices.common.ContainerAddress;
+import io.quarkus.devservices.common.ContainerLocator;
 import io.quarkus.runtime.configuration.ConfigUtils;
 
 @BuildSteps(onlyIf = { IsDevServicesSupportedByLaunchMode.class, DevServicesConfig.Enabled.class })
 class UnleashDevServicesProcessor {
     private static final Logger log = Logger.getLogger(UnleashDevServicesProcessor.class);
+
+    private static final ContainerLocator containerLocator = ContainerLocator.locateContainerWithLabels(
+            UnleashDevContainer.HTTP_PORT, UnleashDevContainer.DEV_SERVICE_LABEL);
 
     @BuildStep
     void watchFlagSources(UnleashBuildTimeConfig config,
@@ -52,6 +58,7 @@ class UnleashDevServicesProcessor {
             OpenFeatureBuildTimeConfig openFeatureConfig,
             DockerStatusBuildItem dockerStatusBuildItem,
             ArchiveRootBuildItem archiveRoot,
+            LaunchModeBuildItem launchMode,
             BuildProducer<DevServicesResultBuildItem> devServices) {
         for (Map.Entry<String, DomainBuildTimeConfig> entry : allDomains(openFeatureConfig).entrySet()) {
             String domain = entry.getKey();
@@ -79,6 +86,19 @@ class UnleashDevServicesProcessor {
                 continue;
             }
 
+            Optional<ContainerAddress> shared = containerLocator.locateContainer(devServicesConfig.serviceName(),
+                    devServicesConfig.shared(), launchMode.getLaunchMode());
+            if (shared.isPresent()) {
+                ContainerAddress address = shared.get();
+                log.infof("Using shared Unleash container %s for %s", address.getId(), domainLabel(domain));
+                devServices.produce(DevServicesResultBuildItem.discovered()
+                        .feature("openfeature-unleash")
+                        .containerId(address.getId())
+                        .config(Map.of(urlConfigKey, "http://" + address.getUrl() + "/api"))
+                        .build());
+                continue;
+            }
+
             Optional<String> path = resolvePath(domain, devServicesConfig, archiveRoot);
 
             String serviceConfigId = domain + ";" + Objects.hash(devServicesConfig) + ";" + fileModTimeHash(path);
@@ -87,7 +107,8 @@ class UnleashDevServicesProcessor {
                     .feature("openfeature-unleash")
                     .serviceName(domain)
                     .serviceConfig(serviceConfigId)
-                    .startable(() -> new UnleashDevContainer(devServicesConfig, path))
+                    .startable(() -> new UnleashDevContainer(devServicesConfig, path)
+                            .withSharedServiceLabel(launchMode.getLaunchMode(), devServicesConfig.serviceName()))
                     .configProvider(Map.of(
                             urlConfigKey, UnleashDevContainer::getConnectionInfo))
                     .build());
