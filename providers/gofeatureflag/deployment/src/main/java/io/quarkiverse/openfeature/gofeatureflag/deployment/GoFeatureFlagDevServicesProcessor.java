@@ -21,12 +21,18 @@ import io.quarkus.deployment.builditem.ArchiveRootBuildItem;
 import io.quarkus.deployment.builditem.DevServicesResultBuildItem;
 import io.quarkus.deployment.builditem.DockerStatusBuildItem;
 import io.quarkus.deployment.builditem.HotDeploymentWatchedFileBuildItem;
+import io.quarkus.deployment.builditem.LaunchModeBuildItem;
 import io.quarkus.deployment.dev.devservices.DevServicesConfig;
+import io.quarkus.devservices.common.ContainerAddress;
+import io.quarkus.devservices.common.ContainerLocator;
 import io.quarkus.runtime.configuration.ConfigUtils;
 
 @BuildSteps(onlyIf = { IsDevServicesSupportedByLaunchMode.class, DevServicesConfig.Enabled.class })
 class GoFeatureFlagDevServicesProcessor {
     private static final Logger log = Logger.getLogger(GoFeatureFlagDevServicesProcessor.class);
+
+    private static final ContainerLocator containerLocator = ContainerLocator.locateContainerWithLabels(
+            GoFeatureFlagDevContainer.HTTP_PORT, GoFeatureFlagDevContainer.DEV_SERVICE_LABEL);
 
     @BuildStep
     void watchFlagSources(GoFeatureFlagBuildTimeConfig config,
@@ -50,6 +56,7 @@ class GoFeatureFlagDevServicesProcessor {
             OpenFeatureBuildTimeConfig openFeatureConfig,
             DockerStatusBuildItem dockerStatusBuildItem,
             ArchiveRootBuildItem archiveRoot,
+            LaunchModeBuildItem launchMode,
             BuildProducer<DevServicesResultBuildItem> devServices) {
         for (Map.Entry<String, DomainBuildTimeConfig> entry : allDomains(openFeatureConfig).entrySet()) {
             String domain = entry.getKey();
@@ -77,13 +84,27 @@ class GoFeatureFlagDevServicesProcessor {
                 continue;
             }
 
+            Optional<ContainerAddress> shared = containerLocator.locateContainer(devServicesConfig.serviceName(),
+                    devServicesConfig.shared(), launchMode.getLaunchMode());
+            if (shared.isPresent()) {
+                ContainerAddress address = shared.get();
+                log.infof("Using shared GO Feature Flag container %s for %s", address.getId(), domainLabel(domain));
+                devServices.produce(DevServicesResultBuildItem.discovered()
+                        .feature("openfeature-gofeatureflag")
+                        .containerId(address.getId())
+                        .config(Map.of(urlConfigKey, "http://" + address.getUrl()))
+                        .build());
+                continue;
+            }
+
             Optional<Path> path = resolvePath(domain, devServicesConfig, archiveRoot);
 
             devServices.produce(DevServicesResultBuildItem.owned()
                     .feature("openfeature-gofeatureflag")
                     .serviceName(domain)
                     .serviceConfig(domain + ";" + devServicesConfig.hashCode())
-                    .startable(() -> new GoFeatureFlagDevContainer(devServicesConfig, path))
+                    .startable(() -> new GoFeatureFlagDevContainer(devServicesConfig, path)
+                            .withSharedServiceLabel(launchMode.getLaunchMode(), devServicesConfig.serviceName()))
                     .configProvider(Map.of(urlConfigKey, GoFeatureFlagDevContainer::getConnectionInfo))
                     .build());
         }
