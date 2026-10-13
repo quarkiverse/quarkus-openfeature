@@ -40,3 +40,14 @@ disabled-flag:
     disabled: false
   defaultRule:
     variation: enabled
+
+object-flag:
+  variations:
+    default:
+      theme: dark
+      maxItems: 25
+    compact:
+      theme: light
+      maxItems: 10
+  defaultRule:
+    variation: default

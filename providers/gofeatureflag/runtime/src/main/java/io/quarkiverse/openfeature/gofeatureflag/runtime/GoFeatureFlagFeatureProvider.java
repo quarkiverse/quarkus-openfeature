@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.jboss.logging.Logger;
 
@@ -24,6 +25,7 @@ import dev.openfeature.sdk.Reason;
 import dev.openfeature.sdk.Value;
 import dev.openfeature.sdk.exceptions.GeneralError;
 import dev.openfeature.sdk.exceptions.ParseError;
+import dev.openfeature.sdk.exceptions.TypeMismatchError;
 import io.quarkiverse.openfeature.runtime.AbstractRemoteFeatureProvider;
 import io.quarkiverse.openfeature.runtime.SyncClientState;
 import io.quarkus.tls.TlsConfigurationRegistry;
@@ -227,23 +229,50 @@ public class GoFeatureFlagFeatureProvider extends AbstractRemoteFeatureProvider 
         };
     }
 
+    // No `Long.class` branch on purpose: `getLongEvaluation` is not overridden, so long
+    // requests take the SDK default path through `getDoubleEvaluation`. A native long path
+    // would not widen the supported range anyway, because the WASM engine holds every number
+    // as a float64 and so already rounds values outside [-(2^53 - 1), 2^53 - 1].
+    // Every branch checks the JSON type before converting, because the `asSomething` methods
+    // coerce instead of failing: `asText()` on an object or array is "" and `asInt()` on a
+    // string is 0, either of which would quietly replace the caller's default with a value
+    // the flag never had. A type mismatch is an error the SDK reports.
     @SuppressWarnings("unchecked")
     private <T> T convertValue(JsonNode valueNode, Class<T> expectedType, T defaultValue) {
         if (valueNode == null || valueNode.isNull()) {
             return defaultValue;
         }
         if (expectedType == Boolean.class) {
-            return (T) Boolean.valueOf(valueNode.asBoolean());
+            if (!valueNode.isBoolean()) {
+                throw typeMismatch(valueNode, "a boolean");
+            }
+            return (T) Boolean.valueOf(valueNode.booleanValue());
         } else if (expectedType == String.class) {
-            return (T) valueNode.asText();
+            if (!valueNode.isTextual()) {
+                throw typeMismatch(valueNode, "a string");
+            }
+            return (T) valueNode.textValue();
         } else if (expectedType == Integer.class) {
-            return (T) Integer.valueOf(valueNode.asInt());
+            // an integral number too large for an `int` is a mismatch as well, because
+            // truncating it would be just as silent as coercing a string to 0
+            if (!valueNode.isIntegralNumber() || !valueNode.canConvertToInt()) {
+                throw typeMismatch(valueNode, "an integer");
+            }
+            return (T) Integer.valueOf(valueNode.intValue());
         } else if (expectedType == Double.class) {
-            return (T) Double.valueOf(valueNode.asDouble());
+            // `long` requests arrive here through the SDK default path, so any number goes
+            if (!valueNode.isNumber()) {
+                throw typeMismatch(valueNode, "a number");
+            }
+            return (T) Double.valueOf(valueNode.doubleValue());
         } else if (expectedType == Value.class) {
             return (T) jsonNodeToValue(valueNode);
         }
         return defaultValue;
+    }
+
+    private static TypeMismatchError typeMismatch(JsonNode valueNode, String expected) {
+        return new TypeMismatchError("Flag value " + valueNode + " is not " + expected);
     }
 
     // Deliberately duplicated in FliptFeatureProvider; the two providers share no
@@ -276,31 +305,77 @@ public class GoFeatureFlagFeatureProvider extends AbstractRemoteFeatureProvider 
     @Override
     public Collection<FlagInfo> getFlags() {
         try {
-            Map<String, JsonNode> flags = syncClient.getAllFlags();
-            List<FlagInfo> result = new ArrayList<>();
-            for (Map.Entry<String, JsonNode> entry : flags.entrySet()) {
-                FlagValueType type = null;
-                JsonNode typeNode = entry.getValue().get("type");
-                if (typeNode != null) {
-                    String typeStr = typeNode.asText();
-                    if ("boolean".equalsIgnoreCase(typeStr)) {
-                        type = FlagValueType.BOOLEAN;
-                    } else if ("string".equalsIgnoreCase(typeStr)) {
-                        type = FlagValueType.STRING;
-                    } else if ("integer".equalsIgnoreCase(typeStr) || "int".equalsIgnoreCase(typeStr)) {
-                        type = FlagValueType.INTEGER;
-                    } else if ("long".equalsIgnoreCase(typeStr)) {
-                        type = FlagValueType.LONG;
-                    } else if ("double".equalsIgnoreCase(typeStr) || "float".equalsIgnoreCase(typeStr)) {
-                        type = FlagValueType.DOUBLE;
-                    }
-                }
-                result.add(new FlagInfo(entry.getKey(), type));
-            }
-            return result;
+            return parseFlags(syncClient.getAllFlags());
         } catch (Exception e) {
             log.debugf(e, "Failed to list flags");
             return List.of();
         }
+    }
+
+    // the flags of the latest configuration are the single source of truth, so that flags
+    // deleted on the server disappear from the list instead of lingering forever
+    static Collection<FlagInfo> parseFlags(Map<String, JsonNode> flags) {
+        if (flags == null) {
+            return List.of();
+        }
+        List<FlagInfo> result = new ArrayList<>();
+        for (Map.Entry<String, JsonNode> entry : flags.entrySet()) {
+            result.add(new FlagInfo(entry.getKey(), inferType(entry.getValue())));
+        }
+        return result;
+    }
+
+    // A flag definition carries no declared type; the flag configuration endpoint returns the
+    // raw flag exactly as it was authored, so the type has to come from the variation values.
+    // GO Feature Flag requires all variations of a flag to have the same type
+    // (`InternalFlag.IsValid`), and variations that disagree have no type to report.
+    //
+    // Deliberately duplicated in FlagdFeatureProvider, whose schema says the same thing about
+    // its variants. The two providers share no module. Fix both copies, never just one.
+    static FlagValueType inferType(JsonNode flagNode) {
+        JsonNode variations = flagNode.get("variations");
+        if (variations == null || !variations.isObject() || variations.isEmpty()) {
+            return null;
+        }
+
+        JsonNode first = variations.iterator().next();
+        if (first.isBoolean()) {
+            return allMatch(variations, JsonNode::isBoolean) ? FlagValueType.BOOLEAN : null;
+        } else if (first.isNumber()) {
+            return numberType(variations);
+        } else if (first.isTextual()) {
+            return allMatch(variations, JsonNode::isTextual) ? FlagValueType.STRING : null;
+        } else if (first.isContainerNode()) {
+            return allMatch(variations, JsonNode::isContainerNode) ? FlagValueType.OBJECT : null;
+        }
+        return null;
+    }
+
+    private static boolean allMatch(JsonNode values, Predicate<JsonNode> predicate) {
+        for (JsonNode value : values) {
+            if (!predicate.test(value)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // The type that all variations share is the JSON one, where `1` and `3.14` are both
+    // numbers, so the widest variation decides. Reporting an integer for `{1, 3.14}` would
+    // have the Dev UI resolve `3.14` as an `int` and show `3`.
+    private static FlagValueType numberType(JsonNode variations) {
+        boolean integral = true;
+        boolean fitsInInt = true;
+        for (JsonNode value : variations) {
+            if (!value.isNumber()) {
+                return null;
+            }
+            integral &= value.isIntegralNumber();
+            fitsInInt &= value.canConvertToInt();
+        }
+        if (!integral) {
+            return FlagValueType.DOUBLE;
+        }
+        return fitsInInt ? FlagValueType.INTEGER : FlagValueType.LONG;
     }
 }

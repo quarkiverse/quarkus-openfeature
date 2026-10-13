@@ -79,7 +79,7 @@ public class UnleashPayloadValueTest {
     }
 
     // A number payload resolves to the same type that `getFlags` reports for it,
-    // see UnleashFlagTypeTest.numberPayloadIsNarrowestTypeThatHoldsIt.
+    // see UnleashListingTest.numberPayloadIsNarrowestTypeThatHoldsIt.
 
     // `asInteger`/`asLong`/`asDouble` all narrow whatever Number is inside, so these
     // assert on `asObject` instead -- that is the only way to see the actual type.

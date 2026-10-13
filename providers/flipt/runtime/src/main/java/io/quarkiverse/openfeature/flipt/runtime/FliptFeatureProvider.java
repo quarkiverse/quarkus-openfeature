@@ -122,6 +122,9 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
         String responseJson = enginePool.evaluateVariant(requestJson);
         JsonNode response = parseWasmResponse(responseJson);
         String variantKey = response.path("variant_key").asText();
+        if (matchedNoVariant(response, variantKey)) {
+            return defaultEvaluation(defaultValue);
+        }
         return ProviderEvaluation.<String> builder()
                 .value(variantKey)
                 .variant(variantKey)
@@ -139,6 +142,9 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
         String responseJson = enginePool.evaluateVariant(requestJson);
         JsonNode response = parseWasmResponse(responseJson);
         String variantKey = response.path("variant_key").asText();
+        if (matchedNoVariant(response, variantKey)) {
+            return defaultEvaluation(defaultValue);
+        }
         int value;
         try {
             value = Integer.parseInt(variantKey);
@@ -162,6 +168,9 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
         String responseJson = enginePool.evaluateVariant(requestJson);
         JsonNode response = parseWasmResponse(responseJson);
         String variantKey = response.path("variant_key").asText();
+        if (matchedNoVariant(response, variantKey)) {
+            return defaultEvaluation(defaultValue);
+        }
         double value;
         try {
             value = Double.parseDouble(variantKey);
@@ -185,12 +194,30 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
         String responseJson = enginePool.evaluateVariant(requestJson);
         JsonNode response = parseWasmResponse(responseJson);
         String variantKey = response.path("variant_key").asText();
+        if (matchedNoVariant(response, variantKey)) {
+            return defaultEvaluation(defaultValue);
+        }
         String variantAttachment = response.path("variant_attachment").asText(null);
-        Value value = variantAttachment != null ? parseJsonValue(variantAttachment) : new Value(variantKey);
+        Value value = hasAttachment(variantAttachment) ? parseJsonValue(variantAttachment) : new Value(variantKey);
         return ProviderEvaluation.<Value> builder()
                 .value(value)
                 .variant(variantKey)
                 .reason(mapReason(response.path("reason").asText()))
+                .build();
+    }
+
+    // A variant flag whose rules all failed resolves to nothing at all: Flipt reports
+    // `match: false` with an empty variant key, and there is no value to hand back, so the
+    // caller's default is the answer. A variant key present despite `match: false` is still
+    // a real value; the official Flipt OpenFeature provider draws the line in the same place.
+    private static boolean matchedNoVariant(JsonNode response, String variantKey) {
+        return !response.path("match").asBoolean() && variantKey.isEmpty();
+    }
+
+    private static <T> ProviderEvaluation<T> defaultEvaluation(T defaultValue) {
+        return ProviderEvaluation.<T> builder()
+                .value(defaultValue)
+                .reason(Reason.DEFAULT.name())
                 .build();
     }
 
@@ -273,10 +300,22 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
         return new Value(node.asText());
     }
 
+    // A variant that has no attachment does not arrive without one: Flipt marshals the empty
+    // attachment of its data model to the JSON `null` literal, which reaches us as a string.
+    private static boolean hasAttachment(String attachment) {
+        return attachment != null && !"null".equals(attachment);
+    }
+
     @Override
     public Collection<FlagInfo> getFlags() {
+        return parseFlags(mapper, enginePool.getLatestSnapshot());
+    }
+
+    static Collection<FlagInfo> parseFlags(ObjectMapper mapper, String snapshot) {
+        if (snapshot == null) {
+            return List.of();
+        }
         try {
-            String snapshot = enginePool.getLatestSnapshot();
             JsonNode root = mapper.readTree(snapshot);
             JsonNode flags = root.get("flags");
             if (flags == null || !flags.isArray()) {
@@ -286,14 +325,7 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
             for (JsonNode flag : flags) {
                 JsonNode key = flag.get("key");
                 if (key != null) {
-                    FlagValueType type = null;
-                    JsonNode typeNode = flag.get("type");
-                    if (typeNode != null && "BOOLEAN_FLAG_TYPE".equals(typeNode.asText())) {
-                        type = FlagValueType.BOOLEAN;
-                    } else if (typeNode != null && "VARIANT_FLAG_TYPE".equals(typeNode.asText())) {
-                        type = FlagValueType.STRING;
-                    }
-                    result.add(new FlagInfo(key.asText(), type));
+                    result.add(new FlagInfo(key.asText(), inferType(flag)));
                 }
             }
             return result;
@@ -301,6 +333,31 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
             log.debugf(e, "Failed to parse flags from snapshot");
             return List.of();
         }
+    }
+
+    // Flipt knows two flag types and no value types: the value of a variant flag is the variant
+    // key, which is always a string, so `String` is the only faithful answer for most of them.
+    // The exception is the attachment, which Flipt validates as a JSON object or array, and
+    // which only `getObjectEvaluation` ever reads.
+    private static FlagValueType inferType(JsonNode flagNode) {
+        JsonNode typeNode = flagNode.get("type");
+        String type = typeNode != null ? typeNode.asText() : null;
+        if ("BOOLEAN_FLAG_TYPE".equals(type)) {
+            return FlagValueType.BOOLEAN;
+        } else if ("VARIANT_FLAG_TYPE".equals(type)) {
+            if (hasAttachment(flagNode.path("defaultVariant").path("attachment").asText(null))) {
+                return FlagValueType.OBJECT;
+            }
+            for (JsonNode rule : flagNode.path("rules")) {
+                for (JsonNode distribution : rule.path("distributions")) {
+                    if (hasAttachment(distribution.path("variantAttachment").asText(null))) {
+                        return FlagValueType.OBJECT;
+                    }
+                }
+            }
+            return FlagValueType.STRING;
+        }
+        return null;
     }
 
     @Override

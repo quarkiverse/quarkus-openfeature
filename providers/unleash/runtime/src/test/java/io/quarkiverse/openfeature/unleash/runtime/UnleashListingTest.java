@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import dev.openfeature.sdk.FlagValueType;
 
-public class UnleashFlagTypeTest {
+public class UnleashListingTest {
     private static FlagValueType typeOf(String variantsJson) {
         String features = """
                 {"version": 2, "features": [

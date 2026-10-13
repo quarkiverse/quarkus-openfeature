@@ -48,6 +48,14 @@ flags:
     name: disabled-flag
     type: BOOLEAN_FLAG_TYPE
     enabled: false
+  # no rule, so no variant ever matches; this is the one case where Flipt reports
+  # no variant attachment at all, rather than the JSON `null` literal
+  - key: no-rule-flag
+    name: no-rule-flag
+    type: VARIANT_FLAG_TYPE
+    enabled: true
+    variants:
+      - key: never
 segments:
   - key: everyone
     name: everyone
