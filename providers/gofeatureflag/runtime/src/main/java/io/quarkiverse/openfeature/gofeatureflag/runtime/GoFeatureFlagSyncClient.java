@@ -104,7 +104,7 @@ public class GoFeatureFlagSyncClient {
         httpClient = createHttpClient();
 
         URI baseUri = URI.create(config.url());
-        int port = SyncClientUrls.port(baseUri, 1031);
+        int port = SyncClientUrls.port(baseUri);
 
         // Connect SSE first, then fetch full config, to avoid missing
         // changes that occur between fetch and subscribe

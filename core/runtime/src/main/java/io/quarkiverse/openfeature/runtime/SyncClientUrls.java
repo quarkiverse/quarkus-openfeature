@@ -15,21 +15,26 @@ public final class SyncClientUrls {
 
     /**
      * Returns the port to connect to. When the configured server URL does not specify one,
-     * it is 443 for {@code https} and {@code defaultPlainPort} otherwise.
+     * it is the default port of the scheme: 443 for {@code https} and 80 for {@code http}.
+     * If the URL doesn't specify a port and has another scheme, an exception is thrown.
      */
-    public static int port(URI uri, int defaultPlainPort) {
+    public static int port(URI uri) {
         if (uri.getPort() > 0) {
             return uri.getPort();
         }
-        return isHttps(uri) ? 443 : defaultPlainPort;
+        if (isHttps(uri)) {
+            return 443;
+        }
+        if ("http".equals(uri.getScheme())) {
+            return 80;
+        }
+        throw new IllegalArgumentException("Not an HTTP(S) URL: " + uri);
     }
 
     /**
      * Returns the path prefix of the configured server URL, which all request paths are
      * relative to. The result is either empty, or starts with a {@code /} and does not end
      * with one, so that a request path can simply be appended to it.
-     * <p>
-     * A prefix is typical when the flag server sits behind a gateway.
      */
     public static String basePath(URI uri) {
         String path = uri.getPath();

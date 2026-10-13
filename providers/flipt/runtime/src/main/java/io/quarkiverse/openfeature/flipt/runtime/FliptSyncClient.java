@@ -80,7 +80,7 @@ public class FliptSyncClient {
 
     private void verifyAuth(Listener listener) {
         URI baseUri = URI.create(config.url());
-        int port = SyncClientUrls.port(baseUri, 8080);
+        int port = SyncClientUrls.port(baseUri);
 
         RequestOptions requestOptions = new RequestOptions()
                 .setMethod(HttpMethod.GET)
@@ -134,7 +134,7 @@ public class FliptSyncClient {
         RequestOptions requestOptions = new RequestOptions()
                 .setMethod(HttpMethod.GET)
                 .setHost(baseUri.getHost())
-                .setPort(SyncClientUrls.port(baseUri, 8080))
+                .setPort(SyncClientUrls.port(baseUri))
                 .setURI(streamUri(SyncClientUrls.basePath(baseUri), config.environment(), config.namespace(),
                         config.reference()))
                 // only guards the wait for the response headers; once they arrive, the
