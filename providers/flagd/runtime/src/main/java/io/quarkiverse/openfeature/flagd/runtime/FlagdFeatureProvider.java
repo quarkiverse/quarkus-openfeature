@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import org.jboss.logging.Logger;
 
@@ -174,29 +175,57 @@ public class FlagdFeatureProvider extends AbstractRemoteFeatureProvider {
         }
     }
 
+    // The type comes from all the variants, not just the default one: the schema makes a flag
+    // a boolean, number, string or object flag and requires every variant to match, and any
+    // of them may be the one an evaluation resolves. Variants that disagree have no type to
+    // report.
+    //
+    // Deliberately duplicated in GoFeatureFlagFeatureProvider, which says the same thing about
+    // its variations. The two providers share no module. Fix both copies, never just one.
     private static FlagValueType inferType(JsonNode flagNode) {
-        JsonNode defaultVariant = flagNode.get("defaultVariant");
         JsonNode variants = flagNode.get("variants");
-        if (defaultVariant == null || variants == null) {
+        if (variants == null || !variants.isObject() || variants.isEmpty()) {
             return null;
         }
-        JsonNode value = variants.get(defaultVariant.asText());
-        if (value == null) {
-            return null;
-        }
-        if (value.isBoolean()) {
-            return FlagValueType.BOOLEAN;
-        } else if (value.isInt()) {
-            return FlagValueType.INTEGER;
-        } else if (value.isLong()) {
-            return FlagValueType.LONG;
-        } else if (value.isNumber()) {
-            return FlagValueType.DOUBLE;
-        } else if (value.isTextual()) {
-            return FlagValueType.STRING;
-        } else if (value.isObject() || value.isArray()) {
-            return FlagValueType.OBJECT;
+
+        JsonNode first = variants.iterator().next();
+        if (first.isBoolean()) {
+            return allMatch(variants, JsonNode::isBoolean) ? FlagValueType.BOOLEAN : null;
+        } else if (first.isNumber()) {
+            return numberType(variants);
+        } else if (first.isTextual()) {
+            return allMatch(variants, JsonNode::isTextual) ? FlagValueType.STRING : null;
+        } else if (first.isContainerNode()) {
+            return allMatch(variants, JsonNode::isContainerNode) ? FlagValueType.OBJECT : null;
         }
         return null;
+    }
+
+    private static boolean allMatch(JsonNode values, Predicate<JsonNode> predicate) {
+        for (JsonNode value : values) {
+            if (!predicate.test(value)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // The schema says `number`, which covers both `1` and `3.14`, so the widest variant
+    // decides. Reporting an integer for `{1, 3.14}` would have the Dev UI resolve `3.14`
+    // as an `int` and show `3`.
+    private static FlagValueType numberType(JsonNode variants) {
+        boolean integral = true;
+        boolean fitsInInt = true;
+        for (JsonNode value : variants) {
+            if (!value.isNumber()) {
+                return null;
+            }
+            integral &= value.isIntegralNumber();
+            fitsInInt &= value.canConvertToInt();
+        }
+        if (!integral) {
+            return FlagValueType.DOUBLE;
+        }
+        return fitsInInt ? FlagValueType.INTEGER : FlagValueType.LONG;
     }
 }
