@@ -144,6 +144,17 @@ export class QwcOpenfeatureFlags extends LitElement {
             color: var(--lumo-error-text-color);
             font-size: var(--lumo-font-size-s);
         }
+        .hint-text {
+            color: var(--lumo-secondary-text-color);
+            font-size: var(--lumo-font-size-s);
+            /* sits in the label slot of the type selector, whose styling would otherwise
+               make it bold and keep it on one line */
+            font-weight: normal;
+            white-space: normal;
+            overflow: visible;
+            margin-top: 6px;
+            margin-bottom: 2px;
+        }
         .unsupported {
             padding: 16px;
             color: var(--lumo-secondary-text-color);
@@ -176,7 +187,7 @@ export class QwcOpenfeatureFlags extends LitElement {
         this._flagsSupported = true;
         this._searchFilter = '';
         this._selectedFlag = null;
-        this._selectedFlagType = 'boolean';
+        this._selectedFlagType = '';
         this._evalDefault = '';
         this._evalContext = '';
         this._evalResult = null;
@@ -236,9 +247,8 @@ export class QwcOpenfeatureFlags extends LitElement {
 
     _onFlagClick(flag) {
         this._selectedFlag = flag.key;
-        if (flag.type) {
-            this._selectedFlagType = flag.type;
-        }
+        // a flag of unknown type must not inherit the type of the previously selected one
+        this._selectedFlagType = flag.type || '';
         this._overrideValue = this._overrides[flag.key] || '';
         this._overrideError = null;
         this._evalResult = null;
@@ -420,12 +430,16 @@ export class QwcOpenfeatureFlags extends LitElement {
                         theme="small"
                     ></vaadin-text-field>
                     <vaadin-select
-                        label="Type"
+                        placeholder="Select a type"
                         .items="${typeItems}"
                         .value="${this._selectedFlagType}"
                         @value-changed="${this._onEvalTypeChanged}"
                         theme="small"
-                    ></vaadin-select>
+                    >
+                        <label slot="label">Type${this._selectedFlag && !this._selectedFlagType ? html`
+                            <div class="hint-text">This provider does not report a type for this flag, so pick the one to evaluate it as.</div>
+                        ` : ''}</label>
+                    </vaadin-select>
                     <vaadin-text-field
                         .value="${this._evalDefault}"
                         @input="${this._onEvalDefaultChanged}"
@@ -443,7 +457,7 @@ export class QwcOpenfeatureFlags extends LitElement {
                     <vaadin-button
                         theme="primary small"
                         @click="${this._onEvaluate}"
-                        ?disabled="${!this._selectedFlag || this._evaluating}"
+                        ?disabled="${!this._selectedFlag || !this._selectedFlagType || this._evaluating}"
                     >Evaluate</vaadin-button>
                 </div>
                 ${this._evalResult ? this._renderResult() : ''}
@@ -464,14 +478,16 @@ export class QwcOpenfeatureFlags extends LitElement {
                         label="Override value"
                         .value="${this._overrideValue}"
                         @input="${this._onOverrideValueInput}"
-                        ?disabled="${!this._selectedFlag || this._selectedFlagType === 'object'}"
+                        ?disabled="${!this._selectedFlag || !this._selectedFlagType
+                                || this._selectedFlagType === 'object'}"
                         theme="small"
                     ></vaadin-text-field>
                     <div class="override-buttons">
                         <vaadin-button
                             theme="primary small"
                             @click="${() => this._onSetOverride(this._selectedFlag)}"
-                            ?disabled="${!this._selectedFlag || this._selectedFlagType === 'object'}"
+                            ?disabled="${!this._selectedFlag || !this._selectedFlagType
+                                    || this._selectedFlagType === 'object'}"
                         >Override</vaadin-button>
                         ${override ? html`
                             <vaadin-button
