@@ -82,7 +82,7 @@ public class UnleashSyncClient {
         }
 
         URI baseUri = URI.create(config.url());
-        int port = SyncClientUrls.port(baseUri, 80);
+        int port = SyncClientUrls.port(baseUri);
         RequestOptions requestOptions = new RequestOptions()
                 .setMethod(HttpMethod.GET)
                 .setHost(baseUri.getHost())
