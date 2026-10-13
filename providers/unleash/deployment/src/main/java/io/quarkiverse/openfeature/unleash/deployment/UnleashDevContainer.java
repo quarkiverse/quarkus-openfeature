@@ -41,46 +41,57 @@ class UnleashDevContainer extends GenericContainer<UnleashDevContainer> implemen
 
     @Override
     public void start() {
-        network = Network.newNetwork();
+        try {
+            network = Network.newNetwork();
 
-        postgres = new GenericContainer<>(DockerImageName.parse("postgres:18"))
-                .withNetwork(network)
-                .withNetworkAliases("unleash-db")
-                .withExposedPorts(5432)
-                .withEnv("POSTGRES_DB", "unleash")
-                .withEnv("POSTGRES_USER", "unleash")
-                .withEnv("POSTGRES_PASSWORD", "unleash")
-                .waitingFor(Wait.forLogMessage(".*database system is ready to accept connections.*", 1));
-        postgres.start();
+            postgres = new GenericContainer<>(DockerImageName.parse("postgres:18"))
+                    .withNetwork(network)
+                    .withNetworkAliases("unleash-db")
+                    .withExposedPorts(5432)
+                    .withEnv("POSTGRES_DB", "unleash")
+                    .withEnv("POSTGRES_USER", "unleash")
+                    .withEnv("POSTGRES_PASSWORD", "unleash")
+                    .waitingFor(Wait.forLogMessage(".*database system is ready to accept connections.*", 1));
+            postgres.start();
 
-        withNetwork(network);
-        withEnv("DATABASE_URL", "postgres://unleash:unleash@unleash-db:5432/unleash");
-        withEnv("DATABASE_SSL", "false");
-        withEnv("CHECK_VERSION", "false");
-        withEnv("AUTH_TYPE", "none");
-        waitingFor(Wait.forHttp("/health").forPort(HTTP_PORT).forStatusCode(200));
+            withNetwork(network);
+            withEnv("DATABASE_URL", "postgres://unleash:unleash@unleash-db:5432/unleash");
+            withEnv("DATABASE_SSL", "false");
+            withEnv("CHECK_VERSION", "false");
+            withEnv("AUTH_TYPE", "none");
+            waitingFor(Wait.forHttp("/health").forPort(HTTP_PORT).forStatusCode(200));
 
-        if (flagsPath.isPresent()) {
-            withCopyFileToContainer(MountableFile.forHostPath(flagsPath.get()), "/tmp/unleash.json");
-            withEnv("IMPORT_FILE", "/tmp/unleash.json");
-            withEnv("IMPORT_PROJECT", "default");
-            withEnv("IMPORT_ENVIRONMENT", "development");
+            if (flagsPath.isPresent()) {
+                withCopyFileToContainer(MountableFile.forHostPath(flagsPath.get()), "/tmp/unleash.json");
+                withEnv("IMPORT_FILE", "/tmp/unleash.json");
+                withEnv("IMPORT_PROJECT", "default");
+                withEnv("IMPORT_ENVIRONMENT", "development");
+            }
+
+            if (fixedExposedPort.isPresent()) {
+                addFixedExposedPort(fixedExposedPort.getAsInt(), HTTP_PORT);
+            } else {
+                addExposedPort(HTTP_PORT);
+            }
+
+            super.start();
+        } catch (RuntimeException | Error e) {
+            stop();
+            throw e;
         }
-
-        if (fixedExposedPort.isPresent()) {
-            addFixedExposedPort(fixedExposedPort.getAsInt(), HTTP_PORT);
-        } else {
-            addExposedPort(HTTP_PORT);
-        }
-
-        super.start();
     }
 
     @Override
     public void stop() {
         super.stop();
-        postgres.stop();
-        network.close();
+        if (postgres != null) {
+            postgres.stop();
+            postgres = null;
+        }
+        if (network != null) {
+            network.close();
+            network = null;
+        }
     }
 
     @Override
