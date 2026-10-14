@@ -80,8 +80,8 @@ quarkus.openfeature.flagd.offline-path=/path/to/flags.json
 ----
 
 In offline mode, no gRPC connection is made, Dev Services do not start a flagd container, and flag values are static.
-The file is read when the provider initializes, so a missing or malformed file leaves the provider in the `ERROR` state, with the error logged and every flag falling back to its default value.
-Unlike a remote connection, offline mode never retries, so the provider stays in `ERROR` until the application restarts.
+The file is read once, while the provider is created, and offline mode never retries: nothing would read the file again for the life of the process.
+A file that is missing or does not parse is therefore a misconfiguration and not a connection failure, and it fails the application startup.
 
 === Selector
 
