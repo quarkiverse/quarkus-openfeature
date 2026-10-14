@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -101,7 +100,7 @@ class FliptDevServicesProcessor {
 
             Optional<Path> path = resolvePath(domain, devServicesConfig, archiveRoot);
 
-            String serviceConfigId = domain + ";" + Objects.hash(devServicesConfig) + ";" + fileModTimeHash(path);
+            String serviceConfigId = domain + ";" + devServicesConfig.hashCode() + ";" + fileModTimeHash(path);
 
             devServices.produce(DevServicesResultBuildItem.owned()
                     .feature("openfeature-flipt")
