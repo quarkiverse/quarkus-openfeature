@@ -7,6 +7,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.jboss.logging.Logger;
 
@@ -103,7 +104,13 @@ public class FlagdSyncClient {
 
     private GrpcClient createGrpcClient() {
         GrpcClientOptions grpcOptions = new GrpcClientOptions();
-        HttpClientOptions httpOptions = grpcOptions.getTransportOptions();
+        // request timeout is cancelled once response headers arrive, so if the connection
+        // delivers the headers but stops delivering the body in the middle, it wouldn't be
+        // guarded by the request timeout and the response handler wouldn't be called either;
+        // we have to enforce the timeout at the socket
+        HttpClientOptions httpOptions = grpcOptions.getTransportOptions()
+                .setReadIdleTimeout((int) config.streamDeadline().toMillis())
+                .setIdleTimeoutUnit(TimeUnit.MILLISECONDS);
 
         if (config.tlsConfigurationName().isPresent()) {
             String tlsName = config.tlsConfigurationName().get();
@@ -131,7 +138,6 @@ public class FlagdSyncClient {
 
         grpcClient.request(address, SYNC_FLAGS)
                 .onSuccess(grpcRequest -> {
-                    grpcRequest.idleTimeout(config.streamDeadline().toMillis());
                     grpcRequest.response()
                             .onSuccess(response -> {
                                 response.handler(syncResponse -> {
