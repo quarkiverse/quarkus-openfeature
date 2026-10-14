@@ -68,6 +68,16 @@ public class OpenFeatureJsonRpcServiceTest {
         assertThat(overridesOf(service, DOMAIN)).isEmpty();
     }
 
+    // `Boolean.parseBoolean` would have accepted this and silently overridden the flag
+    // to `false`, which looks exactly like a deliberate override of a working flag
+    @Test
+    void unparseableBooleanIsReportedAsError() {
+        OpenFeatureJsonRpcService service = new OpenFeatureJsonRpcService();
+        assertThat(service.setOverride(DOMAIN, "my-flag", "ture", "boolean").getString("error"))
+                .contains("ture");
+        assertThat(overridesOf(service, DOMAIN)).isEmpty();
+    }
+
     @Test
     void unknownTypeIsReportedAsError() {
         OpenFeatureJsonRpcService service = new OpenFeatureJsonRpcService();

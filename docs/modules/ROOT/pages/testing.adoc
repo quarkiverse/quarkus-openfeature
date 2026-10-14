@@ -56,11 +56,13 @@ To override flag values by hand in a running application, instead of in a test, 
 
 The `@TestFlag` annotation supports the following value types (via the `type` attribute):
 
-* `BOOLEAN` (default) -- parsed via `Boolean.parseBoolean()`, so only `"true"` (case-insensitive) produces `true`
+* `BOOLEAN` (default) -- must be `"true"` or `"false"` (case-insensitive)
 * `STRING` -- used as-is
 * `INTEGER` -- parsed via `Integer.parseInt()`
 * `LONG` -- parsed via `Long.parseLong()`
 * `DOUBLE` -- parsed via `Double.parseDouble()`
+
+A value that cannot be parsed as the declared type fails the test, so a typo such as `value = "ture"` is an error rather than a flag quietly overridden to `false`.
 
 Note that `OBJECT` is not supported and will result in an exception.
 

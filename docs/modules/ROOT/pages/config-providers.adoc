@@ -47,7 +47,7 @@ quarkus.openfeature.runtime.regions=["eu","us"]
 
 A flag can be evaluated as a type other than the inferred one:
 
-Boolean evaluation:: Never fails. A value that is not a boolean is false, so note that only `true` is truthy (case insensitive), all other values are false.
+Boolean evaluation:: Throws an error unless the flag is a boolean, that is, unless its value is `true` or `false` (case insensitive).
 Integer, long and double evaluation:: Throw an error unless the flag is a number of that type. A long or a fractional value is not truncated to an integer; a whole number is a valid long and a valid double.
 String evaluation:: Never fails. A flag of any other type is rendered in its canonical form, which is not always the text that was configured: `3.10` reads back as `3.1`, and the whitespace in a JSON value is not preserved.
 Object evaluation:: Never fails. A flag of any other type is returned as a value of that type.

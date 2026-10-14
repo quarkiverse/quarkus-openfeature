@@ -1,6 +1,7 @@
 package io.quarkiverse.openfeature.runtime.devui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
@@ -24,6 +25,22 @@ public class OpenFeatureJsonRpcServiceValueTest {
     public void contextDoubleStaysDouble() {
         EvaluationContext ctx = OpenFeatureJsonRpcService.parseContext("{\"ratio\":3.14}");
         assertEquals(3.14, ctx.getValue("ratio").asDouble());
+    }
+
+    @Test
+    public void overrideBooleanLiterals() {
+        assertEquals(true, OpenFeatureJsonRpcService.parseOverrideValue("true", "boolean"));
+        assertEquals(false, OpenFeatureJsonRpcService.parseOverrideValue("FALSE", "boolean"));
+    }
+
+    // a bad integer override already reports an error in the Dev UI; a bad boolean one
+    // must do the same instead of silently overriding the flag to `false`
+    @Test
+    public void overrideBooleanRejectsAnythingElse() {
+        assertThrows(IllegalArgumentException.class,
+                () -> OpenFeatureJsonRpcService.parseOverrideValue("yes", "boolean"));
+        assertThrows(IllegalArgumentException.class,
+                () -> OpenFeatureJsonRpcService.parseOverrideValue("ture", "boolean"));
     }
 
     @Test

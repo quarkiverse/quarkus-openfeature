@@ -109,10 +109,18 @@ public class ConfigFeatureProviderTest {
         assertEquals(true, bool("true"));
         assertEquals(false, bool("false"));
         assertEquals(true, bool("TRUE"));
-        // anything that is not a boolean is false, never an error
-        assertEquals(false, bool("yes"));
-        assertEquals(false, bool("1"));
-        assertEquals(false, bool(""));
+        assertEquals(false, bool("FALSE"));
+    }
+
+    @Test
+    void booleanRejectsOtherTypes() {
+        assertThrows(TypeMismatchError.class, () -> bool("yes"));
+        assertThrows(TypeMismatchError.class, () -> bool("on"));
+        assertThrows(TypeMismatchError.class, () -> bool("1"));
+        assertThrows(TypeMismatchError.class, () -> bool("hello"));
+        assertThrows(TypeMismatchError.class, () -> bool("3.14"));
+        assertThrows(TypeMismatchError.class, () -> bool("{\"max\":10}"));
+        assertThrows(TypeMismatchError.class, () -> bool(""));
     }
 
     @Test

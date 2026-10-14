@@ -161,6 +161,10 @@ public class OpenFeatureTestExtensionTest {
         @TestFlag(key = "object-flag", value = "{}", type = FlagValueType.OBJECT)
         void objectMethod() {
         }
+
+        @TestFlag(key = "typo-flag", value = "ture")
+        void booleanTypoMethod() {
+        }
     }
 
     private static Map<String, Map<String, Object>> collect(String methodName) throws NoSuchMethodException {
@@ -184,6 +188,15 @@ public class OpenFeatureTestExtensionTest {
                 "long-flag", 42L,
                 "double-flag", 2.5), result.get(DEFAULT_DOMAIN));
         assertEquals(Map.of("string-flag", "hello"), result.get("other"));
+    }
+
+    // a typo in a boolean value must fail the test, not quietly override the flag to
+    // `false` and have the test assert against a value nobody asked for
+    @Test
+    public void booleanTypoIsRejected() throws NoSuchMethodException {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> collect("booleanTypoMethod"));
+        assertTrue(e.getMessage().contains("ture"));
     }
 
     @Test
