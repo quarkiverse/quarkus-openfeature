@@ -137,7 +137,7 @@ public class UnleashFeatureProvider extends AbstractRemoteFeatureProvider {
             }
             return ProviderEvaluation.<Boolean> builder()
                     .value(response.value)
-                    .reason(Reason.TARGETING_MATCH.name())
+                    .reason(Reason.UNKNOWN.name())
                     .build();
         } catch (YggdrasilInvalidInputException e) {
             throw new InvalidContextError(e.getMessage());
@@ -195,18 +195,18 @@ public class UnleashFeatureProvider extends AbstractRemoteFeatureProvider {
             }
 
             VariantDef variant = response.value;
-            if (!variant.isFeatureEnabled()) {
+            if (!variant.isEnabled()) {
                 return ProviderEvaluation.<T> builder()
                         .value(defaultValue)
                         .variant(variant.getName())
-                        .reason(Reason.DISABLED.name())
+                        .reason(Reason.DEFAULT.name())
                         .build();
             }
 
             return ProviderEvaluation.<T> builder()
                     .value(extractVariantValue(variant, expectedType, defaultValue))
                     .variant(variant.getName())
-                    .reason(Reason.TARGETING_MATCH.name())
+                    .reason(Reason.UNKNOWN.name())
                     .build();
         } catch (YggdrasilInvalidInputException e) {
             throw new InvalidContextError(e.getMessage());
