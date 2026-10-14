@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -49,7 +48,7 @@ public class FlagdSyncClient {
     private final Context context;
     private final FlagdConfig.ProviderConfig config;
     private final Evaluator evaluator;
-    private final TlsConfigurationRegistry tlsRegistry;
+    private final TlsConfiguration tlsConfig; // null when TLS not configured
     private final SyncClientState state;
 
     // only accessed from the Vert.x event loop, no synchronization needed
@@ -63,8 +62,15 @@ public class FlagdSyncClient {
         this.context = context;
         this.config = config;
         this.evaluator = evaluator;
-        this.tlsRegistry = tlsRegistry;
         this.state = state;
+
+        if (config.tlsConfigurationName().isPresent()) {
+            String tlsName = config.tlsConfigurationName().get();
+            this.tlsConfig = tlsRegistry.get(tlsName).orElseThrow(() -> new ProviderConfigurationException(
+                    "TLS configuration '" + tlsName + "' not found, configure it with quarkus.tls.\"" + tlsName + "\".*"));
+        } else {
+            this.tlsConfig = null;
+        }
     }
 
     void start(Listener listener) throws Exception {
@@ -112,15 +118,10 @@ public class FlagdSyncClient {
                 .setReadIdleTimeout((int) config.streamDeadline().toMillis())
                 .setIdleTimeoutUnit(TimeUnit.MILLISECONDS);
 
-        if (config.tlsConfigurationName().isPresent()) {
-            String tlsName = config.tlsConfigurationName().get();
-            Optional<TlsConfiguration> tlsConfig = tlsRegistry.get(tlsName);
-            if (tlsConfig.isEmpty()) {
-                throw new IllegalStateException("TLS configuration not found: " + tlsName);
-            }
+        if (tlsConfig != null) {
             httpOptions.setSsl(true);
             httpOptions.setUseAlpn(true);
-            TlsConfigUtils.configure(httpOptions, tlsConfig.get());
+            TlsConfigUtils.configure(httpOptions, tlsConfig);
         }
 
         return GrpcClient.client(vertx, grpcOptions);

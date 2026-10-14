@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -18,6 +17,7 @@ import org.jboss.logging.Logger;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.quarkiverse.openfeature.runtime.ProviderConfigurationException;
 import io.quarkiverse.openfeature.runtime.SyncClientState;
 import io.quarkiverse.openfeature.runtime.SyncClientUrls;
 import io.quarkus.tls.TlsConfiguration;
@@ -53,7 +53,7 @@ public class GoFeatureFlagSyncClient {
     private final Vertx vertx;
     private final Context context;
     private final GoFeatureFlagConfig.ProviderConfig config;
-    private final TlsConfigurationRegistry tlsRegistry;
+    private final TlsConfiguration tlsConfig; // null when TLS not configured
     private final String apiKey;
     private final SyncClientState state;
 
@@ -70,9 +70,16 @@ public class GoFeatureFlagSyncClient {
         this.vertx = vertx;
         this.context = context;
         this.config = config;
-        this.tlsRegistry = tlsRegistry;
         this.apiKey = apiKey;
         this.state = state;
+
+        if (config.tlsConfigurationName().isPresent()) {
+            String tlsName = config.tlsConfigurationName().get();
+            this.tlsConfig = tlsRegistry.get(tlsName).orElseThrow(() -> new ProviderConfigurationException(
+                    "TLS configuration '" + tlsName + "' not found, configure it with quarkus.tls.\"" + tlsName + "\".*"));
+        } else {
+            this.tlsConfig = null;
+        }
     }
 
     JsonNode getFlag(String key) {
@@ -233,16 +240,11 @@ public class GoFeatureFlagSyncClient {
                 .setIdleTimeoutUnit(TimeUnit.MILLISECONDS);
 
         URI baseUri = URI.create(config.url());
-        if (SyncClientUrls.isHttps(baseUri) || config.tlsConfigurationName().isPresent()) {
+        if (SyncClientUrls.isHttps(baseUri) || tlsConfig != null) {
             options.setSsl(true);
 
-            if (config.tlsConfigurationName().isPresent()) {
-                String tlsName = config.tlsConfigurationName().get();
-                Optional<TlsConfiguration> tlsConfig = tlsRegistry.get(tlsName);
-                if (tlsConfig.isEmpty()) {
-                    throw new IllegalStateException("TLS configuration not found: " + tlsName);
-                }
-                TlsConfigUtils.configure(options, tlsConfig.get());
+            if (tlsConfig != null) {
+                TlsConfigUtils.configure(options, tlsConfig);
             }
         }
 
