@@ -50,8 +50,7 @@ public class OpenFeatureRecorder {
 
         if (shouldAwaitProviders) {
             // a flag server outage is not an application outage: the provider stays registered
-            // in ERROR, flags fall back to their defaults, and the sync client keeps reconnecting.
-            // a misconfigured provider is the exception, because no reconnect can fix it
+            // in ERROR, flags fall back to their defaults, and the sync client keeps reconnecting
             try {
                 if (OpenFeatureBuildTimeConfig.DEFAULT_DOMAIN.equals(domain)) {
                     api.setProviderAndWait(provider);
@@ -59,9 +58,6 @@ public class OpenFeatureRecorder {
                     api.setProviderAndWait(domain, provider);
                 }
             } catch (OpenFeatureError e) {
-                if (e.getCause() instanceof ProviderConfigurationException) {
-                    throw e;
-                }
                 log.errorf(e, "OpenFeature provider for domain '%s' failed to initialize", domain);
             }
         } else {

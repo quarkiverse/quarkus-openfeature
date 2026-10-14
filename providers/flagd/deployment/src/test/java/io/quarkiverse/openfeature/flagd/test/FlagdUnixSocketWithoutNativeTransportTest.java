@@ -7,9 +7,14 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.quarkus.test.QuarkusUnitTest;
 
+/**
+ * Awaiting providers is off, as it is in production, so that the refusal does not depend
+ * on it.
+ */
 public class FlagdUnixSocketWithoutNativeTransportTest {
     @RegisterExtension
     static final QuarkusUnitTest test = new QuarkusUnitTest()
+            .overrideConfigKey("quarkus.openfeature.await-providers", "false")
             .overrideConfigKey("quarkus.openfeature.flagd.url", "unix:///var/run/flagd.sock")
             .assertException(t -> {
                 for (Throwable cause = t; cause != null; cause = cause.getCause()) {

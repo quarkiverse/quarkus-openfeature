@@ -1,5 +1,6 @@
 package io.quarkiverse.openfeature.flagd.runtime;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -49,6 +50,8 @@ public class FlagdSyncClient {
     private final FlagdConfig.ProviderConfig config;
     private final Evaluator evaluator;
     private final TlsConfiguration tlsConfig; // null when TLS not configured
+    private final SocketAddress address; // null when reading flags from a file
+    private final String offlineFlagData; // null unless reading flags from a file
     private final SyncClientState state;
 
     // only accessed from the Vert.x event loop, no synchronization needed
@@ -71,13 +74,28 @@ public class FlagdSyncClient {
         } else {
             this.tlsConfig = null;
         }
-    }
 
-    void start(Listener listener) throws Exception {
         if (config.offlinePath().isPresent()) {
-            startOffline(config.offlinePath().get());
+            this.address = null;
+            // offline mode reads the file exactly once and never connects to anything, so
+            // a file that is missing or does not parse is not a failure anything could
+            // recover from: nothing would read it again for the life of the process
+            String path = config.offlinePath().get();
+            try {
+                this.offlineFlagData = Files.readString(Path.of(path));
+            } catch (IOException e) {
+                throw new ProviderConfigurationException("Cannot read the flagd offline file '" + path
+                        + "': " + e.getMessage());
+            }
+            try {
+                evaluator.setFlagsAndGetChangedKeys(offlineFlagData);
+            } catch (Exception e) {
+                throw new ProviderConfigurationException("Cannot parse the flagd offline file '" + path
+                        + "': " + e.getMessage());
+            }
         } else {
-            SocketAddress address = parseAddress(config.url());
+            this.offlineFlagData = null;
+            this.address = parseAddress(config.url());
             if (address.isDomainSocket() && !vertx.isNativeTransportEnabled()) {
                 // Vert.x would reject the connection attempt on the event loop, where it only
                 // shows up as a reconnect warning repeating forever
@@ -86,6 +104,15 @@ public class FlagdSyncClient {
                         + " quarkus.vertx.prefer-native-transport=true"
                         + " and add a dependency on io.netty:netty-transport-native-epoll.");
             }
+        }
+    }
+
+    void start(Listener listener) {
+        if (offlineFlagData != null) {
+            // the flags are already in the evaluator, the constructor put them there
+            latestFlagConfiguration = offlineFlagData;
+            state.setReady();
+        } else {
             context.runOnContext(v -> {
                 startGrpc(address, listener);
             });
@@ -94,13 +121,6 @@ public class FlagdSyncClient {
 
     String getLatestFlagConfiguration() {
         return latestFlagConfiguration;
-    }
-
-    private void startOffline(String path) throws Exception {
-        String flagData = Files.readString(Path.of(path));
-        latestFlagConfiguration = flagData;
-        evaluator.setFlagsAndGetChangedKeys(flagData);
-        state.setReady();
     }
 
     private void startGrpc(SocketAddress address, Listener listener) {
