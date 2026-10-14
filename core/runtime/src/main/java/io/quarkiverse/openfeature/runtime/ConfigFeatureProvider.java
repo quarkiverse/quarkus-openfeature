@@ -80,9 +80,11 @@ public class ConfigFeatureProvider implements FeatureProvider, DevFeatureAccess,
             return override;
         }
         Value value = resolveFlag(key);
-        // a value that is not a boolean is false, it is never an error
+        if (!value.isBoolean()) {
+            throw new TypeMismatchError("Cannot parse as boolean: " + asText(value));
+        }
         return ProviderEvaluation.<Boolean> builder()
-                .value(value.isBoolean() ? value.asBoolean() : false)
+                .value(value.asBoolean())
                 .reason(Reason.STATIC.toString())
                 .build();
     }

@@ -21,6 +21,7 @@ import io.quarkiverse.openfeature.runtime.FlagOverrides;
 import io.quarkiverse.openfeature.runtime.OpenFeatureBuildTimeConfig;
 import io.quarkiverse.openfeature.runtime.OpenFeatureRecorder;
 import io.quarkiverse.openfeature.runtime.OverrideFeatureAccess;
+import io.quarkiverse.openfeature.runtime.Primitives;
 import io.smallrye.common.annotation.NonBlocking;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -88,7 +89,8 @@ public class OpenFeatureJsonRpcService {
         try {
             return switch (type) {
                 case "boolean" -> {
-                    boolean def = Boolean.parseBoolean(defaultValue);
+                    boolean def = defaultValue != null && !defaultValue.isEmpty()
+                            && Primitives.parseBoolean(defaultValue);
                     yield detailsToJson(client.getBooleanDetails(key, def, ctx));
                 }
                 case "string" -> {
@@ -232,9 +234,9 @@ public class OpenFeatureJsonRpcService {
         }
     }
 
-    private static Object parseOverrideValue(String value, String type) {
+    static Object parseOverrideValue(String value, String type) {
         return switch (type) {
-            case "boolean" -> Boolean.parseBoolean(value);
+            case "boolean" -> Primitives.parseBoolean(value);
             case "integer" -> Integer.parseInt(value);
             case "long" -> Long.parseLong(value);
             case "double" -> Double.parseDouble(value);

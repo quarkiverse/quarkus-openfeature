@@ -18,6 +18,7 @@ import io.quarkiverse.openfeature.runtime.FlagOverrides;
 import io.quarkiverse.openfeature.runtime.OpenFeatureBuildTimeConfig;
 import io.quarkiverse.openfeature.runtime.OpenFeatureRecorder;
 import io.quarkiverse.openfeature.runtime.OverrideFeatureAccess;
+import io.quarkiverse.openfeature.runtime.Primitives;
 
 class OpenFeatureTestExtension implements BeforeEachCallback, AfterEachCallback {
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(
@@ -110,7 +111,7 @@ class OpenFeatureTestExtension implements BeforeEachCallback, AfterEachCallback 
 
     private Object convertValue(String value, FlagValueType type) {
         return switch (type) {
-            case BOOLEAN -> Boolean.parseBoolean(value);
+            case BOOLEAN -> Primitives.parseBoolean(value);
             case INTEGER -> Integer.parseInt(value);
             case LONG -> Long.parseLong(value);
             case DOUBLE -> Double.parseDouble(value);

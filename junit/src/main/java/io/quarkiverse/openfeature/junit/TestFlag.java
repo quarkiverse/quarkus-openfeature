@@ -15,7 +15,8 @@ import dev.openfeature.sdk.FlagValueType;
  * <p>
  * The {@link #value()} string is converted to the target type based on the {@link #type()}:
  * <ul>
- * <li>{@link FlagValueType#BOOLEAN BOOLEAN}: parsed via {@link Boolean#parseBoolean(String)}</li>
+ * <li>{@link FlagValueType#BOOLEAN BOOLEAN}: must be {@code true} or {@code false} (case insensitive),
+ * anything else throws {@link IllegalArgumentException}</li>
  * <li>{@link FlagValueType#INTEGER INTEGER}: parsed via {@link Integer#parseInt(String)}</li>
  * <li>{@link FlagValueType#LONG LONG}: parsed via {@link Long#parseLong(String)}</li>
  * <li>{@link FlagValueType#DOUBLE DOUBLE}: parsed via {@link Double#parseDouble(String)}</li>
