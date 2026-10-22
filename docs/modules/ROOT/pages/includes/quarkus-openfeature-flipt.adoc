@@ -264,7 +264,7 @@ endif::add-copy-button-to-config-props[]
 
 [.description]
 --
-Authentication type.
+Authentication type. This is what turns authentication on: with the default of `none`, neither the authentication token nor the credentials provider is read and the connection is unauthenticated.
 
 
 ifdef::add-copy-button-to-env-var[]
@@ -292,6 +292,8 @@ endif::add-copy-button-to-config-props[]
 --
 Authentication token value. For development and testing only. For production, use a credentials provider instead.
 
+Ignored unless the authentication type is set.
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLIPT_AUTH_TOKEN+++[]
@@ -317,6 +319,8 @@ endif::add-copy-button-to-config-props[]
 [.description]
 --
 The credentials provider name. This is the key used to look up credentials in the credentials provider.
+
+Ignored unless the authentication type is set.
 
 
 ifdef::add-copy-button-to-env-var[]
