@@ -53,6 +53,7 @@ public class GoFeatureFlagSyncClient {
     private final Vertx vertx;
     private final Context context;
     private final GoFeatureFlagConfig.ProviderConfig config;
+    private final URI baseUri;
     private final TlsConfiguration tlsConfig; // null when TLS not configured
     private final String apiKey;
     private final SyncClientState state;
@@ -70,6 +71,7 @@ public class GoFeatureFlagSyncClient {
         this.vertx = vertx;
         this.context = context;
         this.config = config;
+        this.baseUri = SyncClientUrls.parse("GO Feature Flag", config.url());
         this.apiKey = apiKey;
         this.state = state;
 
@@ -110,7 +112,6 @@ public class GoFeatureFlagSyncClient {
         }
         httpClient = createHttpClient();
 
-        URI baseUri = URI.create(config.url());
         int port = SyncClientUrls.port(baseUri);
 
         // Connect SSE first, then fetch full config, to avoid missing
@@ -198,7 +199,7 @@ public class GoFeatureFlagSyncClient {
                                     fail.accept(t.getMessage());
                                 });
 
-                                fetchFullConfig(baseUri, port, listener, () -> {
+                                fetchFullConfig(port, listener, () -> {
                                     Set<String> changedKeys = new HashSet<>();
                                     for (JsonNode diff : bufferedDiffs) {
                                         changedKeys.addAll(applyDiff(diff));
@@ -239,7 +240,6 @@ public class GoFeatureFlagSyncClient {
                 .setReadIdleTimeout((int) config.streamDeadline().toMillis())
                 .setIdleTimeoutUnit(TimeUnit.MILLISECONDS);
 
-        URI baseUri = URI.create(config.url());
         if (SyncClientUrls.isHttps(baseUri) || tlsConfig != null) {
             options.setSsl(true);
 
@@ -251,7 +251,7 @@ public class GoFeatureFlagSyncClient {
         return vertx.createHttpClient(options);
     }
 
-    private void fetchFullConfig(URI baseUri, int port, Listener listener, Runnable onSuccess) {
+    private void fetchFullConfig(int port, Listener listener, Runnable onSuccess) {
         RequestOptions requestOptions = new RequestOptions()
                 .setMethod(HttpMethod.POST)
                 .setHost(baseUri.getHost())

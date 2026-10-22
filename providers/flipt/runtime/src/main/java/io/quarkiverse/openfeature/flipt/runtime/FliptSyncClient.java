@@ -47,6 +47,7 @@ public class FliptSyncClient {
     private final Vertx vertx;
     private final Context context;
     private final FliptConfig.ProviderConfig config;
+    private final URI baseUri;
     private final FliptWasmEnginePool enginePool;
     private final TlsConfiguration tlsConfig; // null when TLS not configured
     private final String authHeader;
@@ -62,6 +63,7 @@ public class FliptSyncClient {
         this.vertx = vertx;
         this.context = context;
         this.config = config;
+        this.baseUri = SyncClientUrls.parse("Flipt", config.url());
         this.enginePool = enginePool;
         this.authHeader = authHeader;
         this.state = state;
@@ -87,7 +89,6 @@ public class FliptSyncClient {
     }
 
     private void verifyAuth(Listener listener) {
-        URI baseUri = URI.create(config.url());
         int port = SyncClientUrls.port(baseUri);
 
         RequestOptions requestOptions = new RequestOptions()
@@ -136,8 +137,6 @@ public class FliptSyncClient {
         if (state.isShutdown()) {
             return;
         }
-
-        URI baseUri = URI.create(config.url());
 
         RequestOptions requestOptions = new RequestOptions()
                 .setMethod(HttpMethod.GET)
@@ -254,7 +253,6 @@ public class FliptSyncClient {
                 .setReadIdleTimeout((int) config.streamDeadline().toMillis())
                 .setIdleTimeoutUnit(TimeUnit.MILLISECONDS);
 
-        URI baseUri = URI.create(config.url());
         if (SyncClientUrls.isHttps(baseUri) || tlsConfig != null) {
             options.setSsl(true);
 
