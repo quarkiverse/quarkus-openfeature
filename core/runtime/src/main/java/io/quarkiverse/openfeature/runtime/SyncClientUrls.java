@@ -2,6 +2,8 @@ package io.quarkiverse.openfeature.runtime;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 /**
  * URL handling shared by the HTTP-based sync clients.
@@ -62,6 +64,16 @@ public final class SyncClientUrls {
             return 80;
         }
         throw new IllegalArgumentException("Not an HTTP(S) URL: " + uri);
+    }
+
+    /**
+     * Percent-encodes a single path segment of a request path, so that a segment taken from
+     * configuration cannot change the request path. The JDK only has a form encoder, which
+     * differs from a path-segment encoder in one character: it turns a space into {@code +}
+     * instead of {@code %20}.
+     */
+    public static String encodePathSegment(String segment) {
+        return URLEncoder.encode(segment, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
     /**

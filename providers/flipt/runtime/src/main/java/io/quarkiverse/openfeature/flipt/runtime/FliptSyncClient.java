@@ -125,9 +125,7 @@ public class FliptSyncClient {
     // the host and port come from the configured URL
     static String streamUri(String basePath, String environment, String namespace, Optional<String> reference) {
         String path = String.format("%s/client/v2/environments/%s/namespaces/%s/stream",
-                basePath, environment, namespace);
-        // only the query value is encoded: `URLEncoder` is a form encoder, so it would turn a
-        // space in a path segment into `+` rather than `%20`
+                basePath, SyncClientUrls.encodePathSegment(environment), SyncClientUrls.encodePathSegment(namespace));
         return reference
                 .map(ref -> path + "?reference=" + URLEncoder.encode(ref, StandardCharsets.UTF_8))
                 .orElse(path);

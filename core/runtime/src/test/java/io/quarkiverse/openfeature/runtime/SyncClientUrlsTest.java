@@ -135,4 +135,32 @@ public class SyncClientUrlsTest {
     void urlWithMultiSegmentPrefix() {
         assertEquals("/gw/flags", SyncClientUrls.basePath(URI.create("https://gw.example.com/gw/flags")));
     }
+
+    @Test
+    void unreservedPathSegmentIsNotEncoded() {
+        // `~` is unreserved in RFC 3986, but the JDK form encoder escapes it; that is harmless
+        assertEquals("aZ09-._%7E", SyncClientUrls.encodePathSegment("aZ09-._~"));
+    }
+
+    @Test
+    void emptyPathSegment() {
+        assertEquals("", SyncClientUrls.encodePathSegment(""));
+    }
+
+    @Test
+    void pathSegmentWithPathSyntax() {
+        assertEquals("a%2Fb%3Fc%23d", SyncClientUrls.encodePathSegment("a/b?c#d"));
+    }
+
+    @Test
+    void pathSegmentWithSpace() {
+        // not `+`, which is what the underlying `URLEncoder` produces
+        assertEquals("a%20b", SyncClientUrls.encodePathSegment("a b"));
+    }
+
+    @Test
+    void pathSegmentWithNonAsciiCharacters() {
+        // UTF-8 bytes, one `%XX` each
+        assertEquals("p%C5%99%C3%ADli%C5%A1", SyncClientUrls.encodePathSegment("příliš"));
+    }
 }
