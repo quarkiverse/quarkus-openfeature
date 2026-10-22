@@ -48,6 +48,9 @@ The URL is normally a bare `host:port`; the default port is 8015.
 A scheme is accepted only in the two forms the provider implements, `grpc://` for TCP and `unix://` for a Unix domain socket.
 Anything else -- including `https://`, and the gRPC name-resolver schemes `dns://`, `xds://` and `envoy://` -- is rejected at startup.
 
+A `unix://` URL carries the absolute socket path, so it takes three slashes: `unix:///var/run/flagd.sock`.
+Anything else, such as `unix://flagd.sock`, is rejected at startup.
+
 A `unix://` URL needs a Vert.x native transport, which is not enabled by default.
 Set `quarkus.vertx.prefer-native-transport=true` and add a dependency on `io.netty:netty-transport-native-epoll` (classifier derived from your OS and platform, for example `linux-x86_64`); without both, the application fails to start with a message saying so.
 

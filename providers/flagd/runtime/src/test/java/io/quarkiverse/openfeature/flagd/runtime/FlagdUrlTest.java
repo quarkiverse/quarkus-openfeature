@@ -45,6 +45,32 @@ public class FlagdUrlTest {
     }
 
     @Test
+    void unixSocketWithAuthorityRejected() {
+        // `unix://foo/bar.sock` parses as host=foo, path=/bar.sock, so taking the path alone
+        // would silently connect to a different socket than the user wrote
+        ProviderConfigurationException e = assertThrows(ProviderConfigurationException.class,
+                () -> FlagdSyncClient.parseAddress("unix://flagd/flagd.sock"));
+        assertTrue(e.getMessage().contains("unix:///"), e.getMessage());
+    }
+
+    @Test
+    void unixSocketWithoutPathRejected() {
+        // `unix://my.sock` has an empty path; an empty socket path must not reach Vert.x
+        for (String url : new String[] { "unix://my.sock", "unix:///" }) {
+            ProviderConfigurationException e = assertThrows(ProviderConfigurationException.class,
+                    () -> FlagdSyncClient.parseAddress(url), url);
+            assertTrue(e.getMessage().contains("unix:///"), e.getMessage());
+        }
+    }
+
+    @Test
+    void syntacticallyMalformedUrlRejected() {
+        for (String url : new String[] { "unix://", "grpc://host:port", "grpc://ho st:8015" }) {
+            assertThrows(ProviderConfigurationException.class, () -> FlagdSyncClient.parseAddress(url), url);
+        }
+    }
+
+    @Test
     void invalidUrl() {
         assertThrows(ProviderConfigurationException.class, () -> FlagdSyncClient.parseAddress("grpc:///no-host"));
     }

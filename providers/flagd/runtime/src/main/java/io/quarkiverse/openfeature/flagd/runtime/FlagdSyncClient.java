@@ -2,6 +2,7 @@ package io.quarkiverse.openfeature.flagd.runtime;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
@@ -233,7 +234,12 @@ public class FlagdSyncClient {
     }
 
     static SocketAddress parseAddress(String url) {
-        URI uri = URI.create(url.contains("://") ? url : "grpc://" + url);
+        URI uri;
+        try {
+            uri = new URI(url.contains("://") ? url : "grpc://" + url);
+        } catch (URISyntaxException e) {
+            throw new ProviderConfigurationException("Malformed flagd URL '" + url + "': " + e.getReason());
+        }
 
         // the scheme carries no TLS meaning here: flagd sync is gRPC, where a URI scheme
         // selects a name resolver. Rather than ignore an `https://` that the user wrote
@@ -246,7 +252,13 @@ public class FlagdSyncClient {
         }
 
         if ("unix".equals(scheme)) {
-            return SocketAddress.domainSocketAddress(uri.getPath());
+            // the socket path is the URI path, so it must be absolute and the authority empty
+            String path = uri.getPath();
+            if (uri.getAuthority() != null || path == null || path.isEmpty() || "/".equals(path)) {
+                throw new ProviderConfigurationException("Invalid flagd Unix socket URL '" + url
+                        + "'; the path must be absolute, as in 'unix:///var/run/flagd.sock'");
+            }
+            return SocketAddress.domainSocketAddress(path);
         }
         String host = uri.getHost();
         int port = uri.getPort();

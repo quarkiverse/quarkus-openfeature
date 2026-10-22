@@ -36,7 +36,8 @@ public interface FlagdConfig {
     interface ProviderConfig {
         /**
          * flagd server URL, normally a bare {@code host:port} with 8015 as the default port.
-         * The only accepted schemes are {@code grpc://} and {@code unix://} (a Unix domain socket);
+         * The only accepted schemes are {@code grpc://} and {@code unix://} (a Unix domain socket,
+         * whose path must be absolute, as in {@code unix:///var/run/flagd.sock});
          * anything else, {@code https://} included, is rejected at startup. The scheme does not
          * control TLS; use {@link #tlsConfigurationName()} for that.
          */
