@@ -27,6 +27,7 @@ public class UnleashSyncClient {
     private final Vertx vertx;
     private final Context context;
     private final UnleashConfig.ProviderConfig config;
+    private final URI baseUri;
     private final TlsConfiguration tlsConfig; // null when TLS not configured
     private final String apiKey;
     private final SyncClientState state;
@@ -41,6 +42,7 @@ public class UnleashSyncClient {
         this.vertx = vertx;
         this.context = context;
         this.config = config;
+        this.baseUri = SyncClientUrls.parse("Unleash", config.url());
         this.apiKey = apiKey;
         this.state = state;
 
@@ -63,7 +65,6 @@ public class UnleashSyncClient {
                     .setReadIdleTimeout((int) config.requestTimeout().toMillis())
                     .setIdleTimeoutUnit(TimeUnit.MILLISECONDS);
 
-            URI baseUri = URI.create(config.url());
             if (SyncClientUrls.isHttps(baseUri) || tlsConfig != null) {
                 options.setSsl(true);
 
@@ -83,7 +84,6 @@ public class UnleashSyncClient {
             return;
         }
 
-        URI baseUri = URI.create(config.url());
         int port = SyncClientUrls.port(baseUri);
         RequestOptions requestOptions = new RequestOptions()
                 .setMethod(HttpMethod.GET)

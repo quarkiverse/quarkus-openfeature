@@ -11,6 +11,61 @@ import org.junit.jupiter.api.Test;
 
 public class SyncClientUrlsTest {
     @Test
+    void parseHttpUrl() {
+        assertEquals(URI.create("http://flags.example.com:8080/api"),
+                SyncClientUrls.parse("Unleash", "http://flags.example.com:8080/api"));
+    }
+
+    @Test
+    void parseHttpsUrl() {
+        assertEquals(URI.create("https://flags.example.com"),
+                SyncClientUrls.parse("Unleash", "https://flags.example.com"));
+    }
+
+    @Test
+    void parseSchemelessUrl() {
+        ProviderConfigurationException e = assertThrows(ProviderConfigurationException.class,
+                () -> SyncClientUrls.parse("Unleash", "localhost:4242/api"));
+        assertTrue(e.getMessage().contains("Unsupported Unleash URL scheme 'localhost'"), e.getMessage());
+    }
+
+    @Test
+    void parseUrlWithoutSchemeAndPort() {
+        ProviderConfigurationException e = assertThrows(ProviderConfigurationException.class,
+                () -> SyncClientUrls.parse("Flipt", "flags.example.com"));
+        assertTrue(e.getMessage().contains("Unsupported Flipt URL scheme 'null'"), e.getMessage());
+    }
+
+    @Test
+    void parseUrlWithUnsupportedScheme() {
+        ProviderConfigurationException e = assertThrows(ProviderConfigurationException.class,
+                () -> SyncClientUrls.parse("Flipt", "grpc://flags.example.com:9000"));
+        assertTrue(e.getMessage().contains("Unsupported Flipt URL scheme 'grpc'"), e.getMessage());
+    }
+
+    @Test
+    void parseUrlWithoutHost() {
+        ProviderConfigurationException e = assertThrows(ProviderConfigurationException.class,
+                () -> SyncClientUrls.parse("GO Feature Flag", "http:///v1/flag"));
+        assertTrue(e.getMessage().contains("The GO Feature Flag URL 'http:///v1/flag' has no host"), e.getMessage());
+    }
+
+    @Test
+    void parseUrlWithNonNumericPort() {
+        ProviderConfigurationException e = assertThrows(ProviderConfigurationException.class,
+                () -> SyncClientUrls.parse("GO Feature Flag", "http://flags.example.com:not-a-port"));
+        assertTrue(e.getMessage().contains("The authority 'flags.example.com:not-a-port'"), e.getMessage());
+        assertTrue(e.getMessage().contains("is not a valid 'host:port'"), e.getMessage());
+    }
+
+    @Test
+    void parseSyntacticallyInvalidUrl() {
+        ProviderConfigurationException e = assertThrows(ProviderConfigurationException.class,
+                () -> SyncClientUrls.parse("GO Feature Flag", "http://flags example.com"));
+        assertTrue(e.getMessage().contains("Malformed GO Feature Flag URL"), e.getMessage());
+    }
+
+    @Test
     void https() {
         assertTrue(SyncClientUrls.isHttps(URI.create("https://flags.example.com")));
     }

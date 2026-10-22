@@ -36,6 +36,7 @@ public interface GoFeatureFlagConfig {
     interface ProviderConfig {
         /**
          * GO Feature Flag relay proxy URL. May include a path prefix, which all requests are relative to.
+         * Must be an {@code http} or {@code https} URL; a URL that is not fails the application startup.
          */
         @WithDefault("http://localhost:1031")
         String url();
