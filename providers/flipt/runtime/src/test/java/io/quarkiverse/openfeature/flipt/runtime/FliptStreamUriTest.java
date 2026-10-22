@@ -27,6 +27,12 @@ public class FliptStreamUriTest {
     }
 
     @Test
+    void pathSegmentsAreUrlEncoded() {
+        assertEquals("/client/v2/environments/a%2Fb/namespaces/c%20d%3Fe/stream",
+                FliptSyncClient.streamUri("", "a/b", "c d?e", Optional.empty()));
+    }
+
+    @Test
     void withBasePath() {
         assertEquals("/flipt/client/v2/environments/default/namespaces/default/stream",
                 FliptSyncClient.streamUri("/flipt", "default", "default", Optional.empty()));
