@@ -54,7 +54,9 @@ public interface FliptConfig {
         String namespace();
 
         /**
-         * Authentication type.
+         * Authentication type. This is what turns authentication on: with the
+         * default of {@code none}, neither the authentication token nor the
+         * credentials provider is read and the connection is unauthenticated.
          */
         @WithDefault("none")
         AuthType authType();
@@ -62,12 +64,16 @@ public interface FliptConfig {
         /**
          * Authentication token value. For development and testing only.
          * For production, use a credentials provider instead.
+         * <p>
+         * Ignored unless the authentication type is set.
          */
         Optional<String> authToken();
 
         /**
          * The credentials provider name. This is the key used to look up
          * credentials in the credentials provider.
+         * <p>
+         * Ignored unless the authentication type is set.
          */
         Optional<String> credentialsProvider();
 

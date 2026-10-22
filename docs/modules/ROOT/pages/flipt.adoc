@@ -88,6 +88,10 @@ quarkus.openfeature.flipt.auth-type=client-token
 quarkus.openfeature.flipt.auth-token=my-secret-token
 ----
 
+IMPORTANT: `auth-type` is what turns authentication on.
+It defaults to `none`, and as long as it stays that way, neither `auth-token` nor `credentials-provider` is read and the connection to the flag server is unauthenticated, with no warning.
+If authentication appears to be ignored, check that `auth-type` is set.
+
 Setting `auth-token` directly in configuration is suitable for development and testing.
 For production, use a https://quarkus.io/guides/credentials-provider[credentials provider] such as Vault:
 
