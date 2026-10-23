@@ -113,11 +113,19 @@ public class OpenFeatureTestExtensionTest {
         assertNull(three.overrides);
     }
 
+    // an override that reaches no provider at all is always a mistake: either the domain name
+    // is wrong, or the test runs in a mode where the extension cannot see the application
     @Test
-    public void domainWithoutProvidersIsNotReportedAsOverridden() {
-        OpenFeatureTestExtension extension = extensionWith(Map.of());
+    public void domainWithoutProvidersIsRejected() {
+        OverridableProvider overridable = new OverridableProvider("overridable");
+        OpenFeatureTestExtension extension = extensionWith(Map.of(DEFAULT_DOMAIN, List.of(overridable)));
 
-        assertEquals(Set.of(), extension.applyOverrides(Map.of(DEFAULT_DOMAIN, Map.of("flag", true))));
+        IllegalStateException e = assertThrows(IllegalStateException.class, () -> extension.applyOverrides(Map.of(
+                DEFAULT_DOMAIN, Map.of("flag", true),
+                "typo", Map.of("flag", true))));
+
+        assertTrue(e.getMessage().contains("\"typo\""));
+        assertNull(overridable.overrides);
     }
 
     @Test

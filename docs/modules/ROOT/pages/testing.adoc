@@ -52,6 +52,21 @@ public class MyFeatureTest {
 
 To override flag values by hand in a running application, instead of in a test, use the xref:dev-ui.adoc[Dev UI].
 
+== Supported test modes
+
+`@TestFlag` only works under `@QuarkusTest`.
+The overrides are pushed directly into the provider instances of the running application, which requires the test and the application to live in the same classloader.
+
+That is not the case for:
+
+`@QuarkusIntegrationTest`:: the application runs in a separate process (or container, or as a native executable), so there are no provider instances to push anything to.
+`QuarkusUnitTest`:: the application runs in the same JVM, but the JUnit engine instantiates the extension outside the Quarkus classloader, so it does not see the application's providers.
+
+In both cases, a test that declares `@TestFlag` fails with an `IllegalStateException` saying that no provider exists for the domain.
+The same error is raised when the `domain` attribute names a domain that has no providers, which is usually a typo.
+
+Test classes that declare no `@TestFlag` at all are unaffected and run normally in every mode.
+
 == Value types
 
 The `@TestFlag` annotation supports the following value types (via the `type` attribute):

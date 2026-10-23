@@ -28,6 +28,12 @@ import dev.openfeature.sdk.FlagValueType;
  * <p>
  * Flags that are not overridden fall through to the real provider's evaluation.
  * After the test, all overrides are cleared so subsequent tests see the real flag values.
+ * <p>
+ * Only works under {@code @QuarkusTest}, because the override is pushed into the provider instances
+ * of the running application, which requires the test and the application to share a classloader.
+ * Under {@code @QuarkusIntegrationTest} (separate process) or {@code QuarkusUnitTest} (extension
+ * instantiated outside the Quarkus classloader), a test that declares this annotation fails with
+ * an {@link IllegalStateException}; it does not quietly run against the real flag values.
  */
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)

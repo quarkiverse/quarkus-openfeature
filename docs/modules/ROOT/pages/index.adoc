@@ -264,7 +264,7 @@ The application may observe provider state by registering a provider event handl
 
 == Testing
 
-The `quarkus-openfeature-junit` artifact provides a `@TestFlag` annotation for overriding feature flag values in tests.
+The `quarkus-openfeature-junit` artifact provides a `@TestFlag` annotation for overriding feature flag values in `@QuarkusTest` tests.
 See xref:testing.adoc[Testing] for details.
 
 [[extension-configuration-reference]]
