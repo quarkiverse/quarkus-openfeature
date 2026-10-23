@@ -166,6 +166,16 @@ The first provider in the list that has a value for a given flag wins:
 quarkus.openfeature.provider=runtime-config,buildtime-config
 ----
 
+[WARNING]
+====
+A domain that combines several providers does not report provider state and does not emit provider events properly.
+Such domain is registered with the OpenFeature SDK as a _multi-provider_, which is an experimental feature of the OpenFeature Java SDK.
+
+Flag evaluation is unaffected: each provider keeps evaluating the flag definitions it synchronized last, exactly as it does in a single-provider domain.
+
+If you rely on observing provider state or provider events, use one provider per domain.
+====
+
 == Multiple domains
 
 OpenFeature supports the concept of _domains_ -- named scopes that can use different providers.
