@@ -30,11 +30,15 @@ import io.vertx.grpc.client.GrpcClientOptions;
 import io.vertx.grpc.common.GrpcMessageDecoder;
 import io.vertx.grpc.common.GrpcMessageEncoder;
 import io.vertx.grpc.common.GrpcStatus;
+import io.vertx.grpc.common.MessageSizeOverflowException;
 import io.vertx.grpc.common.ServiceMethod;
 import io.vertx.grpc.common.ServiceName;
 
 public class FlagdSyncClient {
     private static final Logger log = Logger.getLogger(FlagdSyncClient.class);
+
+    // the gRPC message length is an unsigned 32bit number, so Vert.x accepts no more
+    private static final long MAX_ALLOWED_MESSAGE_SIZE = 0xFFFF_FFFFL;
 
     private static final Set<GrpcStatus> FATAL_STATUSES = EnumSet.of(
             GrpcStatus.PERMISSION_DENIED,
@@ -53,6 +57,7 @@ public class FlagdSyncClient {
     private final TlsConfiguration tlsConfig; // null when TLS not configured
     private final SocketAddress address; // null when reading flags from a file
     private final String offlineFlagData; // null unless reading flags from a file
+    private final long maxMessageSize;
     private final SyncClientState state;
 
     // only accessed from the Vert.x event loop, no synchronization needed
@@ -67,6 +72,14 @@ public class FlagdSyncClient {
         this.config = config;
         this.evaluator = evaluator;
         this.state = state;
+
+        // Vert.x only rejects the value when the gRPC client is created, which happens
+        // on the event loop, where an exception would never reach the caller
+        this.maxMessageSize = config.maxConfigurationSize().asLongValue();
+        if (maxMessageSize <= 0 || maxMessageSize > MAX_ALLOWED_MESSAGE_SIZE) {
+            throw new ProviderConfigurationException("The flagd max-configuration-size of " + maxMessageSize
+                    + " bytes is out of range, it must be between 1 and " + MAX_ALLOWED_MESSAGE_SIZE + " bytes");
+        }
 
         if (config.tlsConfigurationName().isPresent()) {
             String tlsName = config.tlsConfigurationName().get();
@@ -130,7 +143,8 @@ public class FlagdSyncClient {
     }
 
     private GrpcClient createGrpcClient() {
-        GrpcClientOptions grpcOptions = new GrpcClientOptions();
+        GrpcClientOptions grpcOptions = new GrpcClientOptions()
+                .setMaxMessageSize(maxMessageSize);
         // request timeout is cancelled once response headers arrive, so if the connection
         // delivers the headers but stops delivering the body in the middle, it wouldn't be
         // guarded by the request timeout and the response handler wouldn't be called either;
@@ -196,9 +210,15 @@ public class FlagdSyncClient {
                                     if (state.isShutdown()) {
                                         return;
                                     }
-                                    log.warnf(t, "flagd sync stream error, will reconnect");
+                                    // Vert.x cancels the call and fails the response on an oversized
+                                    // message, so this is the only chance to say what to do about it
+                                    String message = t instanceof MessageSizeOverflowException
+                                            ? "flag configuration exceeds the configured maximum of " + maxMessageSize
+                                                    + " bytes, raise quarkus.openfeature.flagd.max-configuration-size"
+                                            : t.getMessage();
+                                    log.warnf(t, "flagd sync stream error, will reconnect: %s", message);
                                     state.setError();
-                                    listener.onError(t.getMessage());
+                                    listener.onError(message);
                                     state.scheduleReconnect(() -> connectStream(address, listener));
                                 });
                             }).onFailure(t -> {

@@ -251,6 +251,32 @@ endif::add-copy-button-to-env-var[]
 |link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-openfeature-flagd_quarkus-openfeature[icon:question-circle[title=More information about the Duration format]]
 |`+++10M+++`
 
+a| [[quarkus-openfeature-flagd_quarkus-openfeature-flagd-max-configuration-size]] [.property-path]##link:#quarkus-openfeature-flagd_quarkus-openfeature-flagd-max-configuration-size[`+++quarkus.openfeature.flagd.max-configuration-size+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.flagd.max-configuration-size+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".flagd.max-configuration-size+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".flagd.max-configuration-size+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Maximum size of a single flag configuration received from flagd. The whole configuration arrives as one gRPC message, so this is effectively the limit on how many flags the server may serve; a larger message is rejected and the stream is reconnected.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_FLAGD_MAX_CONFIGURATION_SIZE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_FLAGD_MAX_CONFIGURATION_SIZE+++`
+endif::add-copy-button-to-env-var[]
+--
+|MemorySize link:#memory-size-note-anchor-quarkus-openfeature-flagd_quarkus-openfeature[icon:question-circle[title=More information about the MemorySize format]]
+|`+++4M+++`
+
 a| [[quarkus-openfeature-flagd_quarkus-openfeature-flagd-grace-period]] [.property-path]##link:#quarkus-openfeature-flagd_quarkus-openfeature-flagd-grace-period[`+++quarkus.openfeature.flagd.grace-period+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++quarkus.openfeature.flagd.grace-period+++[]
@@ -402,3 +428,13 @@ In other cases, the simplified format is translated to the `java.time.Duration` 
 * If the value is a number followed by `d`, it is prefixed with `P`.
 ====
 endif::no-duration-note[]
+ifndef::no-memory-size-note[]
+[NOTE]
+[id=memory-size-note-anchor-quarkus-openfeature-flagd_quarkus-openfeature]
+.About the MemorySize format
+====
+A size configuration option recognizes strings in this format (shown as a regular expression): `[0-9]+[KkMmGgTtPpEeZzYy]?`.
+
+If no suffix is given, assume bytes.
+====
+endif::no-memory-size-note[]

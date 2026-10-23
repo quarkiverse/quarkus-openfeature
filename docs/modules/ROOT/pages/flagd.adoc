@@ -175,6 +175,15 @@ Therefore, a stream that has not delivered any data for configurable amount of t
 quarkus.openfeature.flagd.stream-deadline=5m
 ----
 
+The whole flag configuration arrives as a single gRPC message, whose size is capped at 4 MB by default.
+A larger message is rejected and the stream reconnects, so a server that keeps sending one never becomes READY.
+To raise the limit:
+
+[source,properties]
+----
+quarkus.openfeature.flagd.max-configuration-size=8M
+----
+
 [[configuration-reference]]
 == Configuration Reference
 
