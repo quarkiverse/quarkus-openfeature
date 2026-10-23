@@ -8,6 +8,7 @@ import io.quarkiverse.openfeature.runtime.OpenFeatureBuildTimeConfig;
 import io.quarkus.runtime.annotations.ConfigDocMapKey;
 import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
+import io.quarkus.runtime.configuration.MemorySize;
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
 import io.smallrye.config.WithDefaults;
@@ -55,6 +56,14 @@ public interface FlagdConfig {
          */
         @WithDefault("10m")
         Duration streamDeadline();
+
+        /**
+         * Maximum size of a single flag configuration received from flagd. The whole configuration
+         * arrives as one gRPC message, so this is effectively the limit on how many flags the server
+         * may serve; a larger message is rejected and the stream is reconnected.
+         */
+        @WithDefault("4M")
+        MemorySize maxConfigurationSize();
 
         /**
          * Grace period before transitioning from STALE to ERROR after a connection loss. During this period,
