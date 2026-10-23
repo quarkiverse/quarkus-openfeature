@@ -1,9 +1,11 @@
 name: OpenFeature - Buildtime Config
+description: Buildtime configuration provider for Quarkus OpenFeature
 metadata:
   keywords:
     - openfeature
     - flags
     - toggles
+  guide: https://docs.quarkiverse.io/quarkus-openfeature/dev/config-providers.html
   categories:
     - "miscellaneous"
   status: "stable"
