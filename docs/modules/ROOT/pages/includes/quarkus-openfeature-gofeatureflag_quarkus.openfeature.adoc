@@ -333,6 +333,32 @@ endif::add-copy-button-to-env-var[]
 |link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-openfeature-gofeatureflag_quarkus-openfeature[icon:question-circle[title=More information about the Duration format]]
 |`+++10M+++`
 
+a| [[quarkus-openfeature-gofeatureflag_quarkus-openfeature-gofeatureflag-max-configuration-size]] [.property-path]##link:#quarkus-openfeature-gofeatureflag_quarkus-openfeature-gofeatureflag-max-configuration-size[`+++quarkus.openfeature.gofeatureflag.max-configuration-size+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.gofeatureflag.max-configuration-size+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".gofeatureflag.max-configuration-size+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".gofeatureflag.max-configuration-size+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Maximum size of a flag configuration received from GO Feature Flag. It bounds both the full configuration, which arrives as one HTTP response, and a single flag diff, which arrives as one line of the SSE stream; either one above this limit is rejected and the connection is re-established.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_GOFEATUREFLAG_MAX_CONFIGURATION_SIZE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_GOFEATUREFLAG_MAX_CONFIGURATION_SIZE+++`
+endif::add-copy-button-to-env-var[]
+--
+|MemorySize link:#memory-size-note-anchor-quarkus-openfeature-gofeatureflag_quarkus-openfeature[icon:question-circle[title=More information about the MemorySize format]]
+|`+++4M+++`
+
 a| [[quarkus-openfeature-gofeatureflag_quarkus-openfeature-gofeatureflag-grace-period]] [.property-path]##link:#quarkus-openfeature-gofeatureflag_quarkus-openfeature-gofeatureflag-grace-period[`+++quarkus.openfeature.gofeatureflag.grace-period+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++quarkus.openfeature.gofeatureflag.grace-period+++[]
@@ -432,3 +458,13 @@ In other cases, the simplified format is translated to the `java.time.Duration` 
 * If the value is a number followed by `d`, it is prefixed with `P`.
 ====
 endif::no-duration-note[]
+ifndef::no-memory-size-note[]
+[NOTE]
+[id=memory-size-note-anchor-quarkus-openfeature-gofeatureflag_quarkus-openfeature]
+.About the MemorySize format
+====
+A size configuration option recognizes strings in this format (shown as a regular expression): `[0-9]+[KkMmGgTtPpEeZzYy]?`.
+
+If no suffix is given, assume bytes.
+====
+endif::no-memory-size-note[]

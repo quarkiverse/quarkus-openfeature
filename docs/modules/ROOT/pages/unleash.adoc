@@ -167,7 +167,8 @@ Changes to the flag definition file are detected during live reload and the Unle
 == Connection lifecycle
 
 The provider polls the Unleash API for the full flag configuration on a regular interval.
-On connection loss, it automatically retries with a shorter interval.
+Each poll is conditional: the `ETag` of the configuration currently held is sent back as `If-None-Match`, so an unchanged flag set costs an empty `304` response and no re-parse.
+On connection loss, the provider automatically retries with a shorter interval.
 The provider lifecycle follows the OpenFeature specification:
 
 READY:: The provider has received flag data and is serving evaluations.
@@ -188,6 +189,14 @@ When it expires, the poll is retried on the reconnect schedule:
 [source,properties]
 ----
 quarkus.openfeature.unleash.request-timeout=5s
+----
+
+A response larger than the configured maximum is rejected instead of being buffered whole, and the poll is retried on the reconnect schedule.
+Raise the limit if the Unleash instance serves more flags than fit in it:
+
+[source,properties]
+----
+quarkus.openfeature.unleash.max-configuration-size=8M
 ----
 
 [[configuration-reference]]

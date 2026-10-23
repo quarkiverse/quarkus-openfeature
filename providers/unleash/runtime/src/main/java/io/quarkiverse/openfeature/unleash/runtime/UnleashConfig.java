@@ -8,6 +8,7 @@ import io.quarkiverse.openfeature.runtime.OpenFeatureBuildTimeConfig;
 import io.quarkus.runtime.annotations.ConfigDocMapKey;
 import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
+import io.quarkus.runtime.configuration.MemorySize;
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
 import io.smallrye.config.WithDefaults;
@@ -86,6 +87,14 @@ public interface UnleashConfig {
          */
         @WithDefault("10s")
         Duration requestTimeout();
+
+        /**
+         * Maximum size of a flag configuration received from Unleash. The whole flag set arrives
+         * as one HTTP response, so this is effectively the limit on how many flags the server may
+         * serve; a larger response is rejected and the poll is retried on the reconnect schedule.
+         */
+        @WithDefault("4M")
+        MemorySize maxConfigurationSize();
 
         /**
          * Grace period before transitioning from STALE to ERROR

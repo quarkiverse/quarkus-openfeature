@@ -359,6 +359,32 @@ endif::add-copy-button-to-env-var[]
 |link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-openfeature-unleash_quarkus-openfeature[icon:question-circle[title=More information about the Duration format]]
 |`+++10S+++`
 
+a| [[quarkus-openfeature-unleash_quarkus-openfeature-unleash-max-configuration-size]] [.property-path]##link:#quarkus-openfeature-unleash_quarkus-openfeature-unleash-max-configuration-size[`+++quarkus.openfeature.unleash.max-configuration-size+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature.unleash.max-configuration-size+++[]
+endif::add-copy-button-to-config-props[]
+
+
+`+++quarkus.openfeature."domain-name".unleash.max-configuration-size+++`
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.openfeature."domain-name".unleash.max-configuration-size+++[]
+endif::add-copy-button-to-config-props[]
+
+[.description]
+--
+Maximum size of a flag configuration received from Unleash. The whole flag set arrives as one HTTP response, so this is effectively the limit on how many flags the server may serve; a larger response is rejected and the poll is retried on the reconnect schedule.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_OPENFEATURE_UNLEASH_MAX_CONFIGURATION_SIZE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_OPENFEATURE_UNLEASH_MAX_CONFIGURATION_SIZE+++`
+endif::add-copy-button-to-env-var[]
+--
+|MemorySize link:#memory-size-note-anchor-quarkus-openfeature-unleash_quarkus-openfeature[icon:question-circle[title=More information about the MemorySize format]]
+|`+++4M+++`
+
 a| [[quarkus-openfeature-unleash_quarkus-openfeature-unleash-grace-period]] [.property-path]##link:#quarkus-openfeature-unleash_quarkus-openfeature-unleash-grace-period[`+++quarkus.openfeature.unleash.grace-period+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++quarkus.openfeature.unleash.grace-period+++[]
@@ -458,3 +484,13 @@ In other cases, the simplified format is translated to the `java.time.Duration` 
 * If the value is a number followed by `d`, it is prefixed with `P`.
 ====
 endif::no-duration-note[]
+ifndef::no-memory-size-note[]
+[NOTE]
+[id=memory-size-note-anchor-quarkus-openfeature-unleash_quarkus-openfeature]
+.About the MemorySize format
+====
+A size configuration option recognizes strings in this format (shown as a regular expression): `[0-9]+[KkMmGgTtPpEeZzYy]?`.
+
+If no suffix is given, assume bytes.
+====
+endif::no-memory-size-note[]

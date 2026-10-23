@@ -13,9 +13,13 @@ import io.quarkus.tls.TlsConfiguration;
 import io.quarkus.tls.TlsConfigurationRegistry;
 import io.quarkus.tls.runtime.config.TlsConfigUtils;
 import io.vertx.core.Context;
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.RequestOptions;
 
@@ -30,11 +34,13 @@ public class UnleashSyncClient {
     private final URI baseUri;
     private final TlsConfiguration tlsConfig; // null when TLS not configured
     private final String apiKey;
+    private final int maxConfigurationSize;
     private final SyncClientState state;
 
     // only accessed from the Vert.x event loop, no synchronization needed
     private long pollTimerId = NO_TIMER;
     private HttpClient httpClient;
+    private String etag; // of the flag configuration currently held, null until the first poll succeeds
 
     UnleashSyncClient(Vertx vertx, Context context, UnleashConfig.ProviderConfig config,
             TlsConfigurationRegistry tlsRegistry, String apiKey,
@@ -45,6 +51,15 @@ public class UnleashSyncClient {
         this.baseUri = SyncClientUrls.parse("Unleash", config.url());
         this.apiKey = apiKey;
         this.state = state;
+
+        // the response is buffered into a single Buffer, which cannot grow past an int;
+        // reject an impossible value here rather than on the event loop, where nothing would see it
+        long maxConfigurationSize = config.maxConfigurationSize().asLongValue();
+        if (maxConfigurationSize <= 0 || maxConfigurationSize > Integer.MAX_VALUE) {
+            throw new ProviderConfigurationException("The Unleash max-configuration-size of " + maxConfigurationSize
+                    + " bytes is out of range, it must be between 1 and " + Integer.MAX_VALUE + " bytes");
+        }
+        this.maxConfigurationSize = (int) maxConfigurationSize;
 
         if (config.tlsConfigurationName().isPresent()) {
             String tlsName = config.tlsConfigurationName().get();
@@ -98,6 +113,9 @@ public class UnleashSyncClient {
                     if (apiKey != null) {
                         request.putHeader("Authorization", apiKey);
                     }
+                    if (etag != null) {
+                        request.putHeader("If-None-Match", etag);
+                    }
 
                     request.send()
                             .onSuccess(response -> {
@@ -106,6 +124,16 @@ public class UnleashSyncClient {
                                     log.errorf(msg);
                                     state.setShutdown();
                                     listener.onFatalError(msg);
+                                    return;
+                                }
+                                if (response.statusCode() == 304) {
+                                    // the flag configuration we already hold is still current,
+                                    // there is nothing to re-parse
+                                    log.debugf("Unleash state unchanged");
+                                    state.resetReconnectDelay();
+                                    listener.onUnchanged(state.isError());
+                                    state.setReady();
+                                    scheduleNextPoll(listener);
                                     return;
                                 }
                                 if (response.statusCode() != 200) {
@@ -117,12 +145,15 @@ public class UnleashSyncClient {
                                     return;
                                 }
 
-                                response.body()
+                                String newEtag = response.getHeader("ETag");
+
+                                body(response)
                                         .onSuccess(body -> {
                                             try {
                                                 log.debugf("Polled Unleash state");
                                                 state.resetReconnectDelay();
                                                 listener.onUpdate(body.toString(), state.isError());
+                                                etag = newEtag;
                                                 state.setReady();
                                                 scheduleNextPoll(listener);
                                             } catch (Exception e) {
@@ -150,6 +181,31 @@ public class UnleashSyncClient {
                     listener.onError(t.getMessage());
                     state.scheduleReconnect(() -> poll(listener));
                 });
+    }
+
+    /**
+     * Like {@code response.body()}, except that it stops reading once the body grows past
+     * {@link #maxConfigurationSize} instead of buffering whatever the server chooses to send.
+     */
+    private Future<Buffer> body(HttpClientResponse response) {
+        Promise<Buffer> promise = Promise.promise();
+        Buffer buffer = Buffer.buffer();
+        response.handler(chunk -> {
+            if (buffer.length() + chunk.length() > maxConfigurationSize) {
+                promise.tryFail("Unleash flag configuration exceeds the configured maximum of "
+                        + maxConfigurationSize + " bytes, raise quarkus.openfeature.unleash.max-configuration-size");
+                response.request().reset();
+                return;
+            }
+            buffer.appendBuffer(chunk);
+        });
+        response.endHandler(v -> {
+            promise.tryComplete(buffer);
+        });
+        response.exceptionHandler(t -> {
+            promise.tryFail(t);
+        });
+        return promise.future();
     }
 
     private void scheduleNextPoll(Listener listener) {
@@ -180,6 +236,11 @@ public class UnleashSyncClient {
 
     interface Listener {
         void onUpdate(String features, boolean reconnected) throws YggdrasilInvalidInputException;
+
+        /**
+         * The server confirmed that the flag configuration already held is still current.
+         */
+        void onUnchanged(boolean reconnected);
 
         void onError(String message);
 

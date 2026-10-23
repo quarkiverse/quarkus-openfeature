@@ -8,6 +8,7 @@ import io.quarkiverse.openfeature.runtime.OpenFeatureBuildTimeConfig;
 import io.quarkus.runtime.annotations.ConfigDocMapKey;
 import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
+import io.quarkus.runtime.configuration.MemorySize;
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
 import io.smallrye.config.WithDefaults;
@@ -76,6 +77,15 @@ public interface GoFeatureFlagConfig {
          */
         @WithDefault("10m")
         Duration streamDeadline();
+
+        /**
+         * Maximum size of a flag configuration received from GO Feature Flag. It bounds both
+         * the full configuration, which arrives as one HTTP response, and a single flag diff,
+         * which arrives as one line of the SSE stream; either one above this limit is rejected
+         * and the connection is re-established.
+         */
+        @WithDefault("4M")
+        MemorySize maxConfigurationSize();
 
         /**
          * Grace period before transitioning from STALE to ERROR
