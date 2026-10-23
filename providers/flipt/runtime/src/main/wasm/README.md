@@ -6,7 +6,7 @@ build and executed at runtime by Endive (a pure Java WASM runtime) to evaluate
 feature flags in-process.
 
 - Repository: https://github.com/flipt-io/flipt-client-sdks
-- Version: `flipt-engine-wasm-v0.3.0`
+- Version: `flipt-engine-wasm-v0.4.0`
 - License: MIT, Copyright (c) 2023 Flipt Software Inc.
 
 Note that the Flipt server is licensed differently; only the client SDKs
