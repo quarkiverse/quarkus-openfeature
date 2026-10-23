@@ -190,6 +190,7 @@ public class FlagdSyncClient {
                                         state.setReady();
                                     } catch (Exception e) {
                                         log.errorf(e, "Failed to process flag data");
+                                        state.setError();
                                         listener.onError("Failed to process flag data: " + e.getMessage());
                                     }
                                 });
