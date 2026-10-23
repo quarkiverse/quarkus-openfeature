@@ -1,10 +1,12 @@
 name: OpenFeature - Unleash
+description: Unleash provider for Quarkus OpenFeature
 metadata:
   keywords:
     - openfeature
     - flags
     - toggles
     - unleash
+  guide: https://docs.quarkiverse.io/quarkus-openfeature/dev/unleash.html
   categories:
     - "miscellaneous"
   status: "stable"

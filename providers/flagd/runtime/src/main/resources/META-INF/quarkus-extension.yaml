@@ -1,10 +1,12 @@
 name: OpenFeature - flagd
+description: flagd provider for Quarkus OpenFeature
 metadata:
   keywords:
     - openfeature
     - flags
     - toggles
     - flagd
+  guide: https://docs.quarkiverse.io/quarkus-openfeature/dev/flagd.html
   categories:
     - "miscellaneous"
   status: "stable"

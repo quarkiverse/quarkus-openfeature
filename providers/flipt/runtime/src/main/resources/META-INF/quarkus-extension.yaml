@@ -1,10 +1,12 @@
 name: OpenFeature - Flipt
+description: Flipt provider for Quarkus OpenFeature
 metadata:
   keywords:
     - openfeature
     - flags
     - toggles
     - flipt
+  guide: https://docs.quarkiverse.io/quarkus-openfeature/dev/flipt.html
   categories:
     - "miscellaneous"
   status: "stable"

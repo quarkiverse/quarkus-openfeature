@@ -1,10 +1,12 @@
 name: OpenFeature - GO Feature Flag
+description: GO Feature Flag provider for Quarkus OpenFeature
 metadata:
   keywords:
     - openfeature
     - flags
     - toggles
     - go-feature-flag
+  guide: https://docs.quarkiverse.io/quarkus-openfeature/dev/gofeatureflag.html
   categories:
     - "miscellaneous"
   status: "stable"

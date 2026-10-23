@@ -1,9 +1,11 @@
 name: OpenFeature - Runtime Config
+description: Runtime configuration provider for Quarkus OpenFeature
 metadata:
   keywords:
     - openfeature
     - flags
     - toggles
+  guide: https://docs.quarkiverse.io/quarkus-openfeature/dev/config-providers.html
   categories:
     - "miscellaneous"
   status: "stable"
