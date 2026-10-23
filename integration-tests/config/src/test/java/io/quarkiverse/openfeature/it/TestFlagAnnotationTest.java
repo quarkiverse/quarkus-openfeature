@@ -109,4 +109,19 @@ public class TestFlagAnnotationTest {
         assertThat(defaultClient.getStringValue("runtime-flag", "default")).isEqualTo("overridden");
         assertThat(defaultClient.getStringValue("buildtime-flag", "default")).isEqualTo("from-buildtime");
     }
+
+    // the default domain has two providers, and `overridden` is configured in both; whichever
+    // of them the multi-provider would pick, the test override has to come out on top
+    @Test
+    @Order(13)
+    @TestFlag(key = "overridden", value = "test-wins", type = FlagValueType.STRING)
+    void overrideBeatsEveryProviderInAMultiProviderDomain() {
+        assertThat(defaultClient.getStringValue("overridden", "default")).isEqualTo("test-wins");
+    }
+
+    @Test
+    @Order(14)
+    void multiProviderDomainIsBackToNormalAfterTheOverride() {
+        assertThat(defaultClient.getStringValue("overridden", "default")).isEqualTo("runtime-wins");
+    }
 }
