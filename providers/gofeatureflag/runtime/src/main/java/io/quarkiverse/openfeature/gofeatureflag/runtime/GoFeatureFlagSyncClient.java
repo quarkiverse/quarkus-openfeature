@@ -219,7 +219,7 @@ public class GoFeatureFlagSyncClient {
                                     fail.accept(t.getMessage());
                                 });
 
-                                fetchFullConfig(port, listener, () -> {
+                                fetchFullConfig(port, listener, fail, () -> {
                                     Set<String> changedKeys = new HashSet<>();
                                     for (JsonNode diff : bufferedDiffs) {
                                         changedKeys.addAll(applyDiff(diff));
@@ -271,7 +271,7 @@ public class GoFeatureFlagSyncClient {
         return vertx.createHttpClient(options);
     }
 
-    private void fetchFullConfig(int port, Listener listener, Runnable onSuccess) {
+    private void fetchFullConfig(int port, Listener listener, Consumer<String> fail, Runnable onSuccess) {
         RequestOptions requestOptions = new RequestOptions()
                 .setMethod(HttpMethod.POST)
                 .setHost(baseUri.getHost())
@@ -298,9 +298,7 @@ public class GoFeatureFlagSyncClient {
                                 if (response.statusCode() != 200) {
                                     String msg = "GO Feature Flag returned " + response.statusCode();
                                     log.warnf(msg);
-                                    state.setError();
-                                    listener.onError(msg);
-                                    state.scheduleReconnect(() -> fetchConfigAndConnectStream(listener));
+                                    fail.accept(msg);
                                     return;
                                 }
 
@@ -312,28 +310,20 @@ public class GoFeatureFlagSyncClient {
                                         onSuccess.run();
                                     } catch (Exception e) {
                                         log.errorf(e, "Failed to parse flag configuration");
-                                        state.setError();
-                                        listener.onError("Failed to parse flag configuration: " + e.getMessage());
-                                        state.scheduleReconnect(() -> fetchConfigAndConnectStream(listener));
+                                        fail.accept("Failed to parse flag configuration: " + e.getMessage());
                                     }
                                 }).onFailure(t -> {
                                     log.warnf(t, "Failed to read response body");
-                                    state.setError();
-                                    listener.onError(t.getMessage());
-                                    state.scheduleReconnect(() -> fetchConfigAndConnectStream(listener));
+                                    fail.accept(t.getMessage());
                                 });
                             }).onFailure(t -> {
                                 log.warnf(t, "Failed to send request to GO Feature Flag");
-                                state.setError();
-                                listener.onError(t.getMessage());
-                                state.scheduleReconnect(() -> fetchConfigAndConnectStream(listener));
+                                fail.accept(t.getMessage());
                             });
                 })
                 .onFailure(t -> {
                     log.warnf(t, "Failed to connect to GO Feature Flag at %s", config.url());
-                    state.setError();
-                    listener.onError(t.getMessage());
-                    state.scheduleReconnect(() -> fetchConfigAndConnectStream(listener));
+                    fail.accept(t.getMessage());
                 });
     }
 
