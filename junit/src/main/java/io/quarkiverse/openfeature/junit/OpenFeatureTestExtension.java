@@ -59,7 +59,15 @@ class OpenFeatureTestExtension implements BeforeEachCallback, AfterEachCallback 
      */
     Set<String> applyOverrides(Map<String, Map<String, Object>> overridesByDomain) {
         for (String domain : overridesByDomain.keySet()) {
-            for (FeatureProvider provider : providerLookup.apply(domain)) {
+            List<FeatureProvider> providers = providerLookup.apply(domain);
+            if (providers.isEmpty()) {
+                throw new IllegalStateException("@" + TestFlag.class.getSimpleName() + " declares an override for domain \""
+                        + domain + "\", but no OpenFeature provider for such domain exists."
+                        + " Either the domain name is wrong, or this test does not run in the same classloader"
+                        + " as the application: @TestFlag only works under @QuarkusTest,"
+                        + " not under @QuarkusIntegrationTest or QuarkusUnitTest.");
+            }
+            for (FeatureProvider provider : providers) {
                 if (!(provider instanceof OverrideFeatureAccess)) {
                     throw new IllegalStateException("Provider \"" + provider.getMetadata().getName()
                             + "\" does not support test overrides");
