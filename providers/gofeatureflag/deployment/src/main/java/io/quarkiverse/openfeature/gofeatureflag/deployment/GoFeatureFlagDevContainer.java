@@ -63,7 +63,9 @@ class GoFeatureFlagDevContainer extends GenericContainer<GoFeatureFlagDevContain
         withCommand("/go-feature-flag", "--config", "/goff/goff-proxy.yaml");
 
         if (flagsPath.isPresent()) {
-            withFileSystemBind(flagsPath.get().toAbsolutePath().toString(), "/goff/flags.goff.yaml", BindMode.READ_ONLY);
+            Path absolutePath = flagsPath.get().toAbsolutePath();
+            // mount the directory, not the file; a file bind mount pins an inode which might get stale
+            withFileSystemBind(absolutePath.getParent().toString(), "/flags", BindMode.READ_ONLY);
         }
     }
 
@@ -89,7 +91,7 @@ class GoFeatureFlagDevContainer extends GenericContainer<GoFeatureFlagDevContain
         if (flagsPath.isPresent()) {
             result.append("retrievers:\n");
             result.append("  - kind: file\n");
-            result.append("    path: /goff/flags.goff.yaml\n");
+            result.append("    path: /flags/").append(flagsPath.get().getFileName()).append("\n");
         }
         return result.toString();
     }
