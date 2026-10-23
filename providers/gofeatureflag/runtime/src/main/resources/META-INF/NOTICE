@@ -3,7 +3,7 @@ WebAssembly to Java bytecode. The classes under
 io.quarkiverse.openfeature.gofeatureflag.runtime.wasm are derived from it.
 
 Source: https://github.com/go-feature-flag/wasm-releases
-Version: 0.2.2
+Version: 0.2.4
 
 The engine is distributed under the following license.
 
