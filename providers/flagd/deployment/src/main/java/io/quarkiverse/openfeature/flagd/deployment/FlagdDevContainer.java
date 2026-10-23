@@ -30,8 +30,10 @@ class FlagdDevContainer extends GenericContainer<FlagdDevContainer> implements S
         this.fixedExposedPort = config.port();
 
         if (path.isPresent()) {
-            withFileSystemBind(path.get().toAbsolutePath().toString(), "/flags.json", BindMode.READ_ONLY);
-            withCommand("start", "-f", "file:/flags.json");
+            Path absolutePath = path.get().toAbsolutePath();
+            // mount the directory, not the file; a file bind mount pins an inode which might get stale
+            withFileSystemBind(absolutePath.getParent().toString(), "/flags", BindMode.READ_ONLY);
+            withCommand("start", "-f", "file:/flags/" + absolutePath.getFileName());
         } else {
             withCommand("start", "-f", "file:/dev/null");
         }
