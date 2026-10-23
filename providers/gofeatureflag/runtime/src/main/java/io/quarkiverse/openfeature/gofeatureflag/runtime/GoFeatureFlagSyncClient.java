@@ -14,6 +14,7 @@ import java.util.function.Consumer;
 
 import org.jboss.logging.Logger;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -172,7 +173,17 @@ public class GoFeatureFlagSyncClient {
                                 };
 
                                 RecordParser parser = RecordParser.newDelimited("\n", line -> {
-                                    JsonNode diff = parseSseDiff(line.toString(StandardCharsets.UTF_8));
+                                    JsonNode diff;
+                                    try {
+                                        diff = parseSseDiff(line.toString(StandardCharsets.UTF_8));
+                                    } catch (Exception e) {
+                                        // a diff is incremental, so dropping one would leave the data
+                                        // permanently diverged; we have to reconnect and start from scratch
+                                        sseResponse.handler(null);
+                                        log.errorf(e, "Failed to parse SSE event data, will reconnect");
+                                        fail.accept("Failed to parse flag diff: " + e.getMessage());
+                                        return;
+                                    }
                                     if (diff == null) {
                                         return;
                                     }
@@ -373,8 +384,9 @@ public class GoFeatureFlagSyncClient {
 
     /**
      * Returns the diff carried by one SSE line, or {@code null} if the line carries none.
+     * A line that does carry one but fails to parse is an error, and throws.
      */
-    private JsonNode parseSseDiff(String line) {
+    private JsonNode parseSseDiff(String line) throws JsonProcessingException {
         line = line.trim();
         if (!line.startsWith("data:")) {
             return null;
@@ -384,12 +396,7 @@ public class GoFeatureFlagSyncClient {
         if (jsonData.isEmpty()) {
             return null;
         }
-        try {
-            return mapper.readTree(jsonData);
-        } catch (Exception e) {
-            log.errorf(e, "Failed to parse SSE event data");
-            return null;
-        }
+        return mapper.readTree(jsonData);
     }
 
     private Set<String> applyDiff(JsonNode diff) {

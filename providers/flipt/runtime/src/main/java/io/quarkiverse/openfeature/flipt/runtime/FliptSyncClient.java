@@ -238,6 +238,7 @@ public class FliptSyncClient {
             state.setReady();
         } catch (Exception e) {
             log.errorf(e, "Failed to process Flipt sync data");
+            state.setError();
             listener.onError("Failed to process flag data: " + e.getMessage());
         }
     }
