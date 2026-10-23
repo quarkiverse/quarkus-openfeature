@@ -32,7 +32,8 @@ import org.junit.platform.suite.api.Suite;
 @ExcludeTags({
         "targetURI", // Vert.x gRPC 4.x client API doesn't expose HTTP/2 authority header
         "deprecated", // superseded by newer scenarios
-        "fractional-v1", // legacy float-based bucketing, superseded by fractional-v2
+        "fractional-v1", // legacy float-based bucketing, superseded by fractional-v3
+        "fractional-v2", // integer bucketing on string values only, superseded by fractional-v3
         "unixsocket", // flagd-testbed doesn't expose a Unix domain socket
 })
 public class RunE2ETest {

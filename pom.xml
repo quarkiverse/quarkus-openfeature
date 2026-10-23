@@ -43,7 +43,7 @@
         <assertj.version>3.27.7</assertj.version>
         <cucumber.version>8.0.4</cucumber.version>
         <endive.version>1.1.0</endive.version>
-        <flagd-core.version>2.0.1</flagd-core.version>
+        <flagd-core.version>3.0.0</flagd-core.version>
         <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>3.6.0</maven-surefire-plugin.version>
         <openfeature-sdk.version>1.23.0</openfeature-sdk.version>

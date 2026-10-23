@@ -10,7 +10,9 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
 public class EventSteps {
-    private static final int DEFAULT_TIMEOUT_MS = 12_000;
+    // the test harness disconnects for up to 8 seconds, so this must leave
+    // enough room for the subsequent reconnect and READY event
+    private static final int DEFAULT_TIMEOUT_MS = 20_000;
 
     private final TestState state;
 
@@ -21,7 +23,9 @@ public class EventSteps {
     @Given("a {word} event handler")
     public void registerEventHandler(String eventType) {
         state.client.on(mapEventType(eventType), eventDetails -> {
-            state.events.add(new TestState.ReceivedEvent(eventType, eventDetails));
+            TestState.ReceivedEvent event = new TestState.ReceivedEvent(eventType, eventDetails);
+            state.events.add(event);
+            state.allEvents.add(event);
         });
     }
 
@@ -38,6 +42,11 @@ public class EventSteps {
     @Then("the {word} event handler should have been executed within {int}ms")
     public void eventHandlerShouldBeExecutedWithin(String eventType, int ms) {
         waitForEvent(eventType, ms);
+    }
+
+    @Then("the {word} event handler should not have been executed")
+    public void eventHandlerShouldNotBeExecuted(String eventType) {
+        assertThat(state.allEvents).noneMatch(e -> e.type().equals(eventType));
     }
 
     @Then("the client should be in {word} state")

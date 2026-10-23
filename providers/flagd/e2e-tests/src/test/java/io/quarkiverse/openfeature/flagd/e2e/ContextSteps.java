@@ -3,19 +3,26 @@ package io.quarkiverse.openfeature.flagd.e2e;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import dev.openfeature.sdk.ImmutableContext;
 import dev.openfeature.sdk.ImmutableStructure;
 import dev.openfeature.sdk.Value;
 import io.cucumber.java.en.Given;
 
 public class ContextSteps {
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
     private final TestState state;
 
     public ContextSteps(TestState state) {
         this.state = state;
     }
 
-    @Given("a context containing a key {string}, with type {string} and with value {string}")
+    // a regular expression, not a Cucumber expression: `Object` values are JSON,
+    // so they contain quotes that `{string}` would not match
+    @Given("^a context containing a key \"([^\"]*)\", with type \"([^\"]*)\" and with value \"(.*)\"$")
     public void contextWithKey(String key, String type, String value) {
         Map<String, Value> attributes = new HashMap<>();
         if (state.context != null) {
@@ -47,6 +54,9 @@ public class ContextSteps {
     }
 
     private static Value toValue(String value, String type) {
+        if ("Null".equals(type) || ("null".equals(value) && !"String".equals(type))) {
+            return new Value();
+        }
         return switch (type) {
             case "String" -> new Value(value);
             case "Boolean" -> new Value(Boolean.parseBoolean(value));
@@ -55,9 +65,18 @@ public class ContextSteps {
                 if (longVal >= Integer.MIN_VALUE && longVal <= Integer.MAX_VALUE) {
                     yield new Value((int) longVal);
                 }
-                yield new Value(value);
+                // `Value` has no long variant; a double preserves the value for the
+                // magnitudes the harness uses, and hashes the same as the `Float` row
+                yield new Value((double) longVal);
             }
             case "Float" -> new Value(Double.parseDouble(value));
+            case "Object" -> {
+                try {
+                    yield Value.objectToValue(MAPPER.readValue(value.isEmpty() ? "{}" : value, Object.class));
+                } catch (JsonProcessingException e) {
+                    throw new AssertionError("Malformed JSON value: " + value, e);
+                }
+            }
             default -> throw new AssertionError("Unknown value type: " + type);
         };
     }
