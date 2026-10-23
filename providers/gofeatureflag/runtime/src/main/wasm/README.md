@@ -6,7 +6,7 @@ to Java bytecode during build and executed at runtime by Endive (a pure
 Java WASM runtime) to evaluate feature flags in-process.
 
 - Repository: https://github.com/go-feature-flag/wasm-releases
-- Version: `0.2.2`
+- Version: `0.2.4`
 - License: MIT, Copyright (c) 2025 GO Feature Flag
 
 When updating the version, also update `docs/modules/ROOT/pages/gofeatureflag.adoc`

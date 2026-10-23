@@ -12,7 +12,7 @@ This extension depends on:
 |Component |Version |Source
 
 |GO Feature Flag engine (WASM)
-|0.2.2
+|0.2.4
 |https://github.com/go-feature-flag/wasm-releases[go-feature-flag/wasm-releases]
 |===
 
