@@ -19,6 +19,9 @@ public class TestState {
     public Object flagDefault;
     public FlagEvaluationDetails<?> evaluation;
     public ConcurrentLinkedQueue<ReceivedEvent> events = new ConcurrentLinkedQueue<>();
+    // unlike `events`, this is never cleared, so that a scenario can assert that
+    // an event was never fired, even after other events were awaited (and cleared)
+    public ConcurrentLinkedQueue<ReceivedEvent> allEvents = new ConcurrentLinkedQueue<>();
     public Optional<ReceivedEvent> lastEvent = Optional.empty();
 
     record ReceivedEvent(String type, EventDetails details) {

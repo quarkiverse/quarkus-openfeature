@@ -4,4 +4,4 @@ scenarios. The tests run a flagd server via Testcontainers and execute
 the Cucumber feature files against it.
 
 Everything in `src/test/resources/` is copied from the `flagd-testbed`
-repository, tag `v3.8.0`.
+repository, tag `v3.10.4`.

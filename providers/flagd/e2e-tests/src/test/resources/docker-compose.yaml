@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   flagd:
-    image: ${IMAGE:-ghcr.io/open-feature/flagd-testbed}:${VERSION:-v3.8.0} # x-release-please-version
+    image: ${IMAGE:-ghcr.io/open-feature/flagd-testbed}:${VERSION:-v3.10.4} # x-release-please-version
     ports:
       - 8013
       - 8014
@@ -21,7 +21,7 @@ services:
       start_period: 30s
 
   envoy:
-    image: envoyproxy/envoy:v1.35-latest
+    image: envoyproxy/envoy:v1.39-latest@sha256:57e14a549d7bd43c8d3f6d03e8cfa653e037d4b38e133acd9b54f38c524401b4
     ports:
       - 9211
       - 9212
@@ -38,7 +38,7 @@ services:
             socket_address:
               address: 0.0.0.0
               port_value: 9901
-
+        
         static_resources:
           listeners:
             - name: local-envoy

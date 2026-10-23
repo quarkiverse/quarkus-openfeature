@@ -27,6 +27,8 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.When;
 import io.quarkiverse.openfeature.flagd.runtime.FlagdConfig;
 import io.quarkiverse.openfeature.flagd.runtime.FlagdFeatureProvider;
+import io.quarkus.runtime.configuration.MemorySize;
+import io.quarkus.runtime.configuration.MemorySizeConverter;
 import io.smallrye.config.SmallRyeConfigBuilder;
 import io.vertx.core.Vertx;
 
@@ -191,10 +193,14 @@ public class ProviderSteps {
 
     private FlagdConfig.ProviderConfig createConnectionConfig(String url) {
         SmallRyeConfigBuilder builder = new SmallRyeConfigBuilder()
+                .withConverter(MemorySize.class, 100, new MemorySizeConverter())
                 .withMapping(FlagdConfig.ProviderConfig.class, "flagd")
                 .withDefaultValue("flagd.url", url)
                 .withDefaultValue("flagd.stream-deadline", "PT10M")
-                .withDefaultValue("flagd.grace-period", "PT2S");
+                // the harness drops the connection for either 1 second (expecting STALE, then
+                // READY, and no ERROR) or 8 seconds (expecting ERROR), so the grace period has
+                // to sit comfortably between the two
+                .withDefaultValue("flagd.grace-period", "PT5S");
         String selector = state.options.get("selector");
         if (selector != null) {
             builder.withDefaultValue("flagd.selector", selector);
