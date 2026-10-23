@@ -3,7 +3,7 @@ to Java bytecode. The classes under
 io.quarkiverse.openfeature.flipt.runtime.wasm are derived from it.
 
 Source: https://github.com/flipt-io/flipt-client-sdks
-Version: flipt-engine-wasm-v0.3.0
+Version: flipt-engine-wasm-v0.4.0
 
 The engine is distributed under the following license.
 

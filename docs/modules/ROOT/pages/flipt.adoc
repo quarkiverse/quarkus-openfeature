@@ -15,7 +15,7 @@ This extension depends on:
 |Component |Version |Source
 
 |Flipt engine (WASM)
-|0.3.0
+|0.4.0
 |https://github.com/flipt-io/flipt-client-sdks[flipt-io/flipt-client-sdks]
 |===
 
