@@ -22,6 +22,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.LongUnaryOperator;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -290,8 +291,68 @@ public class SyncClientStateTest {
 
         long firstDelay = (first - scheduledAt) / 1_000_000;
         long secondDelay = (second - first) / 1_000_000;
-        assertTrue(firstDelay >= 900, "first reconnect waited only " + firstDelay + " ms");
-        assertTrue(secondDelay >= 1800, "second reconnect waited only " + secondDelay + " ms");
+        // jitter can take 20% off the nominal 1000 ms and 2000 ms delays
+        assertTrue(firstDelay >= 750, "first reconnect waited only " + firstDelay + " ms");
+        assertTrue(secondDelay >= 1550, "second reconnect waited only " + secondDelay + " ms");
+    }
+
+    @Test
+    public void jitterGoesNoLowerThan20PercentBelowTheDelay() {
+        SyncClientState state = jitteredState(bound -> {
+            return 0;
+        });
+
+        assertEquals(800, state.jitter(1000));
+        assertEquals(1600, state.jitter(2000));
+        assertEquals(24_000, state.jitter(30_000));
+    }
+
+    @Test
+    public void jitterGoesNoHigherThan20PercentAboveTheDelay() {
+        SyncClientState state = jitteredState(bound -> {
+            return bound - 1;
+        });
+
+        assertEquals(1199, state.jitter(1000));
+        assertEquals(2399, state.jitter(2000));
+        assertEquals(35_999, state.jitter(30_000));
+    }
+
+    @Test
+    public void jitterAsksForTwoFifthsOfTheDelayAsTheBound() {
+        List<Long> bounds = new ArrayList<>();
+        SyncClientState state = jitteredState(bound -> {
+            bounds.add(bound);
+            return 0;
+        });
+
+        state.jitter(1000);
+        state.jitter(30_000);
+
+        assertEquals(List.of(400L, 12_000L), bounds);
+    }
+
+    @Test
+    public void scheduledReconnectIsJittered() throws Exception {
+        // the lowest jitter of the initial 1000 ms delay is 800 ms
+        SyncClientState state = jitteredState(bound -> {
+            return 0;
+        });
+        CountDownLatch reconnected = new CountDownLatch(1);
+
+        long scheduledAt = System.nanoTime();
+        onEventLoop(() -> state.scheduleReconnect(() -> {
+            reconnected.countDown();
+        }));
+        assertTrue(reconnected.await(TIMEOUT_SECONDS, SECONDS), "the reconnect never fired");
+
+        long delay = (System.nanoTime() - scheduledAt) / 1_000_000;
+        assertTrue(delay >= 750, "the reconnect waited only " + delay + " ms");
+        assertTrue(delay < 1000, "the reconnect waited " + delay + " ms, so it was not jittered");
+    }
+
+    private SyncClientState jitteredState(LongUnaryOperator randomLong) {
+        return new SyncClientState(vertx, TIMEOUT_SECONDS * 1000, randomLong);
     }
 
     @Test
@@ -335,7 +396,8 @@ public class SyncClientStateTest {
         });
 
         // a second timer, had one been started, would have been given the next delay of
-        // 2000 ms, so waiting out only the initial 1000 ms would not notice it
+        // 2000 ms, jittered down to at least 1600 ms, so waiting out only the initial
+        // 1000 ms would not notice it
         Thread.sleep(2500);
         assertEquals(1, reconnects.get());
     }
