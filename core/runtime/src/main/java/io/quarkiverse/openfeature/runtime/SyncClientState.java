@@ -1,8 +1,10 @@
 package io.quarkiverse.openfeature.runtime;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.LongUnaryOperator;
 
 import org.jboss.logging.Logger;
 
@@ -43,9 +45,17 @@ public final class SyncClientState {
         return Math.min(currentDelay * 2, MAX_DELAY_MS);
     }
 
+    /**
+     * Returns a random number in {@code [0, bound)}, or 0 when {@code bound} is 0.
+     */
+    private static long randomLong(long bound) {
+        return bound == 0 ? 0 : ThreadLocalRandom.current().nextLong(bound);
+    }
+
     private final AtomicInteger state = new AtomicInteger(CONNECTING);
     private final CountDownLatch initializedBarrier = new CountDownLatch(1);
     private final long initializationTimeoutMs;
+    private final LongUnaryOperator randomLong;
 
     // only accessed from the Vert.x event loop, no synchronization needed
     private final Vertx vertx;
@@ -58,8 +68,14 @@ public final class SyncClientState {
 
     // visible for tests
     SyncClientState(Vertx vertx, long initializationTimeoutMs) {
+        this(vertx, initializationTimeoutMs, SyncClientState::randomLong);
+    }
+
+    // visible for tests
+    SyncClientState(Vertx vertx, long initializationTimeoutMs, LongUnaryOperator randomLong) {
         this.vertx = vertx;
         this.initializationTimeoutMs = initializationTimeoutMs;
+        this.randomLong = randomLong;
     }
 
     public void awaitInitialized() throws Exception {
@@ -120,13 +136,26 @@ public final class SyncClientState {
         if (reconnectTimerId != -1) {
             return;
         }
-        long delay = reconnectDelay;
+        long delay = jitter(reconnectDelay);
         reconnectDelay = nextDelay(reconnectDelay);
         log.debugf("Scheduling reconnect in %d ms", delay);
         reconnectTimerId = vertx.setTimer(delay, id -> {
             reconnectTimerId = -1;
             action.run();
         });
+    }
+
+    /**
+     * Spreads {@code delay} uniformly over {@code [delay - 20%, delay + 20%)}.
+     * <p>
+     * A flag server restart disconnects all clients at once; without this, they
+     * would all retry in lockstep and come back as a thundering herd. The backoff
+     * itself stays deterministic, only the scheduled delay is randomized.
+     */
+    // visible for tests
+    long jitter(long delay) {
+        long spread = delay / 5;
+        return delay - spread + randomLong.applyAsLong(2 * spread);
     }
 
     public void resetReconnectDelay() {
