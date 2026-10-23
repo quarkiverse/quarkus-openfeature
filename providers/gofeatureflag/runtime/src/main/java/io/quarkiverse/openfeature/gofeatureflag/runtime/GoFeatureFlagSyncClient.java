@@ -24,23 +24,19 @@ import io.quarkus.tls.TlsConfiguration;
 import io.quarkus.tls.TlsConfigurationRegistry;
 import io.quarkus.tls.runtime.config.TlsConfigUtils;
 import io.vertx.core.Context;
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.RequestOptions;
 import io.vertx.core.parsetools.RecordParser;
 
 public class GoFeatureFlagSyncClient {
     private static final Logger log = Logger.getLogger(GoFeatureFlagSyncClient.class);
-
-    /**
-     * A flag diff arrives as a single SSE line, so the limit has to be generous; it
-     * only exists so that a server which never sends a newline cannot make the client
-     * buffer without bound.
-     */
-    private static final int MAX_RECORD_SIZE = 32 * 1024 * 1024;
 
     /**
      * How long to wait for the response to the configuration fetch, and for the response
@@ -56,6 +52,7 @@ public class GoFeatureFlagSyncClient {
     private final URI baseUri;
     private final TlsConfiguration tlsConfig; // null when TLS not configured
     private final String apiKey;
+    private final int maxConfigurationSize;
     private final SyncClientState state;
 
     private volatile Map<String, JsonNode> flags = Map.of();
@@ -74,6 +71,17 @@ public class GoFeatureFlagSyncClient {
         this.baseUri = SyncClientUrls.parse("GO Feature Flag", config.url());
         this.apiKey = apiKey;
         this.state = state;
+
+        // both the response body and a parser record are buffered into a single Buffer,
+        // which cannot grow past an int; reject an impossible value here rather than on
+        // the event loop, where nothing would see it
+        long maxConfigurationSize = config.maxConfigurationSize().asLongValue();
+        if (maxConfigurationSize <= 0 || maxConfigurationSize > Integer.MAX_VALUE) {
+            throw new ProviderConfigurationException(
+                    "The GO Feature Flag max-configuration-size of " + maxConfigurationSize
+                            + " bytes is out of range, it must be between 1 and " + Integer.MAX_VALUE + " bytes");
+        }
+        this.maxConfigurationSize = (int) maxConfigurationSize;
 
         if (config.tlsConfigurationName().isPresent()) {
             String tlsName = config.tlsConfigurationName().get();
@@ -178,15 +186,16 @@ public class GoFeatureFlagSyncClient {
                                         bufferedDiffs.add(diff);
                                     }
                                 });
-                                parser.maxRecordSize(MAX_RECORD_SIZE);
+                                parser.maxRecordSize(maxConfigurationSize);
                                 parser.exceptionHandler(t -> {
                                     // the oversized record stays buffered, so every further chunk would
                                     // raise again; stop reading and let the reconnect start from scratch
                                     sseResponse.handler(null);
                                     request.connection().close();
-                                    log.warnf(t, "GO Feature Flag SSE stream exceeded %d bytes per line, will reconnect",
-                                            MAX_RECORD_SIZE);
-                                    fail.accept(t.getMessage());
+                                    String msg = "flag diff exceeds the configured maximum of " + maxConfigurationSize
+                                            + " bytes, raise quarkus.openfeature.gofeatureflag.max-configuration-size";
+                                    log.warnf(t, "GO Feature Flag SSE stream error, will reconnect: %s", msg);
+                                    fail.accept(msg);
                                 });
 
                                 sseResponse.handler(parser);
@@ -284,7 +293,7 @@ public class GoFeatureFlagSyncClient {
                                     return;
                                 }
 
-                                response.body().onSuccess(body -> {
+                                body(response).onSuccess(body -> {
                                     try {
                                         JsonNode root = mapper.readTree(body.toString());
                                         applyFullConfig(root);
@@ -315,6 +324,31 @@ public class GoFeatureFlagSyncClient {
                     listener.onError(t.getMessage());
                     state.scheduleReconnect(() -> fetchConfigAndConnectStream(listener));
                 });
+    }
+
+    /**
+     * Like {@code response.body()}, except that it stops reading once the body grows past
+     * {@link #maxConfigurationSize} instead of buffering whatever the server chooses to send.
+     */
+    private Future<Buffer> body(HttpClientResponse response) {
+        Promise<Buffer> promise = Promise.promise();
+        Buffer buffer = Buffer.buffer();
+        response.handler(chunk -> {
+            if (buffer.length() + chunk.length() > maxConfigurationSize) {
+                promise.tryFail("flag configuration exceeds the configured maximum of " + maxConfigurationSize
+                        + " bytes, raise quarkus.openfeature.gofeatureflag.max-configuration-size");
+                response.request().reset();
+                return;
+            }
+            buffer.appendBuffer(chunk);
+        });
+        response.endHandler(v -> {
+            promise.tryComplete(buffer);
+        });
+        response.exceptionHandler(t -> {
+            promise.tryFail(t);
+        });
+        return promise.future();
     }
 
     private void applyFullConfig(JsonNode root) {

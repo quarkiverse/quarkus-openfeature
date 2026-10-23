@@ -173,6 +173,14 @@ quarkus.openfeature.gofeatureflag.stream-deadline=5m
 
 The initial configuration fetch times out after 10 seconds; this is currently not configurable.
 
+A full configuration or a configuration diff response larger than the configured maximum is rejected instead of being buffered whole, and the connection is re-established.
+Raise the limit if the GO Feature Flag relay proxy serves more flags than fit in it:
+
+[source,properties]
+----
+quarkus.openfeature.gofeatureflag.max-configuration-size=8M
+----
+
 [[configuration-reference]]
 == Configuration Reference
 

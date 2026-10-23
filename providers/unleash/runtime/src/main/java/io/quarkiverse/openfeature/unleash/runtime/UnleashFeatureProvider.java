@@ -100,6 +100,13 @@ public class UnleashFeatureProvider extends AbstractRemoteFeatureProvider {
             }
 
             @Override
+            public void onUnchanged(boolean reconnected) {
+                if (reconnected) {
+                    handleReconnected();
+                }
+            }
+
+            @Override
             public void onError(String message) {
                 handleError(message);
             }
