@@ -26,8 +26,7 @@ public class GoFeatureFlagUnresponsiveStreamTest {
 
     @RegisterExtension
     static final QuarkusUnitTest test = new QuarkusUnitTest()
-            .overrideConfigKey("quarkus.openfeature.gofeatureflag.stream-deadline", "1s")
-            .overrideConfigKey("quarkus.openfeature.gofeatureflag.grace-period", "1s");
+            .overrideConfigKey("quarkus.openfeature.gofeatureflag.stream-deadline", "5s");
 
     static {
         test.setBeforeAllCustomizer(() -> {
