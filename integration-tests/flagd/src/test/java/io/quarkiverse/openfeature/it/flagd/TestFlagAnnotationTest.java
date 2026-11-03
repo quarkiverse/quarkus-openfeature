@@ -75,8 +75,8 @@ public class TestFlagAnnotationTest {
         assertThat(client.getIntegerValue("int-flag", 0)).isEqualTo(42);
     }
 
-    // a provider that resolves long flags through the SDK's double path also exercises
-    // the numeric coercion in FlagOverrides here
+    // the override value is parsed into a `Long`, so this also exercises the numeric
+    // coercion in FlagOverrides
     @Test
     @Order(8)
     @TestFlag(key = "long-flag", value = "10000000000", type = FlagValueType.LONG)
