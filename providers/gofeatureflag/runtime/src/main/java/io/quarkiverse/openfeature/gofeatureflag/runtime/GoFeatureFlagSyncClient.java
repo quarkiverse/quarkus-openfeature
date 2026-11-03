@@ -227,7 +227,17 @@ public class GoFeatureFlagSyncClient {
                                     bufferedDiffs.clear();
                                     live[0] = true;
 
-                                    state.resetReconnectDelay();
+                                    // Only a connection whose stream is still fine may restart
+                                    // the backoff. The fetch succeeding says nothing about
+                                    // the stream, and if the stream has failed, a reconnect
+                                    // is pending and we must NOT reset the backoff.
+                                    //
+                                    // The data itself is still published though. It was fetched
+                                    // in full and is current, so the provider goes ready and serves
+                                    // it until the stream reconnect replaces it.
+                                    if (!failed[0]) {
+                                        state.resetReconnectDelay();
+                                    }
                                     listener.onUpdate(state.isError());
                                     state.setReady();
 
