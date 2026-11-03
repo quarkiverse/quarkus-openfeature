@@ -5,10 +5,6 @@ import java.util.List;
 
 import org.jboss.logging.Logger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.quarkiverse.openfeature.flipt.runtime.wasm.Module;
 import run.endive.runtime.ByteArrayMemory;
 import run.endive.runtime.ExportFunction;
@@ -17,6 +13,9 @@ import run.endive.runtime.Instance;
 import run.endive.runtime.Memory;
 import run.endive.wasi.WasiOptions;
 import run.endive.wasi.WasiPreview1;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 final class FliptWasmEngine {
     private static final Logger log = Logger.getLogger(FliptWasmEngine.class);
@@ -93,11 +92,11 @@ final class FliptWasmEngine {
             String response = readPackedResult(packed);
             try {
                 JsonNode node = mapper.readTree(response);
-                if (!"success".equals(node.path("status").asText())) {
+                if (!"success".equals(node.path("status").asString(""))) {
                     // the engine keeps evaluating against the previous flag data
-                    log.error("Flipt snapshot update failed: " + node.path("error_message").asText());
+                    log.error("Flipt snapshot update failed: " + node.path("error_message").asString(""));
                 }
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 log.error("Wrong response from Flipt snapshot update", e);
             }
         } finally {

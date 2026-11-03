@@ -10,11 +10,6 @@ import java.util.function.Predicate;
 
 import org.jboss.logging.Logger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import dev.openfeature.sdk.ErrorCode;
 import dev.openfeature.sdk.EvaluationContext;
 import dev.openfeature.sdk.FlagValueType;
@@ -30,6 +25,10 @@ import io.quarkiverse.openfeature.runtime.AbstractRemoteFeatureProvider;
 import io.quarkiverse.openfeature.runtime.SyncClientState;
 import io.quarkus.tls.TlsConfigurationRegistry;
 import io.vertx.core.Vertx;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 // Concurrency: flag data is updated from the Vert.x event loop and evaluated
 // from request threads. This is safe because each evaluation acquires a WASM
@@ -164,7 +163,7 @@ public class GoFeatureFlagFeatureProvider extends AbstractRemoteFeatureProvider 
         JsonNode response;
         try {
             response = mapper.readTree(outputJson);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new ParseError("Wrong response from the GO Feature Flag WASM engine: " + e.getMessage());
         }
 
@@ -174,15 +173,15 @@ public class GoFeatureFlagFeatureProvider extends AbstractRemoteFeatureProvider 
             return ProviderEvaluation.<T> builder()
                     .value(defaultValue)
                     .reason(Reason.ERROR.name())
-                    .errorCode(mapErrorCode(response.path("errorCode").asText("GENERAL")))
-                    .errorMessage(response.path("errorDetails").asText("Unknown error"))
+                    .errorCode(mapErrorCode(response.path("errorCode").asString("GENERAL")))
+                    .errorMessage(response.path("errorDetails").asString("Unknown error"))
                     .build();
         }
 
         return ProviderEvaluation.<T> builder()
                 .value(convertValue(response.get("value"), expectedType, defaultValue))
-                .variant(response.path("variationType").asText(null))
-                .reason(response.path("reason").asText(Reason.UNKNOWN.name()))
+                .variant(response.path("variationType").asString(null))
+                .reason(response.path("reason").asString(Reason.UNKNOWN.name()))
                 .build();
     }
 
@@ -210,7 +209,7 @@ public class GoFeatureFlagFeatureProvider extends AbstractRemoteFeatureProvider 
 
         try {
             return mapper.writeValueAsString(input);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new GeneralError("Failed to build the GO Feature Flag evaluation request: " + e.getMessage());
         }
     }
@@ -233,10 +232,9 @@ public class GoFeatureFlagFeatureProvider extends AbstractRemoteFeatureProvider 
     // requests take the SDK default path through `getDoubleEvaluation`. A native long path
     // would not widen the supported range anyway, because the WASM engine holds every number
     // as a float64 and so already rounds values outside [-(2^53 - 1), 2^53 - 1].
-    // Every branch checks the JSON type before converting, because the `asSomething` methods
-    // coerce instead of failing: `asText()` on an object or array is "" and `asInt()` on a
-    // string is 0, either of which would quietly replace the caller's default with a value
-    // the flag never had. A type mismatch is an error the SDK reports.
+    //
+    // Every branch checks the JSON type before converting, because type mismatch is an error
+    // the OpenFeature SDK reports.
     @SuppressWarnings("unchecked")
     private <T> T convertValue(JsonNode valueNode, Class<T> expectedType, T defaultValue) {
         if (valueNode == null || valueNode.isNull()) {
@@ -248,10 +246,10 @@ public class GoFeatureFlagFeatureProvider extends AbstractRemoteFeatureProvider 
             }
             return (T) Boolean.valueOf(valueNode.booleanValue());
         } else if (expectedType == String.class) {
-            if (!valueNode.isTextual()) {
+            if (!valueNode.isString()) {
                 throw typeMismatch(valueNode, "a string");
             }
-            return (T) valueNode.textValue();
+            return (T) valueNode.stringValue();
         } else if (expectedType == Integer.class) {
             // an integral number too large for an `int` is a mismatch as well, because
             // truncating it would be just as silent as coercing a string to 0
@@ -286,8 +284,8 @@ public class GoFeatureFlagFeatureProvider extends AbstractRemoteFeatureProvider 
             return new Value(node.asLong());
         } else if (node.isDouble() || node.isFloat()) {
             return new Value(node.asDouble());
-        } else if (node.isTextual()) {
-            return new Value(node.asText());
+        } else if (node.isString()) {
+            return new Value(node.asString());
         } else if (node.isObject()) {
             Map<String, Value> map = new HashMap<>();
             node.forEachEntry((key, value) -> map.put(key, jsonNodeToValue(value)));
@@ -299,7 +297,7 @@ public class GoFeatureFlagFeatureProvider extends AbstractRemoteFeatureProvider 
             }
             return new Value(list);
         }
-        return new Value(node.asText());
+        return new Value(node.asString(""));
     }
 
     @Override
@@ -343,10 +341,10 @@ public class GoFeatureFlagFeatureProvider extends AbstractRemoteFeatureProvider 
             return allMatch(variations, JsonNode::isBoolean) ? FlagValueType.BOOLEAN : null;
         } else if (first.isNumber()) {
             return numberType(variations);
-        } else if (first.isTextual()) {
-            return allMatch(variations, JsonNode::isTextual) ? FlagValueType.STRING : null;
-        } else if (first.isContainerNode()) {
-            return allMatch(variations, JsonNode::isContainerNode) ? FlagValueType.OBJECT : null;
+        } else if (first.isString()) {
+            return allMatch(variations, JsonNode::isString) ? FlagValueType.STRING : null;
+        } else if (first.isContainer()) {
+            return allMatch(variations, JsonNode::isContainer) ? FlagValueType.OBJECT : null;
         }
         return null;
     }

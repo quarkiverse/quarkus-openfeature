@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.quarkiverse.openfeature.test.runtime.StallingHttpServer;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * The same maximum bounds a single flag diff, which arrives as one line of the SSE stream: an
@@ -20,7 +20,7 @@ public class GoFeatureFlagOversizedDiffTest {
     private static StallingHttpServer server;
 
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             // we first initialize the SSE stream, which produces the error and marks the provider
             // as initialized; then we fetch the full data, which will change the provider state,
             // but that doesn't matter here, the error has already been logged

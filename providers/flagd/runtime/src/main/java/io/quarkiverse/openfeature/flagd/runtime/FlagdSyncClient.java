@@ -48,7 +48,7 @@ public class FlagdSyncClient {
             ServiceName.create("flagd.sync.v1.FlagSyncService"),
             "SyncFlags",
             GrpcMessageEncoder.encoder(),
-            GrpcMessageDecoder.decoder(SyncFlagsResponse.parser()));
+            GrpcMessageDecoder.decoder(SyncFlagsResponse.getDefaultInstance()));
 
     private final Vertx vertx;
     private final Context context;
@@ -110,14 +110,6 @@ public class FlagdSyncClient {
         } else {
             this.offlineFlagData = null;
             this.address = parseAddress(config.url());
-            if (address.isDomainSocket() && !vertx.isNativeTransportEnabled()) {
-                // Vert.x would reject the connection attempt on the event loop, where it only
-                // shows up as a reconnect warning repeating forever
-                throw new ProviderConfigurationException("The flagd URL '" + config.url() + "' is a Unix domain socket,"
-                        + " which Vert.x can only use with a native transport. Set"
-                        + " quarkus.vertx.prefer-native-transport=true"
-                        + " and add a dependency on io.netty:netty-transport-native-epoll.");
-            }
         }
     }
 
@@ -149,7 +141,7 @@ public class FlagdSyncClient {
         // delivers the headers but stops delivering the body in the middle, it wouldn't be
         // guarded by the request timeout and the response handler wouldn't be called either;
         // we have to enforce the timeout at the socket
-        HttpClientOptions httpOptions = grpcOptions.getTransportOptions()
+        HttpClientOptions httpOptions = new HttpClientOptions()
                 .setReadIdleTimeout((int) config.streamDeadline().toMillis())
                 .setIdleTimeoutUnit(TimeUnit.MILLISECONDS);
 
@@ -159,7 +151,7 @@ public class FlagdSyncClient {
             TlsConfigUtils.configure(httpOptions, tlsConfig);
         }
 
-        return GrpcClient.client(vertx, grpcOptions);
+        return GrpcClient.client(vertx, grpcOptions, httpOptions);
     }
 
     private void connectStream(SocketAddress address, Listener listener) {

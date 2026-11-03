@@ -10,7 +10,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import dev.openfeature.sdk.Client;
 import dev.openfeature.sdk.ProviderState;
 import io.quarkiverse.openfeature.deployment.OpenFeatureProviderBuildItem;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * Evaluation in a domain that combines a remote-sync provider with another provider.
@@ -19,7 +19,7 @@ import io.quarkus.test.QuarkusUnitTest;
  */
 public class FlagdMultiProviderTest {
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .withApplicationRoot(root -> root.addAsResource("flags.json").addClass(SecondProviderFactory.class))
             .addBuildChainCustomizer(builder -> {
                 builder.addBuildStep(context -> {
@@ -55,7 +55,7 @@ public class FlagdMultiProviderTest {
         assertThat(client.getStringValue("no-such-flag", "default")).isEqualTo("default");
     }
 
-    // `@TestFlag` is deliberately not exercised here: it does not work under `QuarkusUnitTest`
+    // `@TestFlag` is deliberately not exercised here: it does not work under `QuarkusExtensionTest`
     // at all, for the same reason it does not work under `@QuarkusIntegrationTest`. The
     // multi-provider `@TestFlag` coverage lives in `TestFlagAnnotationTest` instead.
 }

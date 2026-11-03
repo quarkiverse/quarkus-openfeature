@@ -4,9 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import dev.openfeature.sdk.Value;
+import tools.jackson.databind.ObjectMapper;
 
 public class FliptFeatureProviderTest {
     private static final ObjectMapper MAPPER = new ObjectMapper();

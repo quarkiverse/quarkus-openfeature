@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * A TLS configuration name that does not exist is a misconfiguration no reconnect can fix,
@@ -13,7 +13,7 @@ import io.quarkus.test.QuarkusUnitTest;
  */
 public class FliptTlsConfigurationMissingTest {
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .overrideConfigKey("quarkus.openfeature.flipt.url", "https://flipt.example.com:8080")
             .overrideConfigKey("quarkus.openfeature.flipt.tls-configuration-name", "nonexistent")
             .overrideConfigKey("quarkus.devservices.enabled", "false")

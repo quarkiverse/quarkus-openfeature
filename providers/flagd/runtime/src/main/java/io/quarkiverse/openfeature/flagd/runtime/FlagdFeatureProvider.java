@@ -8,9 +8,6 @@ import java.util.function.Predicate;
 
 import org.jboss.logging.Logger;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import dev.openfeature.contrib.tools.flagd.api.Evaluator;
 import dev.openfeature.sdk.EvaluationContext;
 import dev.openfeature.sdk.FlagValueType;
@@ -24,6 +21,8 @@ import io.quarkiverse.openfeature.runtime.DevFeatureAccess.FlagInfo;
 import io.quarkiverse.openfeature.runtime.SyncClientState;
 import io.quarkus.tls.TlsConfigurationRegistry;
 import io.vertx.core.Vertx;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 // Concurrency: the Evaluator (FlagdCore) is updated from the Vert.x event loop
 // and read from request threads. This is safe because FlagdCore uses a
@@ -223,10 +222,10 @@ public class FlagdFeatureProvider extends AbstractRemoteFeatureProvider {
             return allMatch(variants, JsonNode::isBoolean) ? FlagValueType.BOOLEAN : null;
         } else if (first.isNumber()) {
             return numberType(variants);
-        } else if (first.isTextual()) {
-            return allMatch(variants, JsonNode::isTextual) ? FlagValueType.STRING : null;
-        } else if (first.isContainerNode()) {
-            return allMatch(variants, JsonNode::isContainerNode) ? FlagValueType.OBJECT : null;
+        } else if (first.isString()) {
+            return allMatch(variants, JsonNode::isString) ? FlagValueType.STRING : null;
+        } else if (first.isContainer()) {
+            return allMatch(variants, JsonNode::isContainer) ? FlagValueType.OBJECT : null;
         }
         return null;
     }

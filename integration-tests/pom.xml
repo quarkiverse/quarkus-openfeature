@@ -22,7 +22,6 @@
 
     <build>
         <plugins>
-            <!-- we require Quarkus 3.33 (LTS), but configuring `groupIdPrefix` is possible since 3.38 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
@@ -46,7 +45,7 @@
                     <dependency>
                         <groupId>io.quarkus</groupId>
                         <artifactId>quarkus-enforcer-rules</artifactId>
-                        <version>3.40.1.1</version>
+                        <version>${quarkus.version}</version>
                     </dependency>
                 </dependencies>
             </plugin>

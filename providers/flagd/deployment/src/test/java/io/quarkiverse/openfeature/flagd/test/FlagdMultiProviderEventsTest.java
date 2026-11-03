@@ -24,7 +24,7 @@ import io.quarkiverse.openfeature.test.runtime.Disconnect;
 import io.quarkiverse.openfeature.test.runtime.FlagdTestContainer;
 import io.quarkiverse.openfeature.test.runtime.Reconnect;
 import io.quarkiverse.openfeature.test.runtime.TcpProxyExtension;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * A known gap, kept as an executable description of it: a domain with more than one provider
@@ -57,7 +57,7 @@ public class FlagdMultiProviderEventsTest {
 
     @RegisterExtension
     @Order(2)
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .withApplicationRoot(root -> root.addAsResource("flags.json").addClass(SecondProviderFactory.class))
             .addBuildChainCustomizer(builder -> {
                 builder.addBuildStep(context -> {

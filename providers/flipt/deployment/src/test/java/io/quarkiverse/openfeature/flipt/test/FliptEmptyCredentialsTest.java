@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * A credentials provider that resolves to no token is a misconfiguration, not a
@@ -14,7 +14,7 @@ import io.quarkus.test.QuarkusUnitTest;
  */
 public class FliptEmptyCredentialsTest {
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .withApplicationRoot(root -> root.addClasses(TestCredentialsProvider.class))
             .overrideConfigKey("quarkus.openfeature.flipt.url", "http://localhost:8080")
             .overrideConfigKey("quarkus.openfeature.flipt.auth-type", "client-token")

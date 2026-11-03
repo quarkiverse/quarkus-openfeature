@@ -3,13 +3,12 @@ package io.quarkiverse.openfeature.flagd.e2e;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import dev.openfeature.sdk.ImmutableContext;
 import dev.openfeature.sdk.ImmutableStructure;
 import dev.openfeature.sdk.Value;
 import io.cucumber.java.en.Given;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 public class ContextSteps {
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -73,7 +72,7 @@ public class ContextSteps {
             case "Object" -> {
                 try {
                     yield Value.objectToValue(MAPPER.readValue(value.isEmpty() ? "{}" : value, Object.class));
-                } catch (JsonProcessingException e) {
+                } catch (JacksonException e) {
                     throw new AssertionError("Malformed JSON value: " + value, e);
                 }
             }

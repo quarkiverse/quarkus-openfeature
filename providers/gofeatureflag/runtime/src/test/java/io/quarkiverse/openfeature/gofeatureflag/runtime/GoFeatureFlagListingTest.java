@@ -9,12 +9,11 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import dev.openfeature.sdk.FlagValueType;
 import io.quarkiverse.openfeature.runtime.DevFeatureAccess.FlagInfo;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 // The flag definitions below are verbatim excerpts of what the GO Feature Flag relay proxy
 // returns from `/v1/flag/configuration` for the seed file used by the provider tests
@@ -37,7 +36,7 @@ public class GoFeatureFlagListingTest {
     private static JsonNode node(String json) {
         try {
             return MAPPER.readTree(json);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new AssertionError(e);
         }
     }
@@ -46,7 +45,7 @@ public class GoFeatureFlagListingTest {
         JsonNode node;
         try {
             node = MAPPER.readTree(json);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new AssertionError(e);
         }
         return GoFeatureFlagFeatureProvider.inferType(node);

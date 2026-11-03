@@ -11,11 +11,11 @@ import dev.openfeature.sdk.Client;
 import dev.openfeature.sdk.ErrorCode;
 import dev.openfeature.sdk.FlagEvaluationDetails;
 import dev.openfeature.sdk.Value;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 public class GoFeatureFlagTest {
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .withApplicationRoot(root -> root.addAsResource("flags.goff.yaml"));
 
     @Inject
@@ -53,9 +53,9 @@ public class GoFeatureFlagTest {
         assertThat(value.asStructure().getValue("maxItems").asInteger()).isEqualTo(25);
     }
 
-    // a value that is not of the requested type is a type mismatch, not an empty string:
-    // `asText()` on a Jackson container node returns "", which would silently replace the
-    // caller's default with a value the flag never had
+    // a value that is not of the requested type is a type mismatch, not an empty string and
+    // not a Jackson coercion failure: the provider checks the JSON type itself so that the
+    // caller's default is never silently replaced by a value the flag never had
     @Test
     void objectFlagEvaluatedAsStringIsATypeMismatch() {
         FlagEvaluationDetails<String> details = client.getStringDetails("object-flag", "fallback");

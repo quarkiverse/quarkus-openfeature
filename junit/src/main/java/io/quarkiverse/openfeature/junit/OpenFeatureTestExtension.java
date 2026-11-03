@@ -65,7 +65,7 @@ class OpenFeatureTestExtension implements BeforeEachCallback, AfterEachCallback 
                         + domain + "\", but no OpenFeature provider for such domain exists."
                         + " Either the domain name is wrong, or this test does not run in the same classloader"
                         + " as the application: @TestFlag only works under @QuarkusTest,"
-                        + " not under @QuarkusIntegrationTest or QuarkusUnitTest.");
+                        + " not under @QuarkusIntegrationTest or QuarkusExtensionTest.");
             }
             for (FeatureProvider provider : providers) {
                 if (!(provider instanceof OverrideFeatureAccess)) {

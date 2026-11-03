@@ -12,7 +12,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import dev.openfeature.sdk.Client;
 import dev.openfeature.sdk.ProviderState;
 import io.quarkiverse.openfeature.test.runtime.StallingGrpcServer;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * A flag configuration above the configured maximum is dropped by Vert.x, so it must be
@@ -24,7 +24,7 @@ public class FlagdOversizedFlagConfigurationTest {
     private static StallingGrpcServer server;
 
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .overrideConfigKey("quarkus.openfeature.await-providers", "true")
             .overrideConfigKey("quarkus.openfeature.flagd.max-configuration-size", "64K")
             .setLogRecordPredicate(record -> record.getMessage() != null

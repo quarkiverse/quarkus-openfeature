@@ -19,7 +19,7 @@ import io.quarkiverse.openfeature.test.runtime.Disconnect;
 import io.quarkiverse.openfeature.test.runtime.FlagdTestContainer;
 import io.quarkiverse.openfeature.test.runtime.Reconnect;
 import io.quarkiverse.openfeature.test.runtime.TcpProxyExtension;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class FlagdQuickReconnectionTest {
@@ -31,7 +31,7 @@ public class FlagdQuickReconnectionTest {
 
     @RegisterExtension
     @Order(2)
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .withApplicationRoot(root -> root.addAsResource("flags.json"));
 
     static {
