@@ -14,10 +14,6 @@ import java.util.function.Consumer;
 
 import org.jboss.logging.Logger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.quarkiverse.openfeature.runtime.ProviderConfigurationException;
 import io.quarkiverse.openfeature.runtime.SyncClientState;
 import io.quarkiverse.openfeature.runtime.SyncClientUrls;
@@ -35,6 +31,9 @@ import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.RequestOptions;
 import io.vertx.core.parsetools.RecordParser;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 public class GoFeatureFlagSyncClient {
     private static final Logger log = Logger.getLogger(GoFeatureFlagSyncClient.class);
@@ -443,7 +442,7 @@ public class GoFeatureFlagSyncClient {
      * Returns the event carried by one SSE line, or {@code null} if the line carries none.
      * A line that does carry one but fails to parse is an error, and throws.
      */
-    private JsonNode parseSseEvent(String line) throws JsonProcessingException {
+    private JsonNode parseSseEvent(String line) throws JacksonException {
         line = line.trim();
         if (!line.startsWith("data:")) {
             return null;
@@ -574,8 +573,8 @@ public class GoFeatureFlagSyncClient {
     }
 
     private static Object nodeToObject(JsonNode node) {
-        if (node.isTextual()) {
-            return node.asText();
+        if (node.isString()) {
+            return node.asString();
         } else if (node.isBoolean()) {
             return node.asBoolean();
         } else if (node.isInt()) {

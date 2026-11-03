@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * A maximum response size larger than a single buffer can hold must fail the startup, not
@@ -13,7 +13,7 @@ import io.quarkus.test.QuarkusUnitTest;
  */
 public class UnleashMaxConfigurationSizeOutOfRangeTest {
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .overrideConfigKey("quarkus.openfeature.unleash.url", "http://unleash.example.com:4242/api")
             .overrideConfigKey("quarkus.openfeature.unleash.max-configuration-size", "5G")
             .overrideConfigKey("quarkus.devservices.enabled", "false")

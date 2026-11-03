@@ -6,18 +6,14 @@ import static org.hamcrest.Matchers.is;
 
 import java.time.Duration;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.quarkus.test.QuarkusDevModeTest;
-import io.restassured.RestAssured;
 
 public class FlagdMultiDomainDevModeTest {
-    // TODO Quarkus 3.33 doesn't configure RestAssured for random ports in dev mode tests
-    // (fixed in 3.38+: "Set RESTAssured local base URI in QuarkusDevModeTest");
-    // fixed ports (unique per module) work around parallel build conflicts until then
-    private static final int PORT = 18080;
+    // dev mode tests set `quarkus.http.port` to 8080, which would prevent parallel tests
+    // hence a fixed port set in `multi-domain-application.properties`, unique per module
 
     @RegisterExtension
     static final QuarkusDevModeTest test = new QuarkusDevModeTest()
@@ -27,11 +23,6 @@ public class FlagdMultiDomainDevModeTest {
                 root.addAsResource("multi-domain-application.properties", "application.properties");
                 root.addClass(FlagdMultiDomainDevModeResource.class);
             });
-
-    @BeforeAll
-    static void setPort() {
-        RestAssured.port = PORT;
-    }
 
     @Test
     void defaultDomainFlag() {

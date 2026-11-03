@@ -105,7 +105,7 @@ class GoFeatureFlagDevServicesProcessor {
                     .serviceConfig(domain + ";" + devServicesConfig.hashCode())
                     .startable(() -> new GoFeatureFlagDevContainer(devServicesConfig, path)
                             .withSharedServiceLabel(launchMode.getLaunchMode(), devServicesConfig.serviceName()))
-                    .configProvider(Map.of(urlConfigKey, GoFeatureFlagDevContainer::getConnectionInfo))
+                    .configProvider(s -> Map.of(urlConfigKey, s.getConnectionInfo()))
                     .build());
         }
     }

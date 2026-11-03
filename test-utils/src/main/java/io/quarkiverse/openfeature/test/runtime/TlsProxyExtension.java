@@ -12,7 +12,7 @@ import org.testcontainers.containers.GenericContainer;
  * <p>
  * The extension starts the container and proxy in {@code beforeAll} and stops them in {@code afterAll}.
  * <p>
- * This extension must be registered <em>before</em> {@code QuarkusUnitTest} so that the container
+ * This extension must be registered <em>before</em> {@code QuarkusExtensionTest} so that the container
  * and proxy are ready when the Quarkus app starts. Using the {@link org.junit.jupiter.api.Order @Order}
  * annotation is best.
  */

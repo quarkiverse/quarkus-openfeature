@@ -19,7 +19,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import dev.openfeature.sdk.Client;
 import dev.openfeature.sdk.EventDetails;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * Conditional polling must not make the client blind to changes: when the flags really do change,
@@ -39,7 +39,7 @@ public class UnleashConditionalPollingUpdateTest {
     private static final long POLL_INTERVAL_MILLIS = 200;
 
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .withApplicationRoot(root -> root.addAsResource("unleash.json"))
             .overrideConfigKey("quarkus.openfeature.unleash.poll-interval", POLL_INTERVAL_MILLIS + "ms")
             .overrideConfigKey("quarkus.openfeature.unleash.devservices.service-name", "unleash-conditional-polling");

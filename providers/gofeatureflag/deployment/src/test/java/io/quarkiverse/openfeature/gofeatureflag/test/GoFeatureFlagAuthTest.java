@@ -9,13 +9,13 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import dev.openfeature.sdk.Client;
 import io.quarkiverse.openfeature.test.runtime.GoFeatureFlagTestContainer;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 public class GoFeatureFlagAuthTest {
     private static final GoFeatureFlagTestContainer goff = new GoFeatureFlagTestContainer("goff-proxy-auth.yaml");
 
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .withApplicationRoot(root -> root.addAsResource("flags.goff.yaml"));
 
     static {

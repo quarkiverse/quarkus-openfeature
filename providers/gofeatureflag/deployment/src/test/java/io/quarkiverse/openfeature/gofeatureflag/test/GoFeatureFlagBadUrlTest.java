@@ -12,11 +12,11 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import dev.openfeature.sdk.Client;
 import dev.openfeature.sdk.ProviderState;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 public class GoFeatureFlagBadUrlTest {
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .overrideConfigKey("quarkus.openfeature.gofeatureflag.url", "http://localhost:277")
             .overrideConfigKey("quarkus.openfeature.await-providers", "false");
 

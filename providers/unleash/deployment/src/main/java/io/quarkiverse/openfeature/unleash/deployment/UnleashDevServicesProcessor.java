@@ -108,8 +108,7 @@ class UnleashDevServicesProcessor {
                     .serviceConfig(serviceConfigId)
                     .startable(() -> new UnleashDevContainer(devServicesConfig, path)
                             .withSharedServiceLabel(launchMode.getLaunchMode(), devServicesConfig.serviceName()))
-                    .configProvider(Map.of(
-                            urlConfigKey, UnleashDevContainer::getConnectionInfo))
+                    .configProvider(s -> Map.of(urlConfigKey, s.getConnectionInfo()))
                     .build());
         }
     }

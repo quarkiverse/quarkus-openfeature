@@ -12,7 +12,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import dev.openfeature.sdk.Client;
 import dev.openfeature.sdk.EventDetails;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * Conditional polling against a real Unleash server, which answers {@code 304} to a request
@@ -29,7 +29,7 @@ public class UnleashConditionalPollingTest {
     private static final int POLLS_TO_OBSERVE = 10;
 
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .withApplicationRoot(root -> root.addAsResource("unleash.json"))
             .overrideConfigKey("quarkus.openfeature.unleash.poll-interval", POLL_INTERVAL_MILLIS + "ms");
 

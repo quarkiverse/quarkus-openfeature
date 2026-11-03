@@ -2,8 +2,6 @@ package io.quarkiverse.openfeature.flagd.runtime;
 
 import java.util.function.Supplier;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import dev.openfeature.contrib.tools.flagd.core.FlagdCore;
 import io.quarkiverse.openfeature.runtime.FeatureProviderFactory;
 import io.quarkus.arc.Arc;
@@ -11,6 +9,7 @@ import io.quarkus.runtime.RuntimeValue;
 import io.quarkus.runtime.annotations.Recorder;
 import io.quarkus.tls.TlsConfigurationRegistry;
 import io.vertx.core.Vertx;
+import tools.jackson.databind.ObjectMapper;
 
 @Recorder
 public class FlagdRecorder {

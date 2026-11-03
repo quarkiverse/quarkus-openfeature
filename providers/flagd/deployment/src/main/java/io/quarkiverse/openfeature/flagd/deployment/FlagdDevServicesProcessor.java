@@ -111,7 +111,7 @@ class FlagdDevServicesProcessor {
                     .serviceConfig(domain + ";" + devServicesConfig.hashCode())
                     .startable(() -> new FlagdDevContainer(devServicesConfig, path)
                             .withSharedServiceLabel(launchMode.getLaunchMode(), devServicesConfig.serviceName()))
-                    .configProvider(Map.of(urlConfigKey, s -> s.getConnectionInfo()))
+                    .configProvider(s -> Map.of(urlConfigKey, s.getConnectionInfo()))
                     .build());
         }
     }

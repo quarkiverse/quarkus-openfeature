@@ -31,7 +31,7 @@ import dev.openfeature.sdk.FlagValueType;
  * <p>
  * Only works under {@code @QuarkusTest}, because the override is pushed into the provider instances
  * of the running application, which requires the test and the application to share a classloader.
- * Under {@code @QuarkusIntegrationTest} (separate process) or {@code QuarkusUnitTest} (extension
+ * Under {@code @QuarkusIntegrationTest} (separate process) or {@code QuarkusExtensionTest} (extension
  * instantiated outside the Quarkus classloader), a test that declares this annotation fails with
  * an {@link IllegalStateException}; it does not quietly run against the real flag values.
  */

@@ -8,12 +8,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import dev.openfeature.sdk.Client;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 import io.smallrye.common.annotation.Identifier;
 
 public class RuntimeConfigMultiDomainTest {
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .overrideConfigKey("quarkus.openfeature.runtime.default-flag", "from-default")
             .overrideConfigKey("quarkus.openfeature.\"custom\".provider", "runtime-config")
             .overrideConfigKey("quarkus.openfeature.\"custom\".runtime.custom-flag", "from-custom");

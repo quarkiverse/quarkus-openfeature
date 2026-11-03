@@ -15,7 +15,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import dev.openfeature.sdk.Client;
 import dev.openfeature.sdk.ProviderState;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 public class FlagdOfflineTest {
     // written out instead of loaded from `src/test/resources`: the flags must live in a plain
@@ -40,7 +40,7 @@ public class FlagdOfflineTest {
     private static final Path FLAGS_FILE = writeFlagsToTempFile();
 
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .overrideConfigKey("quarkus.openfeature.flagd.offline-path", FLAGS_FILE.toString());
 
     @Inject

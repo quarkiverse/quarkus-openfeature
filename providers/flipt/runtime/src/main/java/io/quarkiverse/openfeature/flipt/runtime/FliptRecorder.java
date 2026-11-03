@@ -3,9 +3,6 @@ package io.quarkiverse.openfeature.flipt.runtime;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import io.quarkiverse.openfeature.runtime.FeatureProviderFactory;
 import io.quarkus.arc.Arc;
 import io.quarkus.credentials.CredentialsProvider;
@@ -14,6 +11,8 @@ import io.quarkus.runtime.RuntimeValue;
 import io.quarkus.runtime.annotations.Recorder;
 import io.quarkus.tls.TlsConfigurationRegistry;
 import io.vertx.core.Vertx;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 @Recorder
 public class FliptRecorder {

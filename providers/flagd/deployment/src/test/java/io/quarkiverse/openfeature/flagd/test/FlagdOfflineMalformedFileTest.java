@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * Like a missing file, flag data that does not parse is final in offline mode: no later
@@ -20,7 +20,7 @@ public class FlagdOfflineMalformedFileTest {
     private static final Path FLAGS_FILE = writeFlagsToTempFile();
 
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .overrideConfigKey("quarkus.openfeature.await-providers", "false")
             .overrideConfigKey("quarkus.openfeature.flagd.offline-path", FLAGS_FILE.toString())
             .assertException(e -> {

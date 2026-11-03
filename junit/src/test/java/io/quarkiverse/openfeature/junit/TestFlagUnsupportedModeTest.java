@@ -13,14 +13,14 @@ import org.junit.platform.testkit.engine.EngineTestKit;
 import org.junit.platform.testkit.engine.Events;
 
 /**
- * Runs {@link QuarkusUnitTestFlagFixture} through the JUnit engine and asserts that an
+ * Runs {@link QuarkusExtensionTestFlagFixture} through the JUnit engine and asserts that an
  * unreachable provider fails the test instead of letting it run against real flag values.
  */
 public class TestFlagUnsupportedModeTest {
     @Test
     void testFlagFailsLoudlyWhenNoProviderIsReachable() {
         Events tests = EngineTestKit.engine("junit-jupiter")
-                .selectors(selectClass(QuarkusUnitTestFlagFixture.class))
+                .selectors(selectClass(QuarkusExtensionTestFlagFixture.class))
                 .execute()
                 .testEvents();
 

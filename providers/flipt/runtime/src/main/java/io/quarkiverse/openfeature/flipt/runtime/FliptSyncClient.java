@@ -9,9 +9,6 @@ import java.util.function.Consumer;
 
 import org.jboss.logging.Logger;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.quarkiverse.openfeature.runtime.ProviderConfigurationException;
 import io.quarkiverse.openfeature.runtime.SyncClientState;
 import io.quarkiverse.openfeature.runtime.SyncClientUrls;
@@ -25,6 +22,8 @@ import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.RequestOptions;
 import io.vertx.core.parsetools.RecordParser;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 public class FliptSyncClient {
     private static final Logger log = Logger.getLogger(FliptSyncClient.class);

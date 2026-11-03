@@ -10,7 +10,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import dev.openfeature.sdk.Client;
 import dev.openfeature.sdk.ProviderState;
 import io.quarkiverse.openfeature.test.runtime.StallingHttpServer;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * A response above the configured maximum must not be buffered whole; it has to be reported
@@ -22,7 +22,7 @@ public class UnleashOversizedResponseTest {
     private static StallingHttpServer server;
 
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .overrideConfigKey("quarkus.openfeature.await-providers", "true")
             .overrideConfigKey("quarkus.openfeature.unleash.max-configuration-size", "64K")
             .setLogRecordPredicate(record -> record.getMessage() != null

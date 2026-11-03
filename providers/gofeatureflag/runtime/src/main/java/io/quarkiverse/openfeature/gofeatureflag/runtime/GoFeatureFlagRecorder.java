@@ -3,8 +3,6 @@ package io.quarkiverse.openfeature.gofeatureflag.runtime;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.quarkiverse.openfeature.runtime.FeatureProviderFactory;
 import io.quarkus.arc.Arc;
 import io.quarkus.credentials.CredentialsProvider;
@@ -13,6 +11,7 @@ import io.quarkus.runtime.RuntimeValue;
 import io.quarkus.runtime.annotations.Recorder;
 import io.quarkus.tls.TlsConfigurationRegistry;
 import io.vertx.core.Vertx;
+import tools.jackson.databind.ObjectMapper;
 
 @Recorder
 public class GoFeatureFlagRecorder {

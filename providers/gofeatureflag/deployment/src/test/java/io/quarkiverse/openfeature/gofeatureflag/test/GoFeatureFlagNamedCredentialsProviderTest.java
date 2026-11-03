@@ -9,7 +9,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import dev.openfeature.sdk.Client;
 import io.quarkiverse.openfeature.test.runtime.GoFeatureFlagTestContainer;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * Two credentials providers are present and only one of them knows the token
@@ -20,7 +20,7 @@ public class GoFeatureFlagNamedCredentialsProviderTest {
     private static final GoFeatureFlagTestContainer goff = new GoFeatureFlagTestContainer("goff-proxy-auth.yaml");
 
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .withApplicationRoot(root -> root
                     .addClasses(TestCredentialsProvider.class, WrongCredentialsProvider.class)
                     .addAsResource("flags.goff.yaml"));

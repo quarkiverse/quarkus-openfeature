@@ -15,7 +15,7 @@ import dev.openfeature.sdk.Client;
 import dev.openfeature.sdk.ProviderState;
 import io.quarkiverse.openfeature.test.runtime.TlsProxyExtension;
 import io.quarkiverse.openfeature.test.runtime.UnleashTestContainer;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 import io.smallrye.certs.Format;
 import io.smallrye.certs.junit5.Certificate;
 import io.smallrye.certs.junit5.Certificates;
@@ -31,7 +31,7 @@ public class UnleashTlsAuthBadTest {
 
     @RegisterExtension
     @Order(2)
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .withApplicationRoot(root -> root.addAsResource("unleash.json"));
 
     static {

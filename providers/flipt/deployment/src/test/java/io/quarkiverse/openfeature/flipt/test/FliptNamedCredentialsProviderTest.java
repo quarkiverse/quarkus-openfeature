@@ -12,7 +12,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import dev.openfeature.sdk.Client;
 import io.quarkiverse.openfeature.flipt.deployment.FliptImporter;
 import io.quarkiverse.openfeature.test.runtime.FliptTestContainer;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * Two credentials providers are present and only one of them knows the token
@@ -23,7 +23,7 @@ public class FliptNamedCredentialsProviderTest {
     private static final FliptTestContainer flipt = new FliptTestContainer.Builder("flipt-auth-config.yml").build();
 
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .withApplicationRoot(root -> root
                     .addClasses(TestCredentialsProvider.class, WrongCredentialsProvider.class)
                     .addAsResource("features.yaml"));

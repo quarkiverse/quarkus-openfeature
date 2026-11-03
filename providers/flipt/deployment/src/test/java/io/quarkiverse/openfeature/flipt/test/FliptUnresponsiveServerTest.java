@@ -13,7 +13,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import dev.openfeature.sdk.Client;
 import dev.openfeature.sdk.ProviderState;
 import io.quarkiverse.openfeature.test.runtime.StallingHttpServer;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * A stream that is accepted but never carries any data must not keep the provider waiting
@@ -23,7 +23,7 @@ public class FliptUnresponsiveServerTest {
     private static StallingHttpServer server;
 
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .overrideConfigKey("quarkus.openfeature.await-providers", "false")
             .overrideConfigKey("quarkus.openfeature.flipt.stream-deadline", "1s");
 

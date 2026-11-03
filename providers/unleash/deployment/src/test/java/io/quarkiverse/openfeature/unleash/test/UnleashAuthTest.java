@@ -9,13 +9,13 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import dev.openfeature.sdk.Client;
 import io.quarkiverse.openfeature.test.runtime.UnleashTestContainer;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 public class UnleashAuthTest {
     private static final UnleashTestContainer unleash = new UnleashTestContainer("unleash.json");
 
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .withApplicationRoot(root -> root.addAsResource("unleash.json"));
 
     static {

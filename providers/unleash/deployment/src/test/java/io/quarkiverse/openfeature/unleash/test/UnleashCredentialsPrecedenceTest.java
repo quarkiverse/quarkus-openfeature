@@ -9,7 +9,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import dev.openfeature.sdk.Client;
 import io.quarkiverse.openfeature.test.runtime.UnleashTestContainer;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * A directly configured {@code api-key} wins over a credentials provider, as
@@ -20,7 +20,7 @@ public class UnleashCredentialsPrecedenceTest {
     private static final UnleashTestContainer unleash = new UnleashTestContainer("unleash.json");
 
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .withApplicationRoot(root -> root
                     .addClasses(WrongCredentialsProvider.class)
                     .addAsResource("unleash.json"));
