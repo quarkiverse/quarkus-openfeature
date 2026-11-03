@@ -21,7 +21,10 @@ public class GoFeatureFlagOversizedDiffTest {
 
     @RegisterExtension
     static final QuarkusUnitTest test = new QuarkusUnitTest()
-            .overrideConfigKey("quarkus.openfeature.await-providers", "false")
+            // we first initialize the SSE stream, which produces the error and marks the provider
+            // as initialized; then we fetch the full data, which will change the provider state,
+            // but that doesn't matter here, the error has already been logged
+            .overrideConfigKey("quarkus.openfeature.await-providers", "true")
             .overrideConfigKey("quarkus.openfeature.gofeatureflag.max-configuration-size", "64K")
             .setLogRecordPredicate(record -> record.getMessage() != null
                     && record.getMessage().contains("GO Feature Flag SSE stream error"))
