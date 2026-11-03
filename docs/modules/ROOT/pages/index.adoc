@@ -135,8 +135,8 @@ double threshold = client.getDoubleValue("threshold", 0.5);
 Value config = client.getObjectValue("complex-config", new Value());
 ----
 
-NOTE: Only the configuration-based providers resolve `long` flags natively.
-The remote-sync providers fall back to the OpenFeature SDK default, which resolves the flag as a `double`, so values outside the range of `[-(2^53^ - 1), 2^53^ - 1]` result in an error.
+NOTE: The configuration-based providers and xref:flagd.adoc[flagd] support the full range of `long`.
+The other remote-sync providers fall back to the OpenFeature SDK default, which resolves the flag as a `double`, so values outside the range of `[-(2^53^ - 1), 2^53^ - 1]` result in an error.
 
 It is safe to call the `Client` methods on a non-blockable thread (such as Vert.x event loop), because this extension guarantees feature flags are evaluated purely in memory; no I/O occurs.
 

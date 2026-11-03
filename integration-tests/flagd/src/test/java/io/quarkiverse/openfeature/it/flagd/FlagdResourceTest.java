@@ -39,7 +39,7 @@ public class FlagdResourceTest {
         when().get("/flagd/long/long-flag")
                 .then()
                 .statusCode(200)
-                .body(is("42"));
+                .body(is("10000000000"));
     }
 
     @Test

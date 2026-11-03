@@ -34,8 +34,28 @@ public class FlagdTest {
     }
 
     @Test
+    void integerFlagFromDoubleFlag() {
+        assertThat(client.getIntegerValue("double-flag", 0)).isEqualTo(3);
+    }
+
+    @Test
     void longFlag() {
-        assertThat(client.getLongValue("long-flag", 0L)).isEqualTo(42L);
+        assertThat(client.getLongValue("long-flag", 0L)).isEqualTo(10_000_000_000L);
+    }
+
+    @Test
+    void longFlagFromIntegerFlag() {
+        assertThat(client.getLongValue("int-flag", 0L)).isEqualTo(10L);
+    }
+
+    @Test
+    void longFlagFromDoubleFlag() {
+        assertThat(client.getLongValue("double-flag", 0L)).isEqualTo(3L);
+    }
+
+    @Test
+    void doubleFlag() {
+        assertThat(client.getDoubleValue("double-flag", 0.0)).isEqualTo(3.14);
     }
 
     @Test

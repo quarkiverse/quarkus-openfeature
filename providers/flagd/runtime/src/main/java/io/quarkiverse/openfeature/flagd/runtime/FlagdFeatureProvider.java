@@ -18,6 +18,7 @@ import dev.openfeature.sdk.Hook;
 import dev.openfeature.sdk.Metadata;
 import dev.openfeature.sdk.ProviderEvaluation;
 import dev.openfeature.sdk.Value;
+import dev.openfeature.sdk.exceptions.TypeMismatchError;
 import io.quarkiverse.openfeature.runtime.AbstractRemoteFeatureProvider;
 import io.quarkiverse.openfeature.runtime.DevFeatureAccess.FlagInfo;
 import io.quarkiverse.openfeature.runtime.SyncClientState;
@@ -27,11 +28,6 @@ import io.vertx.core.Vertx;
 // Concurrency: the Evaluator (FlagdCore) is updated from the Vert.x event loop
 // and read from request threads. This is safe because FlagdCore uses a
 // ReentrantReadWriteLock internally.
-//
-// TODO when flagd-core Evaluator adds `resolveLongValue`:
-// - override `getLongEvaluation` here to call `evaluator.resolveLongValue`
-// - update test value in FlagdTest and flags.json (deployment + integration-tests)
-//   to use a value > Integer.MAX_VALUE (e.g. 10_000_000_000)
 public class FlagdFeatureProvider extends AbstractRemoteFeatureProvider {
     private static final Logger log = Logger.getLogger(FlagdFeatureProvider.class);
 
@@ -127,6 +123,40 @@ public class FlagdFeatureProvider extends AbstractRemoteFeatureProvider {
             return override;
         }
         return evaluator.resolveIntegerValue(key, defaultValue, ctx);
+    }
+
+    // flagd-core has no `resolveLongValue` and its `resolveDoubleValue` only converts an
+    // `Integer` variant to a `Double`, so a whole number that Jackson parsed into a `Long`
+    // is a type mismatch there; resolving the flag as an object instead keeps the parsed
+    // number intact and covers the full 64-bit range
+    @Override
+    public ProviderEvaluation<Long> getLongEvaluation(String key, Long defaultValue, EvaluationContext ctx) {
+        ProviderEvaluation<Long> override = evaluateFlagOverride(key, Long.class);
+        if (override != null) {
+            return override;
+        }
+
+        ProviderEvaluation<Value> result = evaluator.resolveObjectValue(key,
+                defaultValue != null ? new Value(defaultValue) : null, ctx);
+
+        Value value = result.getValue();
+        Long longValue;
+        if (value == null || value.isNull()) {
+            longValue = defaultValue;
+        } else if (value.isNumber()) {
+            longValue = value.asLong();
+        } else {
+            throw new TypeMismatchError("Flag \"" + key + "\" is not a number");
+        }
+
+        return ProviderEvaluation.<Long> builder()
+                .value(longValue)
+                .variant(result.getVariant())
+                .reason(result.getReason())
+                .errorCode(result.getErrorCode())
+                .errorMessage(result.getErrorMessage())
+                .flagMetadata(result.getFlagMetadata())
+                .build();
     }
 
     @Override

@@ -29,9 +29,17 @@
       "state": "ENABLED",
       "variants": {
         "small": 1,
-        "big": 42
+        "big": 10000000000
       },
       "defaultVariant": "big"
+    },
+    "double-flag": {
+      "state": "ENABLED",
+      "variants": {
+        "low": 1.5,
+        "high": 3.14
+      },
+      "defaultVariant": "high"
     },
     "disabled-flag": {
       "state": "DISABLED",
