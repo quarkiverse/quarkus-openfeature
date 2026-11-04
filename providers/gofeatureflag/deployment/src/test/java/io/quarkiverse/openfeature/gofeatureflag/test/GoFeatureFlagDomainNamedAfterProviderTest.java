@@ -5,11 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import io.quarkiverse.openfeature.gofeatureflag.runtime.GoFeatureFlagRecorder;
+import io.quarkiverse.openfeature.gofeatureflag.runtime.GoFeatureFlagSetup;
 import io.quarkus.test.QuarkusExtensionTest;
 
 public class GoFeatureFlagDomainNamedAfterProviderTest {
-    private static final String DOMAIN = GoFeatureFlagRecorder.NAME;
+    private static final String DOMAIN = GoFeatureFlagSetup.NAME;
 
     @RegisterExtension
     static final QuarkusExtensionTest test = new QuarkusExtensionTest()

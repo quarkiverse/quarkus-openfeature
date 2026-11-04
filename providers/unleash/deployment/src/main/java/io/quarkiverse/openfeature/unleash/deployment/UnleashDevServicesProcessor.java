@@ -13,7 +13,7 @@ import org.jboss.logging.Logger;
 
 import io.quarkiverse.openfeature.runtime.OpenFeatureBuildTimeConfig;
 import io.quarkiverse.openfeature.runtime.OpenFeatureBuildTimeConfig.DomainBuildTimeConfig;
-import io.quarkiverse.openfeature.unleash.runtime.UnleashRecorder;
+import io.quarkiverse.openfeature.unleash.runtime.UnleashSetup;
 import io.quarkus.deployment.IsDevServicesSupportedByLaunchMode;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
@@ -128,7 +128,7 @@ class UnleashDevServicesProcessor {
 
     private static boolean domainUsesProvider(DomainBuildTimeConfig domainConfig) {
         return domainConfig.provider().isEmpty()
-                || domainConfig.provider().get().contains(UnleashRecorder.NAME);
+                || domainConfig.provider().get().contains(UnleashSetup.NAME);
     }
 
     private static UnleashBuildTimeConfig.DevServicesConfig getDevServicesConfig(UnleashBuildTimeConfig config, String domain) {

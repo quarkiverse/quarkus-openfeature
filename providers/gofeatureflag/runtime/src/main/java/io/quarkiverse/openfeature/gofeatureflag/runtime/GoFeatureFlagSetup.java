@@ -1,32 +1,22 @@
 package io.quarkiverse.openfeature.gofeatureflag.runtime;
 
 import java.util.Map;
-import java.util.function.Supplier;
 
 import io.quarkiverse.openfeature.runtime.FeatureProviderFactory;
-import io.quarkus.arc.Arc;
+import io.quarkus.arc.ArcContainer;
 import io.quarkus.credentials.CredentialsProvider;
 import io.quarkus.credentials.runtime.CredentialsProviderFinder;
-import io.quarkus.runtime.RuntimeValue;
-import io.quarkus.runtime.annotations.Recorder;
 import io.quarkus.tls.TlsConfigurationRegistry;
 import io.vertx.core.Vertx;
 import tools.jackson.databind.ObjectMapper;
 
-@Recorder
-public class GoFeatureFlagRecorder {
+public final class GoFeatureFlagSetup {
     public static final String NAME = "gofeatureflag";
 
-    private final RuntimeValue<GoFeatureFlagConfig> config;
-
-    public GoFeatureFlagRecorder(RuntimeValue<GoFeatureFlagConfig> config) {
-        this.config = config;
-    }
-
-    public FeatureProviderFactory createFactory(RuntimeValue<Vertx> vertx,
-            Supplier<TlsConfigurationRegistry> tlsRegistry) {
+    public static FeatureProviderFactory createFactory(GoFeatureFlagConfig config, Vertx vertx,
+            TlsConfigurationRegistry tls, ArcContainer arc) {
         return domain -> {
-            GoFeatureFlagConfig.DomainConfig domainConfig = config.getValue().domains().get(domain);
+            GoFeatureFlagConfig.DomainConfig domainConfig = config.domains().get(domain);
             if (domainConfig == null) {
                 throw new IllegalStateException("No GO Feature Flag configuration found for domain: " + domain);
             }
@@ -35,14 +25,14 @@ public class GoFeatureFlagRecorder {
             String apiKey = getApiKey(connectionConfig);
 
             ObjectMapper mapper = connectionConfig.useQuarkusJackson()
-                    ? Arc.requireContainer().instance(ObjectMapper.class).get()
+                    ? arc.instance(ObjectMapper.class).get()
                     : new ObjectMapper();
 
             int poolSize = connectionConfig.wasmInstances();
             GoFeatureFlagWasmEnginePool enginePool = new GoFeatureFlagWasmEnginePool(poolSize);
 
-            return new GoFeatureFlagFeatureProvider(mapper, enginePool, vertx.getValue(),
-                    connectionConfig, tlsRegistry.get(), apiKey);
+            return new GoFeatureFlagFeatureProvider(mapper, enginePool, vertx,
+                    connectionConfig, tls, apiKey);
         };
     }
 

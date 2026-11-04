@@ -13,8 +13,8 @@ public class OpenFeatureMultipleProvidersTest {
     static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .addBuildChainCustomizer(builder -> {
                 builder.addBuildStep(context -> {
-                    context.produce(new OpenFeatureProviderBuildItem("provider-a", null));
-                    context.produce(new OpenFeatureProviderBuildItem("provider-b", null));
+                    context.produce(new OpenFeatureProviderBuildItem("provider-a"));
+                    context.produce(new OpenFeatureProviderBuildItem("provider-b"));
                 })
                         .produces(OpenFeatureProviderBuildItem.class)
                         .build();

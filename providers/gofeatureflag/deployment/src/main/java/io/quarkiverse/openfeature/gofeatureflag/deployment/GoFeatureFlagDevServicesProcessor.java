@@ -10,7 +10,7 @@ import java.util.Set;
 
 import org.jboss.logging.Logger;
 
-import io.quarkiverse.openfeature.gofeatureflag.runtime.GoFeatureFlagRecorder;
+import io.quarkiverse.openfeature.gofeatureflag.runtime.GoFeatureFlagSetup;
 import io.quarkiverse.openfeature.runtime.OpenFeatureBuildTimeConfig;
 import io.quarkiverse.openfeature.runtime.OpenFeatureBuildTimeConfig.DomainBuildTimeConfig;
 import io.quarkus.deployment.IsDevServicesSupportedByLaunchMode;
@@ -125,7 +125,7 @@ class GoFeatureFlagDevServicesProcessor {
 
     private static boolean domainUsesProvider(DomainBuildTimeConfig domainConfig) {
         return domainConfig.provider().isEmpty()
-                || domainConfig.provider().get().contains(GoFeatureFlagRecorder.NAME);
+                || domainConfig.provider().get().contains(GoFeatureFlagSetup.NAME);
     }
 
     private static GoFeatureFlagBuildTimeConfig.DevServicesConfig getDevServicesConfig(

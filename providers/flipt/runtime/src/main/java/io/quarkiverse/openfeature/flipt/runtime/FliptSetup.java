@@ -1,33 +1,23 @@
 package io.quarkiverse.openfeature.flipt.runtime;
 
 import java.util.Map;
-import java.util.function.Supplier;
 
 import io.quarkiverse.openfeature.runtime.FeatureProviderFactory;
-import io.quarkus.arc.Arc;
+import io.quarkus.arc.ArcContainer;
 import io.quarkus.credentials.CredentialsProvider;
 import io.quarkus.credentials.runtime.CredentialsProviderFinder;
-import io.quarkus.runtime.RuntimeValue;
-import io.quarkus.runtime.annotations.Recorder;
 import io.quarkus.tls.TlsConfigurationRegistry;
 import io.vertx.core.Vertx;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
 
-@Recorder
-public class FliptRecorder {
+public final class FliptSetup {
     public static final String NAME = "flipt";
 
-    private final RuntimeValue<FliptConfig> config;
-
-    public FliptRecorder(RuntimeValue<FliptConfig> config) {
-        this.config = config;
-    }
-
-    public FeatureProviderFactory createFactory(RuntimeValue<Vertx> vertx,
-            Supplier<TlsConfigurationRegistry> tlsRegistry) {
+    public static FeatureProviderFactory createFactory(FliptConfig config, Vertx vertx,
+            TlsConfigurationRegistry tls, ArcContainer arc) {
         return domain -> {
-            FliptConfig.DomainConfig domainConfig = config.getValue().domains().get(domain);
+            FliptConfig.DomainConfig domainConfig = config.domains().get(domain);
             if (domainConfig == null) {
                 throw new IllegalStateException("No Flipt configuration found for domain: " + domain);
             }
@@ -36,7 +26,7 @@ public class FliptRecorder {
             String authHeader = getAuthHeader(connectionConfig);
 
             ObjectMapper mapper = connectionConfig.useQuarkusJackson()
-                    ? Arc.requireContainer().instance(ObjectMapper.class).get()
+                    ? arc.instance(ObjectMapper.class).get()
                     : new ObjectMapper();
 
             ObjectNode emptySnapshot = mapper.createObjectNode();
@@ -46,8 +36,7 @@ public class FliptRecorder {
             FliptWasmEnginePool enginePool = new FliptWasmEnginePool(poolSize, connectionConfig.namespace(),
                     emptySnapshot.toString(), mapper);
 
-            return new FliptFeatureProvider(mapper, enginePool, vertx.getValue(), connectionConfig,
-                    tlsRegistry.get(), authHeader);
+            return new FliptFeatureProvider(mapper, enginePool, vertx, connectionConfig, tls, authHeader);
         };
     }
 

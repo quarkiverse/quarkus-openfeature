@@ -5,11 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import io.quarkiverse.openfeature.flipt.runtime.FliptRecorder;
+import io.quarkiverse.openfeature.flipt.runtime.FliptSetup;
 import io.quarkus.test.QuarkusExtensionTest;
 
 public class FliptDomainNamedAfterProviderTest {
-    private static final String DOMAIN = FliptRecorder.NAME;
+    private static final String DOMAIN = FliptSetup.NAME;
 
     @RegisterExtension
     static final QuarkusExtensionTest test = new QuarkusExtensionTest()
