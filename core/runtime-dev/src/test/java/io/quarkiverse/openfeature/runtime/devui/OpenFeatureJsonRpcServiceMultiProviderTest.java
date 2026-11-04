@@ -11,14 +11,14 @@ import org.junit.jupiter.api.Test;
 
 import dev.openfeature.sdk.OpenFeatureAPI;
 import io.quarkiverse.openfeature.runtime.ConfigFeatureProvider;
-import io.quarkiverse.openfeature.runtime.OpenFeatureRecorder;
+import io.quarkiverse.openfeature.runtime.OpenFeatureProviders;
 import io.quarkiverse.openfeature.runtime.OpenFeatureRuntimeConfig;
-import io.quarkus.runtime.RuntimeValue;
+import io.quarkiverse.openfeature.runtime.OpenFeatureSetup;
 import io.vertx.core.json.JsonObject;
 
 /**
  * Dev UI overrides against a domain backed by a {@code MultiProvider}: the overrides are
- * pushed to the child providers, which is what {@link OpenFeatureRecorder#getProviders(String)}
+ * pushed to the child providers, which is what {@link OpenFeatureProviders#get(String)}
  * holds, while evaluation goes through the {@code MultiProvider} wrapper.
  */
 public class OpenFeatureJsonRpcServiceMultiProviderTest {
@@ -27,10 +27,10 @@ public class OpenFeatureJsonRpcServiceMultiProviderTest {
     @BeforeAll
     static void setUpProviders() {
         OpenFeatureRuntimeConfig config = () -> OpenFeatureRuntimeConfig.AwaitProviders.TRUE;
-        OpenFeatureRecorder recorder = new OpenFeatureRecorder(new RuntimeValue<>(config));
-        recorder.configureProvider(DOMAIN, List.of(
-                domain -> new ConfigFeatureProvider("first", Map.of("only-in-first", "first-value")),
-                domain -> new ConfigFeatureProvider("second", Map.of("only-in-second", "second-value"))));
+        OpenFeatureSetup.configureDomain(DOMAIN, List.of("first", "second"), Map.of(
+                "first", domain -> new ConfigFeatureProvider("first", Map.of("only-in-first", "first-value")),
+                "second", domain -> new ConfigFeatureProvider("second", Map.of("only-in-second", "second-value"))),
+                OpenFeatureProviders.create(), config);
     }
 
     @AfterAll

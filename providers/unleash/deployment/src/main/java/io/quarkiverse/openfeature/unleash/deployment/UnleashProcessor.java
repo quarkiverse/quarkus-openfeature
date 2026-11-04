@@ -1,23 +1,26 @@
 package io.quarkiverse.openfeature.unleash.deployment;
 
 import io.quarkiverse.openfeature.deployment.OpenFeatureProviderBuildItem;
-import io.quarkiverse.openfeature.unleash.runtime.UnleashRecorder;
+import io.quarkiverse.openfeature.runtime.FeatureProviderFactory;
+import io.quarkiverse.openfeature.unleash.runtime.UnleashConfig;
+import io.quarkiverse.openfeature.unleash.runtime.UnleashSetup;
+import io.quarkus.core.deployment.service.ServiceRegistrar;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
-import io.quarkus.deployment.annotations.ExecutionTime;
-import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.nativeimage.JniRuntimeAccessBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
-import io.quarkus.tls.deployment.spi.TlsRegistryBuildItem;
-import io.quarkus.vertx.deployment.VertxBuildItem;
+import io.quarkus.tls.TlsConfigurationRegistry;
+import io.vertx.core.Vertx;
 
 class UnleashProcessor {
     @BuildStep
-    @Record(ExecutionTime.RUNTIME_INIT)
-    OpenFeatureProviderBuildItem provider(UnleashRecorder recorder, VertxBuildItem vertx,
-            TlsRegistryBuildItem tlsRegistry) {
-        return new OpenFeatureProviderBuildItem(UnleashRecorder.NAME,
-                recorder.createFactory(vertx.getVertx(), tlsRegistry.registry()));
+    OpenFeatureProviderBuildItem provider(ServiceRegistrar serviceRegistrar) {
+        serviceRegistrar.forService(FeatureProviderFactory.class, UnleashSetup.NAME)
+                .require(UnleashConfig.class)
+                .require(Vertx.class)
+                .require(TlsConfigurationRegistry.class)
+                .onStart((ctx, config, vertx, tls) -> UnleashSetup.createFactory(config, vertx, tls));
+        return new OpenFeatureProviderBuildItem(UnleashSetup.NAME);
     }
 
     @BuildStep

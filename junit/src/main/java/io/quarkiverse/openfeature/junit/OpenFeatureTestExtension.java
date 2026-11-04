@@ -16,7 +16,7 @@ import dev.openfeature.sdk.FeatureProvider;
 import dev.openfeature.sdk.FlagValueType;
 import io.quarkiverse.openfeature.runtime.FlagOverrides;
 import io.quarkiverse.openfeature.runtime.OpenFeatureBuildTimeConfig;
-import io.quarkiverse.openfeature.runtime.OpenFeatureRecorder;
+import io.quarkiverse.openfeature.runtime.OpenFeatureProviders;
 import io.quarkiverse.openfeature.runtime.OverrideFeatureAccess;
 import io.quarkiverse.openfeature.runtime.Primitives;
 
@@ -27,7 +27,7 @@ class OpenFeatureTestExtension implements BeforeEachCallback, AfterEachCallback 
     private static final String OVERRIDDEN_DOMAINS_KEY = "overriddenDomains";
 
     // overridable in tests
-    Function<String, List<FeatureProvider>> providerLookup = OpenFeatureRecorder::getProviders;
+    Function<String, List<FeatureProvider>> providerLookup = OpenFeatureProviders::get;
 
     @Override
     public void beforeEach(ExtensionContext context) {
