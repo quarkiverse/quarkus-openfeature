@@ -32,6 +32,7 @@ public class UnleashSyncClient {
     private final Context context;
     private final UnleashConfig.ProviderConfig config;
     private final URI baseUri;
+    private final int port;
     private final TlsConfiguration tlsConfig; // null when TLS not configured
     private final String apiKey;
     private final int maxConfigurationSize;
@@ -49,6 +50,7 @@ public class UnleashSyncClient {
         this.context = context;
         this.config = config;
         this.baseUri = SyncClientUrls.parse("Unleash", config.url());
+        this.port = SyncClientUrls.port(baseUri);
         this.apiKey = apiKey;
         this.state = state;
 
@@ -99,7 +101,6 @@ public class UnleashSyncClient {
             return;
         }
 
-        int port = SyncClientUrls.port(baseUri);
         RequestOptions requestOptions = new RequestOptions()
                 .setMethod(HttpMethod.GET)
                 .setHost(baseUri.getHost())

@@ -57,6 +57,7 @@ public class GoFeatureFlagSyncClient {
     private final Context context;
     private final GoFeatureFlagConfig.ProviderConfig config;
     private final URI baseUri;
+    private final int port;
     private final TlsConfiguration tlsConfig; // null when TLS not configured
     private final String apiKey;
     private final int maxConfigurationSize;
@@ -79,6 +80,7 @@ public class GoFeatureFlagSyncClient {
         this.context = context;
         this.config = config;
         this.baseUri = SyncClientUrls.parse("GO Feature Flag", config.url());
+        this.port = SyncClientUrls.port(baseUri);
         this.apiKey = apiKey;
         this.state = state;
 
@@ -133,8 +135,6 @@ public class GoFeatureFlagSyncClient {
         currentConnectionId++;
         refetchInFlight = false;
         anotherRefetchPending = false;
-
-        int port = SyncClientUrls.port(baseUri);
 
         // Connect SSE first, then fetch full config, to avoid missing
         // changes that occur between fetch and subscribe
@@ -201,7 +201,7 @@ public class GoFeatureFlagSyncClient {
                                         return;
                                     }
                                     if (live[0]) {
-                                        handleSseEvent(event, port, listener, fail);
+                                        handleSseEvent(event, listener, fail);
                                     } else {
                                         bufferedEvents.add(event);
                                     }
@@ -228,7 +228,7 @@ public class GoFeatureFlagSyncClient {
                                     fail.accept(t.getMessage());
                                 });
 
-                                fetchFullConfig(port, currentConnectionId, listener, fail, ignored -> {
+                                fetchFullConfig(currentConnectionId, listener, fail, ignored -> {
                                     // the fetch may have read the configuration before a change that
                                     // a buffered event announces, so the diffs still have to be applied
                                     // and a re-fetch signal still has to lead to another fetch
@@ -263,7 +263,7 @@ public class GoFeatureFlagSyncClient {
                                         listener.onConfigurationChanged(changedKeys);
                                     }
                                     if (refetch) {
-                                        refetch(port, listener, fail);
+                                        refetch(listener, fail);
                                     }
                                 });
                             }).onFailure(t -> {
@@ -307,7 +307,7 @@ public class GoFeatureFlagSyncClient {
      * would overwrite the newer data that came with the new connection, and failing would push
      * a healthy connection into an unnecessary reconnect.
      */
-    private void fetchFullConfig(int port, int connectionId, Listener listener, Consumer<String> fail,
+    private void fetchFullConfig(int connectionId, Listener listener, Consumer<String> fail,
             Consumer<Set<String>> onSuccess) {
         Consumer<String> failIfCurrent = msg -> {
             if (connectionId == currentConnectionId) {
@@ -456,9 +456,9 @@ public class GoFeatureFlagSyncClient {
         return mapper.readTree(jsonData);
     }
 
-    private void handleSseEvent(JsonNode event, int port, Listener listener, Consumer<String> fail) {
+    private void handleSseEvent(JsonNode event, Listener listener, Consumer<String> fail) {
         if (isRefetchSignal(event)) {
-            refetch(port, listener, fail);
+            refetch(listener, fail);
             return;
         }
 
@@ -478,7 +478,7 @@ public class GoFeatureFlagSyncClient {
      * Fetches the whole configuration again in response to a re-fetch signal. Unlike a full fetch
      * after a connection is established, a refetch doesn't affect the reconnect backoff or readiness.
      */
-    private void refetch(int port, Listener listener, Consumer<String> fail) {
+    private void refetch(Listener listener, Consumer<String> fail) {
         // overlapping fetches could apply their results out of order, so run one at a time
         // and remember that another signal arrived in the meantime
         if (refetchInFlight) {
@@ -487,7 +487,7 @@ public class GoFeatureFlagSyncClient {
         }
         refetchInFlight = true;
 
-        fetchFullConfig(port, currentConnectionId, listener, fail, changedKeys -> {
+        fetchFullConfig(currentConnectionId, listener, fail, changedKeys -> {
             refetchInFlight = false;
 
             if (!changedKeys.isEmpty()) {
@@ -497,7 +497,7 @@ public class GoFeatureFlagSyncClient {
 
             if (anotherRefetchPending) {
                 anotherRefetchPending = false;
-                refetch(port, listener, fail);
+                refetch(listener, fail);
             }
         });
     }
