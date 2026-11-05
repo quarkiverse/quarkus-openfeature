@@ -46,6 +46,12 @@ public class GoFeatureFlagSyncClient {
      */
     private static final long REQUEST_TIMEOUT_MILLIS = 10_000;
 
+    /**
+     * The event type that tells the client that the flag configuration changed and has to be
+     * fetched again. The relay proxy sends this since v1.56.0; before that, it sent a diff.
+     */
+    private static final String REFETCH_EVALUATION = "refetchEvaluation";
+
     private final ObjectMapper mapper;
     private final Vertx vertx;
     private final Context context;
@@ -61,6 +67,9 @@ public class GoFeatureFlagSyncClient {
 
     // only accessed from the Vert.x event loop, no synchronization needed
     private HttpClient httpClient;
+    private int currentConnectionId; // to drop re-fetches triggered by old connections
+    private boolean refetchInFlight;
+    private boolean anotherRefetchPending;
 
     GoFeatureFlagSyncClient(ObjectMapper mapper, Vertx vertx, Context context,
             GoFeatureFlagConfig.ProviderConfig config,
@@ -121,6 +130,10 @@ public class GoFeatureFlagSyncClient {
         }
         httpClient = createHttpClient();
 
+        currentConnectionId++;
+        refetchInFlight = false;
+        anotherRefetchPending = false;
+
         int port = SyncClientUrls.port(baseUri);
 
         // Connect SSE first, then fetch full config, to avoid missing
@@ -158,9 +171,9 @@ public class GoFeatureFlagSyncClient {
                                     return;
                                 }
 
-                                // Buffer diffs received while fetching full config
+                                // Buffer events received while fetching full config
                                 boolean[] live = { false };
-                                List<JsonNode> bufferedDiffs = new ArrayList<>();
+                                List<JsonNode> bufferedEvents = new ArrayList<>();
                                 boolean[] failed = { false };
                                 Consumer<String> fail = msg -> {
                                     if (failed[0] || state.isShutdown()) {
@@ -173,28 +186,24 @@ public class GoFeatureFlagSyncClient {
                                 };
 
                                 RecordParser parser = RecordParser.newDelimited("\n", line -> {
-                                    JsonNode diff;
+                                    JsonNode event;
                                     try {
-                                        diff = parseSseDiff(line.toString(StandardCharsets.UTF_8));
+                                        event = parseSseEvent(line.toString(StandardCharsets.UTF_8));
                                     } catch (Exception e) {
                                         // a diff is incremental, so dropping one would leave the data
                                         // permanently diverged; we have to reconnect and start from scratch
                                         sseResponse.handler(null);
                                         log.errorf(e, "Failed to parse SSE event data, will reconnect");
-                                        fail.accept("Failed to parse flag diff: " + e.getMessage());
+                                        fail.accept("Failed to parse flag event: " + e.getMessage());
                                         return;
                                     }
-                                    if (diff == null) {
+                                    if (event == null) {
                                         return;
                                     }
                                     if (live[0]) {
-                                        Set<String> changedKeys = applyDiff(diff);
-                                        if (!changedKeys.isEmpty()) {
-                                            log.debugf("Applied flag diff: %d keys changed", changedKeys.size());
-                                            listener.onConfigurationChanged(changedKeys);
-                                        }
+                                        handleSseEvent(event, port, listener, fail);
                                     } else {
-                                        bufferedDiffs.add(diff);
+                                        bufferedEvents.add(event);
                                     }
                                 });
                                 parser.maxRecordSize(maxConfigurationSize);
@@ -219,12 +228,20 @@ public class GoFeatureFlagSyncClient {
                                     fail.accept(t.getMessage());
                                 });
 
-                                fetchFullConfig(port, listener, fail, () -> {
+                                fetchFullConfig(port, currentConnectionId, listener, fail, ignored -> {
+                                    // the fetch may have read the configuration before a change that
+                                    // a buffered event announces, so the diffs still have to be applied
+                                    // and a re-fetch signal still has to lead to another fetch
                                     Set<String> changedKeys = new HashSet<>();
-                                    for (JsonNode diff : bufferedDiffs) {
-                                        changedKeys.addAll(applyDiff(diff));
+                                    boolean refetch = false;
+                                    for (JsonNode event : bufferedEvents) {
+                                        if (isRefetchSignal(event)) {
+                                            refetch = true;
+                                        } else {
+                                            changedKeys.addAll(applyDiff(event));
+                                        }
                                     }
-                                    bufferedDiffs.clear();
+                                    bufferedEvents.clear();
                                     live[0] = true;
 
                                     // Only a connection whose stream is still fine may restart
@@ -244,6 +261,9 @@ public class GoFeatureFlagSyncClient {
                                     if (!changedKeys.isEmpty()) {
                                         log.debugf("Applied %d buffered flag diffs", changedKeys.size());
                                         listener.onConfigurationChanged(changedKeys);
+                                    }
+                                    if (refetch) {
+                                        refetch(port, listener, fail);
                                     }
                                 });
                             }).onFailure(t -> {
@@ -281,7 +301,20 @@ public class GoFeatureFlagSyncClient {
         return vertx.createHttpClient(options);
     }
 
-    private void fetchFullConfig(int port, Listener listener, Consumer<String> fail, Runnable onSuccess) {
+    /**
+     * Fetches the whole flag configuration over the connection identified by {@code connectionId}.
+     * Everything that arrives once a new connection was re-established is dropped: applying a change
+     * would overwrite the newer data that came with the new connection, and failing would push
+     * a healthy connection into an unnecessary reconnect.
+     */
+    private void fetchFullConfig(int port, int connectionId, Listener listener, Consumer<String> fail,
+            Consumer<Set<String>> onSuccess) {
+        Consumer<String> failIfCurrent = msg -> {
+            if (connectionId == currentConnectionId) {
+                fail.accept(msg);
+            }
+        };
+
         RequestOptions requestOptions = new RequestOptions()
                 .setMethod(HttpMethod.POST)
                 .setHost(baseUri.getHost())
@@ -298,6 +331,9 @@ public class GoFeatureFlagSyncClient {
 
                     request.send(Buffer.buffer("{}"))
                             .onSuccess(response -> {
+                                if (connectionId != currentConnectionId) {
+                                    return;
+                                }
                                 if (response.statusCode() == 401 || response.statusCode() == 403) {
                                     String msg = "GO Feature Flag returned " + response.statusCode();
                                     log.errorf(msg);
@@ -308,32 +344,35 @@ public class GoFeatureFlagSyncClient {
                                 if (response.statusCode() != 200) {
                                     String msg = "GO Feature Flag returned " + response.statusCode();
                                     log.warnf(msg);
-                                    fail.accept(msg);
+                                    failIfCurrent.accept(msg);
                                     return;
                                 }
 
                                 body(response).onSuccess(body -> {
+                                    if (connectionId != currentConnectionId) {
+                                        return;
+                                    }
                                     try {
                                         JsonNode root = mapper.readTree(body.toString());
-                                        applyFullConfig(root);
+                                        Set<String> changedKeys = applyFullConfig(root);
                                         log.debugf("Fetched %d flags from GO Feature Flag", flags.size());
-                                        onSuccess.run();
+                                        onSuccess.accept(changedKeys);
                                     } catch (Exception e) {
                                         log.errorf(e, "Failed to parse flag configuration");
-                                        fail.accept("Failed to parse flag configuration: " + e.getMessage());
+                                        failIfCurrent.accept("Failed to parse flag configuration: " + e.getMessage());
                                     }
                                 }).onFailure(t -> {
                                     log.warnf(t, "Failed to read response body");
-                                    fail.accept(t.getMessage());
+                                    failIfCurrent.accept(t.getMessage());
                                 });
                             }).onFailure(t -> {
                                 log.warnf(t, "Failed to send request to GO Feature Flag");
-                                fail.accept(t.getMessage());
+                                failIfCurrent.accept(t.getMessage());
                             });
                 })
                 .onFailure(t -> {
                     log.warnf(t, "Failed to connect to GO Feature Flag at %s", config.url());
-                    fail.accept(t.getMessage());
+                    failIfCurrent.accept(t.getMessage());
                 });
     }
 
@@ -362,13 +401,29 @@ public class GoFeatureFlagSyncClient {
         return promise.future();
     }
 
-    private void applyFullConfig(JsonNode root) {
+    /**
+     * Replaces all flag data with {@code root} and returns the keys whose definition changed.
+     */
+    private Set<String> applyFullConfig(JsonNode root) {
         Map<String, JsonNode> newFlags = new HashMap<>();
         JsonNode flagsNode = root.get("flags");
         if (flagsNode != null && flagsNode.isObject()) {
             flagsNode.forEachEntry(newFlags::put);
         }
+        Map<String, JsonNode> oldFlags = this.flags;
         this.flags = newFlags;
+
+        Set<String> changedKeys = new HashSet<>();
+        newFlags.forEach((key, value) -> {
+            if (!value.equals(oldFlags.get(key))) {
+                changedKeys.add(key);
+            }
+        });
+        oldFlags.forEach((key, value) -> {
+            if (!newFlags.containsKey(key)) {
+                changedKeys.add(key);
+            }
+        });
 
         JsonNode enrichment = root.get("evaluationContextEnrichment");
         if (enrichment != null && enrichment.isObject()) {
@@ -380,13 +435,15 @@ public class GoFeatureFlagSyncClient {
         } else {
             this.evaluationContextEnrichment = null;
         }
+
+        return changedKeys;
     }
 
     /**
-     * Returns the diff carried by one SSE line, or {@code null} if the line carries none.
+     * Returns the event carried by one SSE line, or {@code null} if the line carries none.
      * A line that does carry one but fails to parse is an error, and throws.
      */
-    private JsonNode parseSseDiff(String line) throws JsonProcessingException {
+    private JsonNode parseSseEvent(String line) throws JsonProcessingException {
         line = line.trim();
         if (!line.startsWith("data:")) {
             return null;
@@ -399,6 +456,58 @@ public class GoFeatureFlagSyncClient {
         return mapper.readTree(jsonData);
     }
 
+    private void handleSseEvent(JsonNode event, int port, Listener listener, Consumer<String> fail) {
+        if (isRefetchSignal(event)) {
+            refetch(port, listener, fail);
+            return;
+        }
+
+        Set<String> changedKeys = applyDiff(event);
+        if (!changedKeys.isEmpty()) {
+            log.debugf("Applied flag diff: %d keys changed", changedKeys.size());
+            listener.onConfigurationChanged(changedKeys);
+        }
+    }
+
+    private static boolean isRefetchSignal(JsonNode event) {
+        JsonNode type = event.get("type");
+        return type != null && REFETCH_EVALUATION.equals(type.asText());
+    }
+
+    /**
+     * Fetches the whole configuration again in response to a re-fetch signal. Unlike a full fetch
+     * after a connection is established, a refetch doesn't affect the reconnect backoff or readiness.
+     */
+    private void refetch(int port, Listener listener, Consumer<String> fail) {
+        // overlapping fetches could apply their results out of order, so run one at a time
+        // and remember that another signal arrived in the meantime
+        if (refetchInFlight) {
+            anotherRefetchPending = true;
+            return;
+        }
+        refetchInFlight = true;
+
+        fetchFullConfig(port, currentConnectionId, listener, fail, changedKeys -> {
+            refetchInFlight = false;
+
+            if (!changedKeys.isEmpty()) {
+                log.debugf("Re-fetched flag configuration: %d keys changed", changedKeys.size());
+                listener.onConfigurationChanged(changedKeys);
+            }
+
+            if (anotherRefetchPending) {
+                anotherRefetchPending = false;
+                refetch(port, listener, fail);
+            }
+        });
+    }
+
+    /**
+     * Applies a flag diff pushed by the relay proxy. A flag diff is only pushed by relay proxies
+     * before v1.56.0; newer ones only signal that the configuration changed and has to be re-fetched.
+     * <p>
+     * This method can be removed once those versions are out of support.
+     */
     private Set<String> applyDiff(JsonNode diff) {
         Set<String> changedKeys = new HashSet<>();
         Map<String, JsonNode> newFlags = new HashMap<>(this.flags);
