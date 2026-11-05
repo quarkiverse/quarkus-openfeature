@@ -48,6 +48,7 @@ public class FliptSyncClient {
     private final Context context;
     private final FliptConfig.ProviderConfig config;
     private final URI baseUri;
+    private final int port;
     private final FliptWasmEnginePool enginePool;
     private final TlsConfiguration tlsConfig; // null when TLS not configured
     private final String authHeader;
@@ -64,6 +65,7 @@ public class FliptSyncClient {
         this.context = context;
         this.config = config;
         this.baseUri = SyncClientUrls.parse("Flipt", config.url());
+        this.port = SyncClientUrls.port(baseUri);
         this.enginePool = enginePool;
         this.authHeader = authHeader;
         this.state = state;
@@ -89,8 +91,6 @@ public class FliptSyncClient {
     }
 
     private void verifyAuth(Listener listener) {
-        int port = SyncClientUrls.port(baseUri);
-
         RequestOptions requestOptions = new RequestOptions()
                 .setMethod(HttpMethod.GET)
                 .setHost(baseUri.getHost())
@@ -139,7 +139,7 @@ public class FliptSyncClient {
         RequestOptions requestOptions = new RequestOptions()
                 .setMethod(HttpMethod.GET)
                 .setHost(baseUri.getHost())
-                .setPort(SyncClientUrls.port(baseUri))
+                .setPort(port)
                 .setURI(streamUri(SyncClientUrls.basePath(baseUri), config.environment(), config.namespace(),
                         config.reference()))
                 // only guards the wait for the response headers; once they arrive, the

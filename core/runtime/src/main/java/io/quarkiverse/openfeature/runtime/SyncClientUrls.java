@@ -63,7 +63,7 @@ public final class SyncClientUrls {
         if ("http".equals(uri.getScheme())) {
             return 80;
         }
-        throw new IllegalArgumentException("Not an HTTP(S) URL: " + uri);
+        throw new ProviderConfigurationException("Not an HTTP(S) URL: " + uri);
     }
 
     /**

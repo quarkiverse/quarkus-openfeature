@@ -102,7 +102,7 @@ public class SyncClientUrlsTest {
 
     @Test
     void portOfNonHttpUrlWithoutPort() {
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(ProviderConfigurationException.class,
                 () -> SyncClientUrls.port(URI.create("unix:///var/run/flags.sock")));
     }
 
