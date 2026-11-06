@@ -16,7 +16,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import dev.openfeature.sdk.Client;
 import dev.openfeature.sdk.ProviderState;
 import io.quarkiverse.openfeature.test.runtime.StallingGrpcServer;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerResponse;
@@ -25,7 +25,7 @@ public class FlagdMalformedConfigurationRecoveryTest {
     private static StallingGrpcServer server;
 
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .overrideConfigKey("quarkus.openfeature.await-providers", "false");
 
     static {

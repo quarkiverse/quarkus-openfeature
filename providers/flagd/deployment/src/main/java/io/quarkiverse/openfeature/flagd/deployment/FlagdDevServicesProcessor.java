@@ -10,7 +10,7 @@ import java.util.Set;
 
 import org.jboss.logging.Logger;
 
-import io.quarkiverse.openfeature.flagd.runtime.FlagdRecorder;
+import io.quarkiverse.openfeature.flagd.runtime.FlagdSetup;
 import io.quarkiverse.openfeature.runtime.OpenFeatureBuildTimeConfig;
 import io.quarkiverse.openfeature.runtime.OpenFeatureBuildTimeConfig.DomainBuildTimeConfig;
 import io.quarkus.deployment.IsDevServicesSupportedByLaunchMode;
@@ -111,7 +111,7 @@ class FlagdDevServicesProcessor {
                     .serviceConfig(domain + ";" + devServicesConfig.hashCode())
                     .startable(() -> new FlagdDevContainer(devServicesConfig, path)
                             .withSharedServiceLabel(launchMode.getLaunchMode(), devServicesConfig.serviceName()))
-                    .configProvider(Map.of(urlConfigKey, s -> s.getConnectionInfo()))
+                    .configProvider(s -> Map.of(urlConfigKey, s.getConnectionInfo()))
                     .build());
         }
     }
@@ -131,7 +131,7 @@ class FlagdDevServicesProcessor {
 
     private static boolean domainUsesProvider(DomainBuildTimeConfig domainConfig) {
         return domainConfig.provider().isEmpty()
-                || domainConfig.provider().get().contains(FlagdRecorder.NAME);
+                || domainConfig.provider().get().contains(FlagdSetup.NAME);
     }
 
     private static FlagdBuildTimeConfig.DevServicesConfig getDevServicesConfig(FlagdBuildTimeConfig config, String domain) {

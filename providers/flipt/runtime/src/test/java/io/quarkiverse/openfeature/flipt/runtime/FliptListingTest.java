@@ -9,10 +9,9 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import dev.openfeature.sdk.FlagValueType;
 import io.quarkiverse.openfeature.runtime.DevFeatureAccess.FlagInfo;
+import tools.jackson.databind.ObjectMapper;
 
 // The snapshots below follow the shape of `EvaluationNamespaceSnapshot`
 // (`rpc/v2/evaluation/evaluationv2.proto` in Flipt), as observed on the wire from

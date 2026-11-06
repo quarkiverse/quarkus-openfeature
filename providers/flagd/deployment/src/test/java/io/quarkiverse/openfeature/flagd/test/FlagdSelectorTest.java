@@ -9,14 +9,14 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import dev.openfeature.sdk.Client;
 import io.quarkiverse.openfeature.test.runtime.FlagdTestContainer;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 public class FlagdSelectorTest {
     private static final FlagdTestContainer flagd = new FlagdTestContainer.Builder(
             "flags-with-selector.json", "flags-with-other-selector.json").build();
 
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .overrideConfigKey("quarkus.openfeature.flagd.selector", "flagSetId=my-set");
 
     static {

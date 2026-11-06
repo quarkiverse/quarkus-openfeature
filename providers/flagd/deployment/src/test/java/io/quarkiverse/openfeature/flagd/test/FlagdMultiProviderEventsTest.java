@@ -19,12 +19,11 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import dev.openfeature.sdk.Client;
 import dev.openfeature.sdk.EventDetails;
 import dev.openfeature.sdk.ProviderState;
-import io.quarkiverse.openfeature.deployment.OpenFeatureProviderBuildItem;
 import io.quarkiverse.openfeature.test.runtime.Disconnect;
 import io.quarkiverse.openfeature.test.runtime.FlagdTestContainer;
 import io.quarkiverse.openfeature.test.runtime.Reconnect;
 import io.quarkiverse.openfeature.test.runtime.TcpProxyExtension;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * A known gap, kept as an executable description of it: a domain with more than one provider
@@ -57,16 +56,11 @@ public class FlagdMultiProviderEventsTest {
 
     @RegisterExtension
     @Order(2)
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
-            .withApplicationRoot(root -> root.addAsResource("flags.json").addClass(SecondProviderFactory.class))
-            .addBuildChainCustomizer(builder -> {
-                builder.addBuildStep(context -> {
-                    context.produce(new OpenFeatureProviderBuildItem(SecondProviderFactory.NAME,
-                            new SecondProviderFactory()));
-                })
-                        .produces(OpenFeatureProviderBuildItem.class)
-                        .build();
-            })
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
+            .withApplicationRoot(root -> root.addAsResource("flags.json")
+                    .addClass(SecondProviderFactory.class)
+                    .addClass(SecondProviderBuildStep.class))
+            .addBuildChainCustomizer(SecondProviderBuildStep::register)
             .overrideConfigKey("quarkus.openfeature.provider", "flagd," + SecondProviderFactory.NAME);
 
     static {

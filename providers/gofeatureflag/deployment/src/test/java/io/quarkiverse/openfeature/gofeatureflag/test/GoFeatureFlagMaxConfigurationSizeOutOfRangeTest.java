@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * A maximum configuration size larger than a single buffer can hold must fail the startup, not
@@ -13,7 +13,7 @@ import io.quarkus.test.QuarkusUnitTest;
  */
 public class GoFeatureFlagMaxConfigurationSizeOutOfRangeTest {
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .overrideConfigKey("quarkus.openfeature.gofeatureflag.url", "http://gofeatureflag.example.com:1031")
             .overrideConfigKey("quarkus.openfeature.gofeatureflag.max-configuration-size", "5G")
             .overrideConfigKey("quarkus.devservices.enabled", "false")

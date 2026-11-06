@@ -17,7 +17,7 @@ import org.testcontainers.containers.GenericContainer;
  * In {@code beforeEach}, it checks the test method for {@link Disconnect} and {@link Reconnect} annotations
  * and acts on the proxy accordingly.
  * <p>
- * This extension must be registered <em>before</em> {@code QuarkusUnitTest} so that the container
+ * This extension must be registered <em>before</em> {@code QuarkusExtensionTest} so that the container
  * and proxy are ready when the Quarkus app starts. Using the {@link org.junit.jupiter.api.Order @Order}
  * annotation is best.
  */

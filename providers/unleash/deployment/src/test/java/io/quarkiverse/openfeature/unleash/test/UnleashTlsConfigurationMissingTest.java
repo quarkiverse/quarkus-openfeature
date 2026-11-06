@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * A TLS configuration name that does not exist is a misconfiguration no reconnect can fix,
@@ -13,7 +13,7 @@ import io.quarkus.test.QuarkusUnitTest;
  */
 public class UnleashTlsConfigurationMissingTest {
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .overrideConfigKey("quarkus.openfeature.unleash.url", "https://unleash.example.com/api")
             .overrideConfigKey("quarkus.openfeature.unleash.tls-configuration-name", "nonexistent")
             .overrideConfigKey("quarkus.devservices.enabled", "false")

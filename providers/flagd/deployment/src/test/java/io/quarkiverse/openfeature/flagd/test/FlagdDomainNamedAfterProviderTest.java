@@ -5,14 +5,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import io.quarkiverse.openfeature.flagd.runtime.FlagdRecorder;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkiverse.openfeature.flagd.runtime.FlagdSetup;
+import io.quarkus.test.QuarkusExtensionTest;
 
 public class FlagdDomainNamedAfterProviderTest {
-    private static final String DOMAIN = FlagdRecorder.NAME;
+    private static final String DOMAIN = FlagdSetup.NAME;
 
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .overrideConfigKey("quarkus.openfeature.\"" + DOMAIN + "\".provider", DOMAIN)
             .overrideConfigKey("quarkus.devservices.enabled", "false")
             .overrideConfigKey("quarkus.openfeature.await-providers", "false")

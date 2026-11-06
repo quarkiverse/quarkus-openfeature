@@ -9,11 +9,6 @@ import java.util.Optional;
 
 import org.jboss.logging.Logger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import dev.openfeature.sdk.EvaluationContext;
 import dev.openfeature.sdk.FlagValueType;
 import dev.openfeature.sdk.ImmutableStructure;
@@ -29,6 +24,10 @@ import io.quarkiverse.openfeature.runtime.DevFeatureAccess.FlagInfo;
 import io.quarkiverse.openfeature.runtime.SyncClientState;
 import io.quarkus.tls.TlsConfigurationRegistry;
 import io.vertx.core.Vertx;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 // Concurrency: flag data is updated from the Vert.x event loop and evaluated
 // from request threads. This is safe because each evaluation acquires a WASM
@@ -108,7 +107,7 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
         JsonNode response = parseWasmResponse(responseJson);
         return ProviderEvaluation.<Boolean> builder()
                 .value(response.path("enabled").asBoolean())
-                .reason(mapReason(response.path("reason").asText()))
+                .reason(mapReason(response.path("reason").asString("")))
                 .build();
     }
 
@@ -121,14 +120,14 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
         String requestJson = buildEvaluationRequest(key, ctx);
         String responseJson = enginePool.evaluateVariant(requestJson);
         JsonNode response = parseWasmResponse(responseJson);
-        String variantKey = response.path("variant_key").asText();
+        String variantKey = response.path("variant_key").asString("");
         if (matchedNoVariant(response, variantKey)) {
             return defaultEvaluation(defaultValue);
         }
         return ProviderEvaluation.<String> builder()
                 .value(variantKey)
                 .variant(variantKey)
-                .reason(mapReason(response.path("reason").asText()))
+                .reason(mapReason(response.path("reason").asString("")))
                 .build();
     }
 
@@ -141,7 +140,7 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
         String requestJson = buildEvaluationRequest(key, ctx);
         String responseJson = enginePool.evaluateVariant(requestJson);
         JsonNode response = parseWasmResponse(responseJson);
-        String variantKey = response.path("variant_key").asText();
+        String variantKey = response.path("variant_key").asString("");
         if (matchedNoVariant(response, variantKey)) {
             return defaultEvaluation(defaultValue);
         }
@@ -154,7 +153,7 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
         return ProviderEvaluation.<Integer> builder()
                 .value(value)
                 .variant(variantKey)
-                .reason(mapReason(response.path("reason").asText()))
+                .reason(mapReason(response.path("reason").asString("")))
                 .build();
     }
 
@@ -167,7 +166,7 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
         String requestJson = buildEvaluationRequest(key, ctx);
         String responseJson = enginePool.evaluateVariant(requestJson);
         JsonNode response = parseWasmResponse(responseJson);
-        String variantKey = response.path("variant_key").asText();
+        String variantKey = response.path("variant_key").asString("");
         if (matchedNoVariant(response, variantKey)) {
             return defaultEvaluation(defaultValue);
         }
@@ -180,7 +179,7 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
         return ProviderEvaluation.<Double> builder()
                 .value(value)
                 .variant(variantKey)
-                .reason(mapReason(response.path("reason").asText()))
+                .reason(mapReason(response.path("reason").asString("")))
                 .build();
     }
 
@@ -193,16 +192,16 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
         String requestJson = buildEvaluationRequest(key, ctx);
         String responseJson = enginePool.evaluateVariant(requestJson);
         JsonNode response = parseWasmResponse(responseJson);
-        String variantKey = response.path("variant_key").asText();
+        String variantKey = response.path("variant_key").asString("");
         if (matchedNoVariant(response, variantKey)) {
             return defaultEvaluation(defaultValue);
         }
-        String variantAttachment = response.path("variant_attachment").asText(null);
+        String variantAttachment = response.path("variant_attachment").asString(null);
         Value value = hasAttachment(variantAttachment) ? parseJsonValue(variantAttachment) : new Value(variantKey);
         return ProviderEvaluation.<Value> builder()
                 .value(value)
                 .variant(variantKey)
-                .reason(mapReason(response.path("reason").asText()))
+                .reason(mapReason(response.path("reason").asString("")))
                 .build();
     }
 
@@ -231,7 +230,7 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
                 result.set("context", mapper.valueToTree(ctx.asObjectMap()));
             }
             return mapper.writeValueAsString(result);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new GeneralError("Failed to build the Flipt evaluation request: " + e.getMessage());
         }
     }
@@ -242,12 +241,12 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
         JsonNode root;
         try {
             root = mapper.readTree(responseJson);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new ParseError("Wrong response from the Flipt WASM engine: " + e.getMessage());
         }
-        String status = root.path("status").asText();
+        String status = root.path("status").asString("");
         if (!"success".equals(status)) {
-            throw new GeneralError(root.path("error_message").asText("Unknown WASM error"));
+            throw new GeneralError(root.path("error_message").asString("Unknown WASM error"));
         }
         return root.path("result");
     }
@@ -284,8 +283,8 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
             return new Value(node.asLong());
         } else if (node.isDouble() || node.isFloat()) {
             return new Value(node.asDouble());
-        } else if (node.isTextual()) {
-            return new Value(node.asText());
+        } else if (node.isString()) {
+            return new Value(node.asString());
         } else if (node.isObject()) {
             Map<String, Value> map = new HashMap<>();
             node.forEachEntry((key, value) -> map.put(key, jsonNodeToValue(value)));
@@ -297,7 +296,7 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
             }
             return new Value(list);
         }
-        return new Value(node.asText());
+        return new Value(node.asString(""));
     }
 
     // A variant that has no attachment does not arrive without one: Flipt marshals the empty
@@ -325,7 +324,7 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
             for (JsonNode flag : flags) {
                 JsonNode key = flag.get("key");
                 if (key != null) {
-                    result.add(new FlagInfo(key.asText(), inferType(flag)));
+                    result.add(new FlagInfo(key.asString(""), inferType(flag)));
                 }
             }
             return result;
@@ -341,16 +340,16 @@ public class FliptFeatureProvider extends AbstractRemoteFeatureProvider {
     // which only `getObjectEvaluation` ever reads.
     private static FlagValueType inferType(JsonNode flagNode) {
         JsonNode typeNode = flagNode.get("type");
-        String type = typeNode != null ? typeNode.asText() : null;
+        String type = typeNode != null ? typeNode.asString("") : null;
         if ("BOOLEAN_FLAG_TYPE".equals(type)) {
             return FlagValueType.BOOLEAN;
         } else if ("VARIANT_FLAG_TYPE".equals(type)) {
-            if (hasAttachment(flagNode.path("defaultVariant").path("attachment").asText(null))) {
+            if (hasAttachment(flagNode.path("defaultVariant").path("attachment").asString(null))) {
                 return FlagValueType.OBJECT;
             }
             for (JsonNode rule : flagNode.path("rules")) {
                 for (JsonNode distribution : rule.path("distributions")) {
-                    if (hasAttachment(distribution.path("variantAttachment").asText(null))) {
+                    if (hasAttachment(distribution.path("variantAttachment").asString(null))) {
                         return FlagValueType.OBJECT;
                     }
                 }

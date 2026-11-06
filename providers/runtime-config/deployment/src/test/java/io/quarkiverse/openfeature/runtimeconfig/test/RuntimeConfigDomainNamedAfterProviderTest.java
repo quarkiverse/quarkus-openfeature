@@ -5,14 +5,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import io.quarkiverse.openfeature.runtimeconfig.runtime.RuntimeConfigRecorder;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkiverse.openfeature.runtimeconfig.runtime.RuntimeConfigSetup;
+import io.quarkus.test.QuarkusExtensionTest;
 
 public class RuntimeConfigDomainNamedAfterProviderTest {
-    private static final String DOMAIN = RuntimeConfigRecorder.NAME;
+    private static final String DOMAIN = RuntimeConfigSetup.NAME;
 
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .overrideConfigKey("quarkus.openfeature.\"" + DOMAIN + "\".provider", DOMAIN)
             .overrideConfigKey("quarkus.openfeature.await-providers", "false")
             .assertException(e -> {

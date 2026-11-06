@@ -16,7 +16,7 @@ import dev.openfeature.sdk.FeatureProvider;
 import dev.openfeature.sdk.FlagValueType;
 import io.quarkiverse.openfeature.runtime.FlagOverrides;
 import io.quarkiverse.openfeature.runtime.OpenFeatureBuildTimeConfig;
-import io.quarkiverse.openfeature.runtime.OpenFeatureRecorder;
+import io.quarkiverse.openfeature.runtime.OpenFeatureProviders;
 import io.quarkiverse.openfeature.runtime.OverrideFeatureAccess;
 import io.quarkiverse.openfeature.runtime.Primitives;
 
@@ -27,7 +27,7 @@ class OpenFeatureTestExtension implements BeforeEachCallback, AfterEachCallback 
     private static final String OVERRIDDEN_DOMAINS_KEY = "overriddenDomains";
 
     // overridable in tests
-    Function<String, List<FeatureProvider>> providerLookup = OpenFeatureRecorder::getProviders;
+    Function<String, List<FeatureProvider>> providerLookup = OpenFeatureProviders::get;
 
     @Override
     public void beforeEach(ExtensionContext context) {
@@ -65,7 +65,7 @@ class OpenFeatureTestExtension implements BeforeEachCallback, AfterEachCallback 
                         + domain + "\", but no OpenFeature provider for such domain exists."
                         + " Either the domain name is wrong, or this test does not run in the same classloader"
                         + " as the application: @TestFlag only works under @QuarkusTest,"
-                        + " not under @QuarkusIntegrationTest or QuarkusUnitTest.");
+                        + " not under @QuarkusIntegrationTest or QuarkusExtensionTest.");
             }
             for (FeatureProvider provider : providers) {
                 if (!(provider instanceof OverrideFeatureAccess)) {

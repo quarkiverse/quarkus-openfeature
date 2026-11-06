@@ -9,10 +9,9 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import dev.openfeature.sdk.FlagValueType;
 import io.quarkiverse.openfeature.runtime.DevFeatureAccess.FlagInfo;
+import tools.jackson.databind.ObjectMapper;
 
 // The flag configurations below follow the flagd provider schema,
 // https://flagd.dev/schema/v0/flags.json, and are modelled on its

@@ -2,9 +2,8 @@ package io.quarkiverse.openfeature.flipt.runtime;
 
 import java.util.function.Function;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.quarkiverse.openfeature.runtime.Pool;
+import tools.jackson.databind.ObjectMapper;
 
 final class FliptWasmEnginePool {
     private final Pool<FliptWasmEngine> pool;

@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * Offline mode reads the file once and never connects to anything, so a file that is not
@@ -15,7 +15,7 @@ import io.quarkus.test.QuarkusUnitTest;
  */
 public class FlagdOfflineMissingFileTest {
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .overrideConfigKey("quarkus.openfeature.await-providers", "false")
             .overrideConfigKey("quarkus.openfeature.flagd.offline-path", "/this/path/does/not/exist/flags.json")
             .assertException(e -> {

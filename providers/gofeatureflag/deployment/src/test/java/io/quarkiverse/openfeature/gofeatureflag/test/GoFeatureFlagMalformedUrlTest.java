@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * A GO Feature Flag URL without a scheme is a typo, not a server that happens to be down, so it must
@@ -15,7 +15,7 @@ import io.quarkus.test.QuarkusUnitTest;
  */
 public class GoFeatureFlagMalformedUrlTest {
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .overrideConfigKey("quarkus.openfeature.await-providers", "false")
             .overrideConfigKey("quarkus.openfeature.gofeatureflag.url", "localhost:1031")
             .overrideConfigKey("quarkus.devservices.enabled", "false")

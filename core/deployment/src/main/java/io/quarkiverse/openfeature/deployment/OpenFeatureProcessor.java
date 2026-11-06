@@ -1,8 +1,8 @@
 package io.quarkiverse.openfeature.deployment;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -14,17 +14,20 @@ import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 import dev.openfeature.sdk.Client;
+import dev.openfeature.sdk.FeatureProvider;
 import io.quarkiverse.openfeature.runtime.FeatureProviderFactory;
 import io.quarkiverse.openfeature.runtime.OpenFeatureBuildTimeConfig;
 import io.quarkiverse.openfeature.runtime.OpenFeatureBuildTimeConfig.DomainBuildTimeConfig;
 import io.quarkiverse.openfeature.runtime.OpenFeatureProducer;
-import io.quarkiverse.openfeature.runtime.OpenFeatureRecorder;
+import io.quarkiverse.openfeature.runtime.OpenFeatureProviders;
+import io.quarkiverse.openfeature.runtime.OpenFeatureRuntimeConfig;
+import io.quarkiverse.openfeature.runtime.OpenFeatureSetup;
+import io.quarkus.arc.ArcContainer;
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.arc.deployment.SyntheticBeanBuildItem;
+import io.quarkus.core.deployment.service.ServiceRegistrar;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
-import io.quarkus.deployment.annotations.ExecutionTime;
-import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.smallrye.common.annotation.Identifier;
 
@@ -42,30 +45,31 @@ class OpenFeatureProcessor {
     }
 
     @BuildStep
-    @Record(ExecutionTime.RUNTIME_INIT)
     void configureProvidersAndClients(OpenFeatureBuildTimeConfig config,
             List<OpenFeatureProviderBuildItem> providers,
-            OpenFeatureRecorder recorder,
+            ServiceRegistrar serviceRegistrar,
             BuildProducer<SyntheticBeanBuildItem> syntheticBeans) {
         validateDomainNames(config, providers);
 
-        Map<String, FeatureProviderFactory> factories = new HashMap<>();
+        Set<String> providerNames = new LinkedHashSet<>();
         for (OpenFeatureProviderBuildItem item : providers) {
-            if (factories.put(item.getName(), item.getFactory()) != null) {
-                throw new IllegalStateException(
-                        "Duplicate OpenFeature provider name: " + item.getName());
+            if (!providerNames.add(item.getName())) {
+                throw new IllegalStateException("Duplicate OpenFeature provider name: " + item.getName());
             }
         }
 
-        recorder.reset();
+        // all per-domain services share this registry, so it must exist before any of them starts
+        serviceRegistrar.forService(OpenFeatureProviders.class)
+                .onStart(ctx -> OpenFeatureProviders.create());
 
         DomainBuildTimeConfig defaultDomainConfig = config.domains()
                 .getOrDefault(OpenFeatureBuildTimeConfig.DEFAULT_DOMAIN, (DomainBuildTimeConfig) Optional::empty);
-        processDomain(OpenFeatureBuildTimeConfig.DEFAULT_DOMAIN, defaultDomainConfig, factories, recorder, syntheticBeans);
+        processDomain(OpenFeatureBuildTimeConfig.DEFAULT_DOMAIN, defaultDomainConfig, providerNames, serviceRegistrar,
+                syntheticBeans);
 
         for (Map.Entry<String, DomainBuildTimeConfig> entry : config.domains().entrySet()) {
             if (!OpenFeatureBuildTimeConfig.DEFAULT_DOMAIN.equals(entry.getKey())) {
-                processDomain(entry.getKey(), entry.getValue(), factories, recorder, syntheticBeans);
+                processDomain(entry.getKey(), entry.getValue(), providerNames, serviceRegistrar, syntheticBeans);
             }
         }
     }
@@ -109,66 +113,74 @@ class OpenFeatureProcessor {
     }
 
     private void processDomain(String domain, DomainBuildTimeConfig domainConfig,
-            Map<String, FeatureProviderFactory> factories,
-            OpenFeatureRecorder recorder,
+            Set<String> providerNames,
+            ServiceRegistrar serviceRegistrar,
             BuildProducer<SyntheticBeanBuildItem> syntheticBeans) {
-        List<FeatureProviderFactory> domainFactories = getProviderFactories(domain, domainConfig, factories);
+        List<String> domainProviders = getProviderNames(domain, domainConfig, providerNames);
 
-        recorder.configureProvider(domain, domainFactories);
+        // every provider installs a `FeatureProviderFactory` service named after the provider,
+        // so `consumeAll()` collects all of them, keyed by provider name
+        serviceRegistrar.forService(FeatureProvider.class, domain)
+                .consumeAll(FeatureProviderFactory.class)
+                .require(OpenFeatureProviders.class)
+                .require(OpenFeatureRuntimeConfig.class)
+                .require(ArcContainer.class)
+                .onStart((ctx, factories, registry, runtimeConfig, container) -> {
+                    return OpenFeatureSetup.configureDomain(domain, domainProviders, factories, registry, runtimeConfig);
+                });
+
+        serviceRegistrar.forService(Client.class, domain)
+                .after(FeatureProvider.class, domain)
+                .onStart(ctx -> OpenFeatureSetup.createClient(domain));
 
         SyntheticBeanBuildItem.ExtendedBeanConfigurator bean = SyntheticBeanBuildItem.configure(Client.class)
                 .scope(Singleton.class)
                 .setRuntimeInit()
-                .unremovable();
+                .unremovable()
+                .serviceValue(Client.class, domain);
 
-        if (OpenFeatureBuildTimeConfig.DEFAULT_DOMAIN.equals(domain)) {
-            bean.supplier(recorder.createDefaultClient());
-        } else {
+        if (!OpenFeatureBuildTimeConfig.DEFAULT_DOMAIN.equals(domain)) {
             bean.addQualifier().annotation(Identifier.class).addValue("value", domain).done();
-            bean.supplier(recorder.createClient(domain));
         }
 
         syntheticBeans.produce(bean.done());
     }
 
-    private List<FeatureProviderFactory> getProviderFactories(String domain,
-            DomainBuildTimeConfig domainConfig,
-            Map<String, FeatureProviderFactory> factories) {
+    private List<String> getProviderNames(String domain, DomainBuildTimeConfig domainConfig, Set<String> providerNames) {
         boolean isDefault = OpenFeatureBuildTimeConfig.DEFAULT_DOMAIN.equals(domain);
         String domainLabel = isDefault ? "default domain" : "domain \"" + domain + "\"";
 
         if (domainConfig.provider().isPresent()) {
-            List<FeatureProviderFactory> result = new ArrayList<>();
+            List<String> result = new ArrayList<>();
             Set<String> seen = new HashSet<>();
             for (String name : domainConfig.provider().get()) {
                 if (!seen.add(name)) {
                     throw new IllegalStateException(
                             "Duplicate provider \"" + name + "\" in configuration for " + domainLabel + ".");
                 }
-                FeatureProviderFactory factory = factories.get(name);
-                if (factory == null) {
+                if (!providerNames.contains(name)) {
                     throw new IllegalStateException(
                             "Unknown OpenFeature provider \"" + name + "\" for " + domainLabel + ".\n"
-                                    + "Available providers: " + factories.keySet());
+                                    + "Available providers: " + providerNames);
                 }
-                result.add(factory);
+                result.add(name);
             }
-            return result;
+            return List.copyOf(result);
         }
 
-        if (factories.isEmpty()) {
+        if (providerNames.isEmpty()) {
             throw new IllegalStateException(
                     "No OpenFeature provider found for " + domainLabel + ".\n"
                             + "Add a provider extension such as "
                             + "quarkus-openfeature-flagd or quarkus-openfeature-unleash.");
-        } else if (factories.size() > 1) {
+        } else if (providerNames.size() > 1) {
             throw new IllegalStateException(
-                    "Multiple OpenFeature providers found for " + domainLabel + ": " + factories.keySet()
+                    "Multiple OpenFeature providers found for " + domainLabel + ": " + providerNames
                             + ".\nSet quarkus.openfeature."
                             + (isDefault ? "" : "\"" + domain + "\".")
                             + "provider to select which provider(s) to use.");
         } else {
-            return new ArrayList<>(factories.values());
+            return List.copyOf(providerNames);
         }
     }
 }

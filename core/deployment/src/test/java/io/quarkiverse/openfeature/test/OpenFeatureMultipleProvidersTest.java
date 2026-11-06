@@ -6,15 +6,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.quarkiverse.openfeature.deployment.OpenFeatureProviderBuildItem;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 public class OpenFeatureMultipleProvidersTest {
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .addBuildChainCustomizer(builder -> {
                 builder.addBuildStep(context -> {
-                    context.produce(new OpenFeatureProviderBuildItem("provider-a", null));
-                    context.produce(new OpenFeatureProviderBuildItem("provider-b", null));
+                    context.produce(new OpenFeatureProviderBuildItem("provider-a"));
+                    context.produce(new OpenFeatureProviderBuildItem("provider-b"));
                 })
                         .produces(OpenFeatureProviderBuildItem.class)
                         .build();

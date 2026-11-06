@@ -2,6 +2,7 @@
 
 include::./includes/attributes.adoc[]
 :maintained: ✅
+:legacy: ⚠️
 :unmaintained: ❌
 
 Each stream of this extension supports a range of Quarkus versions.
@@ -11,10 +12,16 @@ Only maintained streams receive bug fixes and dependency updates.
 |===
 |Quarkus OpenFeature |Quarkus |Maintained
 
+|2.0.x
+|4.0+
+|{maintained}
+
 |1.0.x
 |3.33+
 |{maintained}
 |===
 
-Future `1.x` streams may target the next Quarkus 3 LTS.
-Quarkus 4 support is expected in a `2.0` stream.
+[%hardbreaks]
+{maintained} Actively developed and fully maintained, receives new features, bug fixes, dependency updates.
+{legacy} Maintained in a legacy status, receives important bug fixes, but no new features.
+{unmaintained} Not maintained, migration to a newer version is recommended.

@@ -16,8 +16,6 @@ import org.testcontainers.containers.ComposeContainer;
 import org.testcontainers.containers.ContainerState;
 import org.testcontainers.containers.wait.strategy.Wait;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import dev.openfeature.contrib.tools.flagd.core.FlagdCore;
 import dev.openfeature.sdk.OpenFeatureAPI;
 import io.cucumber.java.After;
@@ -27,10 +25,9 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.When;
 import io.quarkiverse.openfeature.flagd.runtime.FlagdConfig;
 import io.quarkiverse.openfeature.flagd.runtime.FlagdFeatureProvider;
-import io.quarkus.runtime.configuration.MemorySize;
-import io.quarkus.runtime.configuration.MemorySizeConverter;
 import io.smallrye.config.SmallRyeConfigBuilder;
 import io.vertx.core.Vertx;
+import tools.jackson.databind.ObjectMapper;
 
 public class ProviderSteps {
     static final int MANAGEMENT_PORT = 8014;
@@ -193,7 +190,6 @@ public class ProviderSteps {
 
     private FlagdConfig.ProviderConfig createConnectionConfig(String url) {
         SmallRyeConfigBuilder builder = new SmallRyeConfigBuilder()
-                .withConverter(MemorySize.class, 100, new MemorySizeConverter())
                 .withMapping(FlagdConfig.ProviderConfig.class, "flagd")
                 .withDefaultValue("flagd.url", url)
                 .withDefaultValue("flagd.stream-deadline", "PT10M")

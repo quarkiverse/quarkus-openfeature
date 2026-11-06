@@ -5,7 +5,6 @@ import static org.hamcrest.Matchers.is;
 
 import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.containers.GenericContainer;
@@ -14,7 +13,6 @@ import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.utility.DockerImageName;
 
 import io.quarkus.test.QuarkusDevModeTest;
-import io.restassured.RestAssured;
 
 /**
  * Container sharing only happens in dev mode, so this has to be a dev mode test. The GO Feature
@@ -22,8 +20,8 @@ import io.restassured.RestAssured;
  * discover it by its label instead of starting a second one.
  */
 public class GoFeatureFlagSharedDevServiceTest {
-    // TODO Quarkus 3.33 doesn't configure RestAssured for random ports in dev mode tests
-    //  unique fixed ports work around parallel build conflicts until then
+    // dev mode tests set `quarkus.http.port` to 8080, which would prevent parallel tests
+    // hence a fixed port, unique per module
     private static final int PORT = 18280;
 
     private static final int HTTP_PORT = 1031;
@@ -61,11 +59,6 @@ public class GoFeatureFlagSharedDevServiceTest {
                         + "quarkus.openfeature.await-providers=false\n"), "application.properties");
                 root.addClass(GoFeatureFlagUrlResource.class);
             });
-
-    @BeforeAll
-    static void setPort() {
-        RestAssured.port = PORT;
-    }
 
     @AfterAll
     static void stopSharedGoFeatureFlag() {

@@ -11,7 +11,7 @@ import java.util.Set;
 
 import org.jboss.logging.Logger;
 
-import io.quarkiverse.openfeature.flipt.runtime.FliptRecorder;
+import io.quarkiverse.openfeature.flipt.runtime.FliptSetup;
 import io.quarkiverse.openfeature.runtime.OpenFeatureBuildTimeConfig;
 import io.quarkiverse.openfeature.runtime.OpenFeatureBuildTimeConfig.DomainBuildTimeConfig;
 import io.quarkus.deployment.IsDevServicesSupportedByLaunchMode;
@@ -108,7 +108,7 @@ class FliptDevServicesProcessor {
                     .serviceConfig(serviceConfigId)
                     .startable(() -> new FliptDevContainer(devServicesConfig, path)
                             .withSharedServiceLabel(launchMode.getLaunchMode(), devServicesConfig.serviceName()))
-                    .configProvider(Map.of(urlConfigKey, s -> s.getConnectionInfo()))
+                    .configProvider(s -> Map.of(urlConfigKey, s.getConnectionInfo()))
                     .build());
         }
     }
@@ -128,7 +128,7 @@ class FliptDevServicesProcessor {
 
     private static boolean domainUsesProvider(DomainBuildTimeConfig domainConfig) {
         return domainConfig.provider().isEmpty()
-                || domainConfig.provider().get().contains(FliptRecorder.NAME);
+                || domainConfig.provider().get().contains(FliptSetup.NAME);
     }
 
     private static FliptBuildTimeConfig.DevServicesConfig getDevServicesConfig(FliptBuildTimeConfig config, String domain) {

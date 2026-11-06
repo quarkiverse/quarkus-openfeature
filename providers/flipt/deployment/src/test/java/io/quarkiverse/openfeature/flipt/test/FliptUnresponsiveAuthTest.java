@@ -13,7 +13,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import dev.openfeature.sdk.Client;
 import dev.openfeature.sdk.ProviderState;
 import io.quarkiverse.openfeature.test.runtime.StallingHttpServer;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * An authentication check that is accepted and never answered must not block the provider
@@ -26,7 +26,7 @@ public class FliptUnresponsiveAuthTest {
     private static StallingHttpServer server;
 
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .overrideConfigKey("quarkus.openfeature.await-providers", "false")
             .overrideConfigKey("quarkus.openfeature.flipt.auth-type", "client_token")
             .overrideConfigKey("quarkus.openfeature.flipt.auth-token", "secret");

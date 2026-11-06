@@ -5,14 +5,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import io.quarkiverse.openfeature.unleash.runtime.UnleashRecorder;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkiverse.openfeature.unleash.runtime.UnleashSetup;
+import io.quarkus.test.QuarkusExtensionTest;
 
 public class UnleashDomainNamedAfterProviderTest {
-    private static final String DOMAIN = UnleashRecorder.NAME;
+    private static final String DOMAIN = UnleashSetup.NAME;
 
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .overrideConfigKey("quarkus.openfeature.\"" + DOMAIN + "\".provider", DOMAIN)
             .overrideConfigKey("quarkus.devservices.enabled", "false")
             .overrideConfigKey("quarkus.openfeature.await-providers", "false")

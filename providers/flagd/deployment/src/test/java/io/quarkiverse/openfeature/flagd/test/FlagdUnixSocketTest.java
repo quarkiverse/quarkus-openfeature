@@ -18,7 +18,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import dev.openfeature.sdk.Client;
 import dev.openfeature.sdk.ProviderState;
 import io.quarkiverse.openfeature.test.runtime.FlagdTestContainer;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 @EnabledOnOs(OS.LINUX)
 public class FlagdUnixSocketTest {
@@ -29,9 +29,8 @@ public class FlagdUnixSocketTest {
             .build();
 
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
-            .withApplicationRoot(root -> root.addAsResource("flags.json"))
-            .overrideConfigKey("quarkus.vertx.prefer-native-transport", "true");
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
+            .withApplicationRoot(root -> root.addAsResource("flags.json"));
 
     static {
         test.setBeforeAllCustomizer(() -> {

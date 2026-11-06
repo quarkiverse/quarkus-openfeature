@@ -19,7 +19,7 @@ import dev.openfeature.sdk.Value;
 import io.quarkiverse.openfeature.runtime.DevFeatureAccess;
 import io.quarkiverse.openfeature.runtime.FlagOverrides;
 import io.quarkiverse.openfeature.runtime.OpenFeatureBuildTimeConfig;
-import io.quarkiverse.openfeature.runtime.OpenFeatureRecorder;
+import io.quarkiverse.openfeature.runtime.OpenFeatureProviders;
 import io.quarkiverse.openfeature.runtime.OverrideFeatureAccess;
 import io.quarkiverse.openfeature.runtime.Primitives;
 import io.smallrye.common.annotation.NonBlocking;
@@ -39,7 +39,7 @@ public class OpenFeatureJsonRpcService {
     public JsonObject getProviderStatus(String domain) {
         Client client = getClient(domain);
         JsonArray providers = new JsonArray();
-        for (FeatureProvider provider : OpenFeatureRecorder.getProviders(domain)) {
+        for (FeatureProvider provider : OpenFeatureProviders.get(domain)) {
             JsonObject json = new JsonObject().put("name", provider.getMetadata().getName());
             if (provider instanceof DevFeatureAccess devSpi) {
                 Optional<String> consoleUrl = devSpi.getConsoleUrl();
@@ -58,7 +58,7 @@ public class OpenFeatureJsonRpcService {
     public JsonObject getFlags(String domain) {
         Map<String, FlagValueType> flagMap = new HashMap<>();
         boolean supported = false;
-        for (FeatureProvider provider : OpenFeatureRecorder.getProviders(domain)) {
+        for (FeatureProvider provider : OpenFeatureProviders.get(domain)) {
             if (provider instanceof DevFeatureAccess devSpi) {
                 supported = true;
                 for (DevFeatureAccess.FlagInfo flag : devSpi.getFlags()) {
@@ -122,7 +122,7 @@ public class OpenFeatureJsonRpcService {
     public JsonObject getEvents(String domain) {
         List<String> names = new ArrayList<>();
         List<List<DevFeatureAccess.EventInfo>> logs = new ArrayList<>();
-        for (FeatureProvider provider : OpenFeatureRecorder.getProviders(domain)) {
+        for (FeatureProvider provider : OpenFeatureProviders.get(domain)) {
             if (provider instanceof DevFeatureAccess devSpi) {
                 List<DevFeatureAccess.EventInfo> log = devSpi.getEventLog();
                 if (!log.isEmpty()) {
@@ -219,7 +219,7 @@ public class OpenFeatureJsonRpcService {
     }
 
     private void applyOverrides(String domain, FlagOverrides overrides) {
-        for (FeatureProvider provider : OpenFeatureRecorder.getProviders(domain)) {
+        for (FeatureProvider provider : OpenFeatureProviders.get(domain)) {
             if (provider instanceof OverrideFeatureAccess access) {
                 access.setFlagOverrides(overrides);
             }
@@ -227,7 +227,7 @@ public class OpenFeatureJsonRpcService {
     }
 
     private void clearOverrides(String domain) {
-        for (FeatureProvider provider : OpenFeatureRecorder.getProviders(domain)) {
+        for (FeatureProvider provider : OpenFeatureProviders.get(domain)) {
             if (provider instanceof OverrideFeatureAccess access) {
                 access.clearFlagOverrides();
             }

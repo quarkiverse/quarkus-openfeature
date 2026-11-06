@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.quarkiverse.openfeature.test.runtime.StallingHttpServer;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 /**
  * A server whose SSE stream always fails but whose configuration fetch always succeeds must
@@ -40,7 +40,7 @@ public class GoFeatureFlagBrokenStreamBackoffTest {
     private static StallingHttpServer server;
 
     @RegisterExtension
-    static final QuarkusUnitTest test = new QuarkusUnitTest()
+    static final QuarkusExtensionTest test = new QuarkusExtensionTest()
             .overrideConfigKey("quarkus.openfeature.gofeatureflag.max-configuration-size", "64K");
 
     static {
