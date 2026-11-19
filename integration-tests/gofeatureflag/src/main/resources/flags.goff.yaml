@@ -49,5 +49,5 @@ targeted-flag:
     variation: fallback
   targeting:
     - name: test-users
-      query: .targetingKey == "test-user"
+      query: targetingKey == "test-user"
       variation: match
