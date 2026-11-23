@@ -11,10 +11,18 @@ Select an OpenFeature provider and add its extension to your project:
 ```xml
 <dependency>
     <groupId>io.quarkiverse.openfeature</groupId>
-    <artifactId>quarkus-openfeature-runtime-config</artifactId>
+    <artifactId>quarkus-openfeature-flagd</artifactId>
     <version>${quarkus-openfeature.version}</version>
 </dependency>
 ```
+
+This extension supports the following OpenFeature providers:
+
+- flagd
+- Flipt
+- GO Feature Flag
+- Unleash
+- Quarkus-specific providers that read from runtime configuration and build-time configuration
 
 You don't need to explicitly add a dependency on `io.quarkiverse.openfeature:quarkus-openfeature`, it is included transitively.
 
